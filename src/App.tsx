@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { VaultScanResult, CourseItem, ModuleItem } from "./types/vault";
+import { PdfViewer } from "./components/PdfViewer";
 import "./App.css";
 
 const VAULT_STORAGE_KEY = "syllex_selected_vault_path";
@@ -9,6 +10,7 @@ const VAULT_STORAGE_KEY = "syllex_selected_vault_path";
 function App() {
   const [vaultPath, setVaultPath] = useState<string | null>(null);
   const [scanResult, setScanResult] = useState<VaultScanResult | null>(null);
+  const [activeModule, setActiveModule] = useState<ModuleItem | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -87,8 +89,24 @@ function App() {
     }
   }
 
+  function handleOpenModule(mod: ModuleItem) {
+    if (mod.file_type === "Pdf") {
+      setActiveModule(mod);
+    } else {
+      setError(`Opening ${mod.file_type} files directly in viewer is coming in later milestones.`);
+    }
+  }
+
   return (
     <div className="app-layout">
+      {activeModule && vaultPath && (
+        <PdfViewer
+          vaultRoot={vaultPath}
+          module={activeModule}
+          onClose={() => setActiveModule(null)}
+        />
+      )}
+
       <header className="app-header">
         <h1>Syllex</h1>
         <div className="vault-actions">
@@ -161,7 +179,11 @@ function App() {
                     <p className="module-count">{course.modules.length} module(s)</p>
                     <ul className="module-list">
                       {course.modules.map((mod: ModuleItem) => (
-                        <li key={mod.relative_path} className="module-item">
+                        <li
+                          key={mod.relative_path}
+                          className="module-item clickable"
+                          onClick={() => handleOpenModule(mod)}
+                        >
                           <span className={`file-tag ${mod.file_type.toLowerCase()}`}>
                             {mod.file_type}
                           </span>
@@ -189,7 +211,11 @@ function App() {
                     </div>
                     <ul className="module-list">
                       {scanResult.root_modules.map((mod: ModuleItem) => (
-                        <li key={mod.relative_path} className="module-item">
+                        <li
+                          key={mod.relative_path}
+                          className="module-item clickable"
+                          onClick={() => handleOpenModule(mod)}
+                        >
                           <span className={`file-tag ${mod.file_type.toLowerCase()}`}>
                             {mod.file_type}
                           </span>

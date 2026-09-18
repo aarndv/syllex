@@ -221,6 +221,28 @@ pub fn add_module_to_vault<P: AsRef<Path>>(
     })
 }
 
+/// Safely reads document file bytes from within the vault.
+pub fn read_module_bytes<P: AsRef<Path>>(
+    vault_root: P,
+    relative_path: &str,
+) -> Result<Vec<u8>, String> {
+    let vault_canon = vault_root
+        .as_ref()
+        .canonicalize()
+        .map_err(|e| format!("Invalid vault path: {}", e))?;
+
+    let file_path = vault_canon.join(relative_path);
+    let file_canon = file_path
+        .canonicalize()
+        .map_err(|e| format!("Module file not found: {}", e))?;
+
+    if !file_canon.starts_with(&vault_canon) {
+        return Err("Requested path escapes vault boundary".to_string());
+    }
+
+    std::fs::read(&file_canon).map_err(|e| format!("Failed to read module file: {}", e))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

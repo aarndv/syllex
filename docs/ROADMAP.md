@@ -30,11 +30,11 @@ Acceptance criteria:
 
 ## M3 — Basic PDF viewer
 
-- [ ] Open PDFs through PDF.js
-- [ ] Navigate pages and zoom
-- [ ] Render pages lazily
-- [ ] Remember the last page locally
-- [ ] Handle malformed or protected PDFs
+- [x] Open PDFs through PDF.js
+- [x] Navigate pages and zoom
+- [x] Render pages lazily
+- [x] Remember the last page locally
+- [x] Handle malformed or protected PDFs
 
 ## M4 — Fast document dark mode
 

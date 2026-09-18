@@ -164,8 +164,18 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0;
+  padding: 0.5rem;
   border-bottom: 1px solid #f1f5f9;
+  border-radius: 4px;
+}
+
+.module-item.clickable {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.module-item.clickable:hover {
+  background-color: #f1f5f9;
 }
 
 .module-item:last-child {
