@@ -21,12 +21,12 @@ Acceptance criteria:
 
 ## M2 — Read-only vault selection and scan
 
-- [ ] Select a directory through a native dialog
-- [ ] Persist the selected vault in platform app data
-- [ ] Recursively discover supported modules
-- [ ] Group first-level folders as courses
-- [ ] Handle missing, inaccessible, and empty vaults
-- [ ] Prove through tests that source modules are never modified
+- [x] Select a directory through a native dialog
+- [x] Persist the selected vault in platform app data
+- [x] Recursively discover supported modules
+- [x] Group first-level folders as courses
+- [x] Handle missing, inaccessible, and empty vaults
+- [x] Prove through tests that source modules are never modified
 
 ## M3 — Basic PDF viewer
 
