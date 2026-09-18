@@ -13,11 +13,11 @@ Only one milestone should be active at a time. Each milestone should be reviewed
 
 Acceptance criteria:
 
-- [ ] Tauri 2, React, TypeScript, and Vite application starts on Fedora
-- [ ] Formatting, linting, type-checking, and basic tests are configured
-- [ ] Rust formatting, Clippy, and tests are configured
-- [ ] No product feature or permanent visual theme is added
-- [ ] Initial application also compiles on a Windows CI runner
+- [x] Tauri 2, React, TypeScript, and Vite application starts on Fedora
+- [x] Formatting, linting, type-checking, and basic tests are configured
+- [x] Rust formatting, Clippy, and tests are configured
+- [x] No product feature or permanent visual theme is added
+- [x] Initial application also compiles on a Windows CI runner
 
 ## M2 — Read-only vault selection and scan
 
