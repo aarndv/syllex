@@ -1,6 +1,6 @@
 # Product Design Constraints
 
-The visual theme, color system, icon style, typography, and branding are intentionally undecided. An implementation agent must not establish a permanent visual identity without a separate approved design task.
+The visual theme has been established to provide a clean, modern, and focused study environment. Implementation agents should adhere to these visual guidelines.
 
 ## Initial information architecture
 
@@ -76,11 +76,11 @@ Application
 - Label icon-only controls for assistive technology.
 - Dark document rendering and interface theme are separate settings.
 
-## Deferred visual questions
+## Visual Theme Direction
 
-- Light/dark/system interface theme
-- Color palette
-- Typography
-- Icon family
-- Density and spacing scale
-- Application logo and broader visual identity
+- **Interface Theme:** Follow the system theme by default, with explicit overrides (Light/Dark) available in user settings.
+- **Color Palette:** Neutral slate/zinc grays for the structure, using a subtle, academic accent color (like muted blue or indigo) to keep focus on the documents.
+- **Typography:** Clean, modern sans-serif (e.g., Inter, or system defaults like Segoe UI / San Francisco) for high legibility in UI elements.
+- **Icon Family:** Lucide or Radix Icons (clean, modern outline icons that complement the sans-serif typography).
+- **Density and Spacing:** Comfortable/Balanced scale (modern web app spacing that provides breathing room while keeping course lists scannable).
+- **Application Logo:** Use a simple placeholder for the MVP. A human-made illustration logo will be added in the future.

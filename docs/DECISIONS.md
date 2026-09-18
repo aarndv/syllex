@@ -44,7 +44,7 @@ Record decisions that are expensive to reverse or affect multiple parts of the a
 
 ## D-005 — Visual theme deferred
 
-**Status:** Accepted
+**Status:** Superseded by D-011
 
 **Decision:** Implement accessible structural UI without establishing a visual theme or broader visual identity.
 
@@ -113,3 +113,13 @@ Record decisions that are expensive to reverse or affect multiple parts of the a
 **Reason:** Prevents the vault from being cluttered with metadata files and avoids indexing export files during recursive scans.
 
 **Consequences:** The application must trigger standard "Save As" OS dialogs for all export workflows.
+
+## D-011 — Visual Theme Direction
+
+**Status:** Accepted
+
+**Decision:** Establish a clean, neutral visual theme using slate/zinc grays, a muted blue/indigo accent, modern sans-serif fonts, Lucide/Radix icons, and comfortable spacing. The system theme is the default (with an override), and the logo remains a placeholder for MVP.
+
+**Reason:** Creates a premium, distraction-free environment suited for reading and studying, replacing the previously deferred state (D-005). 
+
+**Consequences:** Implementation agents can now use Tailwind/CSS to establish these foundational design tokens and themes during scaffolding.
