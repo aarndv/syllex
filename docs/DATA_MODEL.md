@@ -46,7 +46,6 @@ Prefer paths relative to the vault when referencing module files.
 - `last_page`
 - `zoom`
 - `scroll_position`
-- `completed`
 - `last_opened_at`
 
 ### bookmarks
@@ -74,6 +73,9 @@ Bookmarks are post-MVP unless reprioritized.
 - `front`
 - `back`
 - `tags`
+- `ease_factor`
+- `interval`
+- `next_review_at`
 - `created_at`
 - `updated_at`
 

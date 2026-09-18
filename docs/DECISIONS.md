@@ -62,9 +62,6 @@ Record decisions that are expensive to reverse or affect multiple parts of the a
 
 **Consequences:** Fedora hosts the development toolchain and local checks. Windows builds are produced by native CI runners and periodically installed on the Windows 11 PC for manual platform testing. The Windows PC does not need a development checkout or compiler toolchain unless this decision changes later.
 
-## New decision template
-
-```md
 ## D-NNN — Title
 
 **Status:** Proposed | Accepted | Superseded
@@ -76,4 +73,43 @@ Record decisions that are expensive to reverse or affect multiple parts of the a
 **Alternatives:** What credible alternatives were considered?
 
 **Consequences:** What becomes easier, harder, or constrained?
-```
+
+## D-007 — Single vault MVP
+
+**Status:** Accepted
+
+**Decision:** The first public release (MVP) will only support a single vault. Multiple vaults are deferred.
+
+**Reason:** Keeps the initial architecture simple and focuses on core features first without adding the complexity of vault switching.
+
+**Consequences:** Less UI and state management overhead. Multiple vaults will be a later capability.
+
+## D-008 — Implicit reading progress
+
+**Status:** Accepted
+
+**Decision:** Reading progress will be tracked by remembering the last page opened, without tracking an explicit "completed" status.
+
+**Reason:** Users generally just want to resume reading from where they left off. Formal tracking isn't necessary for unstructured course materials.
+
+**Consequences:** Eliminates the need to define exact percentage thresholds or manual "mark as complete" buttons.
+
+## D-009 — Basic spaced repetition
+
+**Status:** Accepted
+
+**Decision:** Implement a basic spaced repetition algorithm using simple "Mark Known/Unknown" flags.
+
+**Reason:** Balances the MVP scope with effective study habits by prioritizing crucial questions while keeping the interaction simple.
+
+**Consequences:** The `flashcards` table will store spaced repetition data (e.g., interval, ease factor). 
+
+## D-010 — External exports
+
+**Status:** Accepted
+
+**Decision:** Portable export files (like flashcard backups or study progress) must be saved outside the vault at a user-selected location.
+
+**Reason:** Prevents the vault from being cluttered with metadata files and avoids indexing export files during recursive scans.
+
+**Consequences:** The application must trigger standard "Save As" OS dialogs for all export workflows.
