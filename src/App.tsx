@@ -59,12 +59,45 @@ function App() {
     setError(null);
   }
 
+  async function handleAddModule(targetCourseRelPath?: string) {
+    if (!vaultPath) return;
+    try {
+      const selected = await open({
+        directory: false,
+        multiple: false,
+        title: "Select Module File to Copy into Vault",
+        filters: [
+          {
+            name: "Course Modules",
+            extensions: ["pdf", "ppt", "pptx", "md"],
+          },
+        ],
+      });
+
+      if (selected && typeof selected === "string") {
+        await invoke("add_module_to_vault", {
+          vaultRoot: vaultPath,
+          targetCourseRelPath: targetCourseRelPath || null,
+          sourceFilePath: selected,
+        });
+        await scanVault(vaultPath);
+      }
+    } catch (err: any) {
+      setError(typeof err === "string" ? err : err.message || "Failed to add module to vault");
+    }
+  }
+
   return (
     <div className="app-layout">
       <header className="app-header">
         <h1>Syllex</h1>
         <div className="vault-actions">
-          <button onClick={handleSelectVault} className="primary-btn">
+          {vaultPath && (
+            <button onClick={() => handleAddModule()} className="primary-btn">
+              + Add Module
+            </button>
+          )}
+          <button onClick={handleSelectVault} className="secondary-btn">
             {vaultPath ? "Change Vault" : "Select Vault"}
           </button>
           {vaultPath && (
@@ -106,13 +139,25 @@ function App() {
 
             {scanResult.courses.length === 0 && scanResult.root_modules.length === 0 ? (
               <div className="empty-state">
-                <p>No supported course modules (.pdf, .ppt, .pptx) found in this vault.</p>
+                <p>No supported course modules (.pdf, .ppt, .pptx, .md) found in this vault.</p>
+                <button onClick={() => handleAddModule()} className="primary-btn">
+                  Add First Module
+                </button>
               </div>
             ) : (
               <div className="courses-grid">
                 {scanResult.courses.map((course: CourseItem) => (
                   <section key={course.relative_path} className="course-card">
-                    <h4>📚 {course.name}</h4>
+                    <div className="course-card-header">
+                      <h4>📚 {course.name}</h4>
+                      <button
+                        onClick={() => handleAddModule(course.relative_path)}
+                        className="add-file-btn"
+                        title="Add file to this course"
+                      >
+                        + Add File
+                      </button>
+                    </div>
                     <p className="module-count">{course.modules.length} module(s)</p>
                     <ul className="module-list">
                       {course.modules.map((mod: ModuleItem) => (
@@ -132,7 +177,16 @@ function App() {
 
                 {scanResult.root_modules.length > 0 && (
                   <section className="course-card unassigned">
-                    <h4>📄 General Modules</h4>
+                    <div className="course-card-header">
+                      <h4>📄 General Modules</h4>
+                      <button
+                        onClick={() => handleAddModule()}
+                        className="add-file-btn"
+                        title="Add file to vault root"
+                      >
+                        + Add File
+                      </button>
+                    </div>
                     <ul className="module-list">
                       {scanResult.root_modules.map((mod: ModuleItem) => (
                         <li key={mod.relative_path} className="module-item">

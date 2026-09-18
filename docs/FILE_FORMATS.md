@@ -6,6 +6,7 @@
 
 - `.pdf`: displayed directly through PDF.js
 - `.ppt` and `.pptx`: converted to a cached PDF through LibreOffice when available
+- `.md`: rendered directly in the app as self-notes
 
 Extension checks are only an initial filter. Inputs remain untrusted and failures must be handled safely.
 

@@ -16,16 +16,18 @@ A college student using Fedora Linux and Windows 11 who stores course modules lo
 
 1. Select and remember one local course directory, called a vault.
 2. Treat first-level directories as courses by default.
-3. Recursively discover supported documents without modifying them.
-4. Display PDFs internally with navigation, zoom, search, and remember the last opened page to resume reading (no explicit completion status).
-5. Provide Original and Fast Dark viewing modes.
-6. Convert PPT/PPTX files to cached PDFs when LibreOffice is available.
-7. Allow opening the original document in its system application.
-8. Import flashcards from a validated CSV file with a preview before saving.
-9. Store settings, progress, and flashcards locally in SQLite.
-10. Review flashcards using a basic spaced repetition algorithm with simple "Mark Known/Unknown" flagging to prioritize crucial questions.
-11. Export study data to a user-selected external location to keep the vault pristine.
-12. Operate without an internet connection.
+3. Recursively discover supported documents (`.pdf`, `.ppt`, `.pptx`, `.md`) without modifying existing files.
+4. Provide an "Add Module" feature to copy new PDF, PPT, or Markdown files into a selected course directory inside the vault.
+5. Display PDFs internally with navigation, zoom, search, and remember the last opened page to resume reading (no explicit completion status).
+6. Provide Original and Fast Dark viewing modes.
+7. Convert PPT/PPTX files to cached PDFs when LibreOffice is available.
+8. Render Markdown (`.md`) self-notes directly in the application.
+9. Allow opening the original document in its system application.
+10. Import flashcards from a validated CSV file with a preview before saving.
+11. Store settings, progress, and flashcards locally in SQLite.
+12. Review flashcards using a basic spaced repetition algorithm with simple "Mark Known/Unknown" flagging to prioritize crucial questions.
+13. Export study data to a user-selected external location to keep the vault pristine.
+14. Operate without an internet connection.
 
 ## Later capabilities
 

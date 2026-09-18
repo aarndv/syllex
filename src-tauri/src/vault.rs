@@ -7,6 +7,7 @@ pub enum ModuleFileType {
     Pdf,
     Ppt,
     Pptx,
+    Md,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -75,6 +76,7 @@ pub fn scan_vault<P: AsRef<Path>>(root_path: P) -> Result<VaultScanResult, Strin
                 "pdf" => ModuleFileType::Pdf,
                 "ppt" => ModuleFileType::Ppt,
                 "pptx" => ModuleFileType::Pptx,
+                "md" => ModuleFileType::Md,
                 _ => continue,
             };
 
@@ -130,6 +132,92 @@ pub fn scan_vault<P: AsRef<Path>>(root_path: P) -> Result<VaultScanResult, Strin
         root_path: canonical_root.to_string_lossy().to_string(),
         courses,
         root_modules,
+    })
+}
+
+/// Copies an external module file (.pdf, .ppt, .pptx, .md) into a specified course directory inside the vault.
+pub fn add_module_to_vault<P: AsRef<Path>>(
+    vault_root: P,
+    target_course_rel_path: Option<String>,
+    source_file_path: P,
+) -> Result<ModuleItem, String> {
+    let vault_canon = vault_root
+        .as_ref()
+        .canonicalize()
+        .map_err(|e| format!("Invalid vault path: {}", e))?;
+
+    let source = source_file_path.as_ref();
+    if !source.exists() || !source.is_file() {
+        return Err("Source file does not exist or is not a valid file".to_string());
+    }
+
+    let ext = source
+        .extension()
+        .and_then(|s| s.to_str())
+        .map(|s| s.to_lowercase())
+        .ok_or_else(|| "Source file has no extension".to_string())?;
+
+    let file_type = match ext.as_str() {
+        "pdf" => ModuleFileType::Pdf,
+        "ppt" => ModuleFileType::Ppt,
+        "pptx" => ModuleFileType::Pptx,
+        "md" => ModuleFileType::Md,
+        _ => return Err("Unsupported file format".to_string()),
+    };
+
+    let file_name = source
+        .file_name()
+        .ok_or_else(|| "Invalid source file name".to_string())?
+        .to_string_lossy()
+        .to_string();
+
+    let target_dir = match target_course_rel_path {
+        Some(rel) if !rel.trim().is_empty() => vault_canon.join(rel),
+        _ => vault_canon.clone(),
+    };
+
+    if !target_dir.exists() {
+        std::fs::create_dir_all(&target_dir)
+            .map_err(|e| format!("Failed to create course directory: {}", e))?;
+    }
+
+    let dest_file_path = target_dir.join(&file_name);
+    let dest_canon = if dest_file_path.exists() {
+        dest_file_path
+            .canonicalize()
+            .map_err(|e| format!("Failed to resolve destination path: {}", e))?
+    } else {
+        // Safe check path traversal
+        let parent = dest_file_path
+            .parent()
+            .ok_or_else(|| "Invalid destination path".to_string())?;
+        let parent_canon = parent
+            .canonicalize()
+            .map_err(|e| format!("Failed to resolve parent directory: {}", e))?;
+        parent_canon.join(&file_name)
+    };
+
+    if !dest_canon.starts_with(&vault_canon) {
+        return Err("Target path escapes the vault boundary".to_string());
+    }
+
+    std::fs::copy(source, &dest_file_path)
+        .map_err(|e| format!("Failed to copy file into vault: {}", e))?;
+
+    let metadata = std::fs::metadata(&dest_file_path)
+        .map_err(|e| format!("Failed to read metadata of copied file: {}", e))?;
+
+    let rel_path = dest_file_path
+        .strip_prefix(&vault_canon)
+        .map_err(|e| format!("Failed to compute relative path: {}", e))?
+        .to_string_lossy()
+        .to_string();
+
+    Ok(ModuleItem {
+        relative_path: rel_path,
+        file_name,
+        file_type,
+        size_bytes: metadata.len(),
     })
 }
 

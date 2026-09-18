@@ -1,4 +1,4 @@
-export type ModuleFileType = 'Pdf' | 'Ppt' | 'Pptx';
+export type ModuleFileType = 'Pdf' | 'Ppt' | 'Pptx' | 'Md';
 
 export interface ModuleItem {
   relative_path: string;

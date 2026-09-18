@@ -114,12 +114,12 @@ Record decisions that are expensive to reverse or affect multiple parts of the a
 
 **Consequences:** The application must trigger standard "Save As" OS dialogs for all export workflows.
 
-## D-011 — Visual Theme Direction
+## D-012 — Markdown self-notes and module imports
 
 **Status:** Accepted
 
-**Decision:** Establish a clean, neutral visual theme using slate/zinc grays, a muted blue/indigo accent, modern sans-serif fonts, Lucide/Radix icons, and comfortable spacing. The system theme is the default (with an override), and the logo remains a placeholder for MVP.
+**Decision:** Support `.md` files as discoverable course modules and provide an explicit "Add Module" dialog that copies chosen `.pdf`, `.ppt`, `.pptx`, or `.md` files into a course directory within the vault.
 
-**Reason:** Creates a premium, distraction-free environment suited for reading and studying, replacing the previously deferred state (D-005). 
+**Reason:** Enables students to add new modules and keep personal markdown notes alongside course materials without breaking the rule that existing files are never overwritten or modified silently.
 
-**Consequences:** Implementation agents can now use Tailwind/CSS to establish these foundational design tokens and themes during scaffolding.
+**Consequences:** The scanner must recognize `.md` files, and a native file copy command must validate target paths to ensure copied files stay within the selected vault.
