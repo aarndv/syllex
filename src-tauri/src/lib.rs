@@ -1,3 +1,4 @@
+pub mod ppt_converter;
 pub mod vault;
 
 #[tauri::command]
@@ -39,6 +40,20 @@ fn list_subvaults(parent_dir: String) -> Result<Vec<vault::VaultSummary>, String
     vault::list_subvaults(parent_dir)
 }
 
+#[tauri::command]
+fn check_libreoffice_installed() -> bool {
+    ppt_converter::detect_libreoffice().is_some()
+}
+
+#[tauri::command]
+fn convert_ppt_to_pdf(
+    app: tauri::AppHandle,
+    vault_root: String,
+    relative_path: String,
+) -> Result<Vec<u8>, String> {
+    ppt_converter::convert_ppt_to_pdf(&app, &vault_root, &relative_path)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -51,7 +66,9 @@ pub fn run() {
             create_folder,
             remove_item,
             create_vault,
-            list_subvaults
+            list_subvaults,
+            check_libreoffice_installed,
+            convert_ppt_to_pdf
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

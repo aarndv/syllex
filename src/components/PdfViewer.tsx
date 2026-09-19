@@ -60,6 +60,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     return VIEW_MODE_ORDER.includes(saved) ? saved : "original";
   });
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadingMessage, setLoadingMessage] = useState<string>("Loading document...");
   const [error, setError] = useState<string | null>(null);
 
   const singleCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -90,10 +91,24 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
 
     async function loadPdf() {
       try {
-        const fileBytes = await invoke<number[]>("read_module_bytes", {
-          vaultRoot,
-          relativePath: node.relative_path,
-        });
+        const isPpt =
+          node.relative_path.toLowerCase().endsWith(".ppt") ||
+          node.relative_path.toLowerCase().endsWith(".pptx");
+
+        let fileBytes: number[];
+        if (isPpt) {
+          setLoadingMessage("Converting presentation slides via LibreOffice...");
+          fileBytes = await invoke<number[]>("convert_ppt_to_pdf", {
+            vaultRoot,
+            relativePath: node.relative_path,
+          });
+        } else {
+          setLoadingMessage("Loading PDF document...");
+          fileBytes = await invoke<number[]>("read_module_bytes", {
+            vaultRoot,
+            relativePath: node.relative_path,
+          });
+        }
 
         const uint8Array = new Uint8Array(fileBytes);
         const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
@@ -116,7 +131,11 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         }
       } catch (err: any) {
         if (isMounted) {
-          setError(err.message || "Failed to parse or load PDF document");
+          setError(
+            typeof err === "string"
+              ? err
+              : err.message || "Failed to parse or convert presentation file"
+          );
           setLoading(false);
         }
       }
@@ -333,7 +352,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         </header>
 
         <main className="pdf-viewer-body">
-          {loading && <div className="pdf-loading">Loading PDF document...</div>}
+          {loading && <div className="pdf-loading">{loadingMessage}</div>}
 
           {error && (
             <div className="pdf-error">

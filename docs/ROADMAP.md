@@ -44,11 +44,11 @@ Acceptance criteria:
 
 ## M5 — PowerPoint conversion
 
-- [ ] Detect LibreOffice on Fedora and Windows
-- [ ] Convert PPT/PPTX into the application cache
-- [ ] Reuse valid cached conversions
-- [ ] Provide Open Original and useful failure states
-- [ ] Test shell-injection-resistant argument handling
+- [x] Detect LibreOffice on Fedora and Windows
+- [x] Convert PPT/PPTX into the application cache
+- [x] Reuse valid cached conversions
+- [x] Provide Open Original and useful failure states
+- [x] Test shell-injection-resistant argument handling
 
 ## M6 — Flashcards
 
