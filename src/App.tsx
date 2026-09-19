@@ -179,82 +179,74 @@ function App() {
 
       <header className="app-header">
         <h1>Syllex</h1>
-        <div className="vault-actions">
-          {vaultPath && (
-            <div className="plus-menu-wrapper">
-              <button
-                onClick={() => setIsPlusMenuOpen((prev) => !prev)}
-                className="icon-btn primary-icon-btn"
-                title="Add module or create folder"
-              >
-                +
-              </button>
-              {isPlusMenuOpen && (
-                <div className="plus-dropdown">
-                  <button
-                    onClick={() => {
-                      setIsPlusMenuOpen(false);
-                      handleCreateFolder();
-                    }}
-                  >
-                    📁 New Folder
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsPlusMenuOpen(false);
-                      handleAddModule();
-                    }}
-                  >
-                    📄 Add Module
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {vaultPath ? (
-            <button
-              onClick={handleSelectVault}
-              className="icon-btn secondary-icon-btn"
-              title="Change Vault Directory"
-            >
-              ⇄
-            </button>
-          ) : (
-            <button onClick={handleSelectVault} className="primary-btn">
-              Select Vault
-            </button>
-          )}
-
-          {vaultPath && (
-            <button
-              onClick={handleClearVault}
-              className="icon-btn close-icon-btn"
-              title="Close Vault"
-            >
-              ✕
-            </button>
-          )}
-        </div>
       </header>
 
       <div className="app-workspace">
-        {scanResult && !loading && (
-          <aside className="app-sidebar">
-            <div className="sidebar-header">
-              <span className="sidebar-title">Course Explorer</span>
+        <aside className="app-sidebar">
+          <div className="sidebar-header">
+            <span className="sidebar-title">Course Explorer</span>
+            <div className="vault-actions">
+              {vaultPath && (
+                <div className="plus-menu-wrapper">
+                  <button
+                    onClick={() => setIsPlusMenuOpen((prev) => !prev)}
+                    className="icon-btn primary-icon-btn"
+                    title="Add module or create folder"
+                  >
+                    +
+                  </button>
+                  {isPlusMenuOpen && (
+                    <div className="plus-dropdown">
+                      <button
+                        onClick={() => {
+                          setIsPlusMenuOpen(false);
+                          handleCreateFolder();
+                        }}
+                      >
+                        📁 New Folder
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsPlusMenuOpen(false);
+                          handleAddModule();
+                        }}
+                      >
+                        📄 Add Module
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {vaultPath ? (
+                <button
+                  onClick={handleSelectVault}
+                  className="icon-btn secondary-icon-btn"
+                  title="Change Vault Directory"
+                >
+                  ⇄
+                </button>
+              ) : (
+                <button onClick={handleSelectVault} className="primary-btn">
+                  Select Vault
+                </button>
+              )}
+
+              {vaultPath && (
+                <button
+                  onClick={handleClearVault}
+                  className="icon-btn close-icon-btn"
+                  title="Close Vault"
+                >
+                  ✕
+                </button>
+              )}
             </div>
-            <div className="sidebar-content">
-              <FileTree
-                nodes={scanResult.root_nodes}
-                activePath={activeNode?.relative_path}
-                onSelectFile={handleSelectFileNode}
-                onAddFile={handleAddModule}
-                onRemoveItem={handleRemoveItem}
-              />
-            </div>
-          </aside>
-        )}
+          </div>
+          <div className="sidebar-content">
+            {/* Sidebar body kept empty while center vault view is active to avoid redundancy */}
+          </div>
+        </aside>
 
         <main className="app-main-content">
           {error && (

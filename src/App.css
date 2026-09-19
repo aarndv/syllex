@@ -204,8 +204,8 @@ body::before {
 
 /* Left Sidebar for Vault Explorer */
 .app-sidebar {
-  width: 260px;
-  min-width: 220px;
+  width: 300px;
+  min-width: 260px;
   background-color: #fcfaf7;
   border-right: 1px solid #efeae1;
   display: flex;
@@ -213,9 +213,13 @@ body::before {
 }
 
 .sidebar-header {
-  padding: 0.75rem 1rem;
+  padding: 0.65rem 0.85rem;
   background-color: #f7f3eb;
   border-bottom: 1px solid #efeae1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .sidebar-title {
