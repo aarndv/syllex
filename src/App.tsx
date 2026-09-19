@@ -9,6 +9,7 @@ import { DashboardHeader } from "./components/DashboardHeader";
 import { VaultManagerModal } from "./components/VaultManagerModal";
 import { SettingsModal, AppSettings, DEFAULT_SETTINGS } from "./components/SettingsModal";
 import { SidebarAcademicWidget } from "./components/SidebarAcademicWidget";
+import { SidebarTodoList } from "./components/SidebarTodoList";
 import {
   PlusIcon,
   FolderIcon,
@@ -264,7 +265,7 @@ function App() {
       <div className="app-workspace">
         <aside className="app-sidebar">
           <div className="sidebar-header">
-            <SidebarAcademicWidget />
+            <SidebarAcademicWidget onOpenSettings={() => setIsSettingsOpen(true)} />
             <div className="vault-actions">
               <div className="plus-menu-wrapper">
                 <button
@@ -344,7 +345,7 @@ function App() {
             </div>
           </div>
           <div className="sidebar-content">
-            {/* Sidebar body kept empty while center vault view is active to avoid redundancy */}
+            <SidebarTodoList />
           </div>
         </aside>
 

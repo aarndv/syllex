@@ -160,3 +160,43 @@
     color: #fbf9f4;
   }
 }
+
+/* Academic Settings Form Grid */
+.academic-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  background-color: rgba(22, 62, 38, 0.4);
+  padding: 0.85rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.setting-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sub-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #e2f0d9;
+}
+
+.setting-text-input {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  padding: 0.4rem 0.65rem;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  font-family: inherit;
+  outline: none;
+}
+
+.setting-text-input:focus {
+  border-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.18);
+}
+

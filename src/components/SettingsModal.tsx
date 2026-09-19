@@ -55,6 +55,16 @@ export const READING_FILTER_OPTIONS = [
   { value: "ocean-dark", label: "Ocean Dark Blue" },
 ];
 
+const ACADEMIC_STORAGE_KEY = "syllex_academic_tracker_data";
+
+interface AcademicData {
+  midtermDate: string;
+  finalsDate: string;
+  trimesterStartDate: string;
+  trimesterEndDate: string;
+  manualTrimesterPercent: number | null;
+}
+
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   settings,
   defaultVaultsRoot,
@@ -63,11 +73,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
 }) => {
   const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
+  const [academicData, setAcademicData] = useState<AcademicData>(() => {
+    const saved = localStorage.getItem(ACADEMIC_STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        // Fallback
+      }
+    }
+    return {
+      midtermDate: "",
+      finalsDate: "",
+      trimesterStartDate: "",
+      trimesterEndDate: "",
+      manualTrimesterPercent: null,
+    };
+  });
 
   function handleChange<K extends keyof AppSettings>(key: K, value: AppSettings[K]) {
     const updated = { ...localSettings, [key]: value };
     setLocalSettings(updated);
     onUpdateSettings(updated);
+  }
+
+  function handleAcademicChange<K extends keyof AcademicData>(key: K, value: AcademicData[K]) {
+    const updated = { ...academicData, [key]: value };
+    setAcademicData(updated);
+    localStorage.setItem(ACADEMIC_STORAGE_KEY, JSON.stringify(updated));
+    window.dispatchEvent(new Event("syllex_academic_update"));
   }
 
   async function handleSelectDefaultFolder() {
@@ -97,6 +131,70 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </header>
 
         <div className="settings-modal-body">
+          {/* Academic Milestones & Calendar Section */}
+          <section className="settings-section">
+            <label className="setting-label">Academic Milestones & Calendar</label>
+            <div className="academic-settings-grid">
+              <div className="setting-input-group">
+                <label className="sub-label">Midterms Date (or Days Left)</label>
+                <input
+                  type="text"
+                  placeholder="YYYY-MM-DD or e.g. 24"
+                  value={academicData.midtermDate}
+                  onChange={(e) => handleAcademicChange("midtermDate", e.target.value)}
+                  className="setting-text-input"
+                />
+              </div>
+
+              <div className="setting-input-group">
+                <label className="sub-label">Finals Date (or Days Left)</label>
+                <input
+                  type="text"
+                  placeholder="YYYY-MM-DD or e.g. 68"
+                  value={academicData.finalsDate}
+                  onChange={(e) => handleAcademicChange("finalsDate", e.target.value)}
+                  className="setting-text-input"
+                />
+              </div>
+
+              <div className="setting-input-group">
+                <label className="sub-label">Trimester Start Date</label>
+                <input
+                  type="date"
+                  value={academicData.trimesterStartDate}
+                  onChange={(e) => handleAcademicChange("trimesterStartDate", e.target.value)}
+                  className="setting-text-input"
+                />
+              </div>
+
+              <div className="setting-input-group">
+                <label className="sub-label">Trimester End Date</label>
+                <input
+                  type="date"
+                  value={academicData.trimesterEndDate}
+                  onChange={(e) => handleAcademicChange("trimesterEndDate", e.target.value)}
+                  className="setting-text-input"
+                />
+              </div>
+
+              <div className="setting-input-group">
+                <label className="sub-label">Manual Trimester Progress % (Optional)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  placeholder="e.g. 45"
+                  value={academicData.manualTrimesterPercent ?? ""}
+                  onChange={(e) => {
+                    const val = e.target.value === "" ? null : parseInt(e.target.value, 10);
+                    handleAcademicChange("manualTrimesterPercent", val);
+                  }}
+                  className="setting-text-input"
+                />
+              </div>
+            </div>
+          </section>
+
           {/* Theme / Appearance Section */}
           <section className="settings-section">
             <label className="setting-label">Interface Theme</label>
