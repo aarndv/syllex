@@ -1,7 +1,36 @@
 import React, { useState } from "react";
 import { VaultNode, VaultNodeType } from "../types/vault";
-import { FolderIcon, FileIcon, PlusIcon, CloseIcon, BookIcon } from "./Icons";
+import { FolderIcon, FileIcon, PlusIcon, CloseIcon, BookIcon, PencilIcon } from "./Icons";
 import "./BookshelfView.css";
+
+export interface FolderColorOption {
+  id: string;
+  name: string;
+  primary: string;
+  secondary: string;
+  bg: string;
+}
+
+export const FOLDER_COLOR_PALETTE: FolderColorOption[] = [
+  { id: "emerald", name: "Emerald Green", primary: "#059669", secondary: "#047857", bg: "rgba(5, 150, 105, 0.18)" },
+  { id: "forest", name: "Forest Pine", primary: "#15803d", secondary: "#166534", bg: "rgba(21, 128, 61, 0.18)" },
+  { id: "teal", name: "Deep Teal", primary: "#0d9488", secondary: "#0f766e", bg: "rgba(13, 148, 136, 0.18)" },
+  { id: "cyan", name: "Cyan Coast", primary: "#0284c7", secondary: "#0369a1", bg: "rgba(2, 132, 199, 0.18)" },
+  { id: "cobalt", name: "Cobalt Blue", primary: "#2563eb", secondary: "#1d4ed8", bg: "rgba(37, 99, 235, 0.18)" },
+  { id: "indigo", name: "Midnight Indigo", primary: "#4f46e5", secondary: "#4338ca", bg: "rgba(79, 70, 229, 0.18)" },
+  { id: "violet", name: "Royal Violet", primary: "#7c3aed", secondary: "#6d28d9", bg: "rgba(124, 58, 237, 0.18)" },
+  { id: "purple", name: "Deep Purple", primary: "#9333ea", secondary: "#7e22ce", bg: "rgba(147, 51, 234, 0.18)" },
+  { id: "plum", name: "Vintage Plum", primary: "#a21caf", secondary: "#86198f", bg: "rgba(162, 28, 175, 0.18)" },
+  { id: "rose", name: "Nordic Rose", primary: "#e11d48", secondary: "#be123c", bg: "rgba(225, 29, 72, 0.18)" },
+  { id: "crimson", name: "Rust Crimson", primary: "#dc2626", secondary: "#b91c1c", bg: "rgba(220, 38, 38, 0.18)" },
+  { id: "terracotta", name: "Terracotta Red", primary: "#ea580c", secondary: "#c2410c", bg: "rgba(234, 88, 12, 0.18)" },
+  { id: "amber", name: "Warm Amber", primary: "#d97706", secondary: "#b45309", bg: "rgba(217, 119, 6, 0.18)" },
+  { id: "bronze", name: "Study Bronze", primary: "#ca8a04", secondary: "#a16207", bg: "rgba(202, 138, 4, 0.18)" },
+  { id: "slate", name: "Steel Slate", primary: "#475569", secondary: "#334155", bg: "rgba(71, 85, 105, 0.22)" },
+  { id: "sage", name: "Chalk Sage", primary: "#4d7c0f", secondary: "#3f6212", bg: "rgba(77, 124, 15, 0.18)" },
+];
+
+const FOLDER_COLORS_STORAGE_KEY = "syllex_folder_custom_colors";
 
 interface BookshelfViewProps {
   nodes: VaultNode[];
@@ -16,13 +45,31 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
   onAddFile,
   onRemoveItem,
 }) => {
-  // Separate top-level folders and top-level files
+  const [folderColors, setFolderColors] = useState<Record<string, string>>(() => {
+    const saved = localStorage.getItem(FOLDER_COLORS_STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  });
+
+  function handleSetFolderColor(relPath: string, colorId: string) {
+    setFolderColors((prev) => {
+      const updated = { ...prev, [relPath]: colorId };
+      localStorage.setItem(FOLDER_COLORS_STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  }
+
   const folderNodes = nodes.filter((n) => n.node_type === "Folder");
   const fileNodes = nodes.filter((n) => n.node_type !== "Folder");
 
   return (
     <div className="bookshelf-container">
-      {/* Top Level Loose Files Shelf (if any) */}
       {fileNodes.length > 0 && (
         <ShelfSection
           title="General Modules Shelf"
@@ -34,11 +81,12 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
         />
       )}
 
-      {/* Folders as Shelves */}
       {folderNodes.map((folder) => (
         <FolderShelf
           key={folder.relative_path}
           folder={folder}
+          folderColors={folderColors}
+          onSetFolderColor={handleSetFolderColor}
           onSelectFile={onSelectFile}
           onAddFile={onAddFile}
           onRemoveItem={onRemoveItem}
@@ -60,6 +108,8 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
 
 interface FolderShelfProps {
   folder: VaultNode;
+  folderColors: Record<string, string>;
+  onSetFolderColor: (relPath: string, colorId: string) => void;
   onSelectFile: (node: VaultNode) => void;
   onAddFile: (targetFolderRelPath?: string) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
@@ -67,20 +117,32 @@ interface FolderShelfProps {
 
 const FolderShelf: React.FC<FolderShelfProps> = ({
   folder,
+  folderColors,
+  onSetFolderColor,
   onSelectFile,
   onAddFile,
   onRemoveItem,
 }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState<boolean>(false);
 
-  // Direct files inside this folder
+  const currentColorId = folderColors[folder.relative_path];
+  const currentColorObj = FOLDER_COLOR_PALETTE.find((c) => c.id === currentColorId);
+
   const directFiles = folder.children.filter((c) => c.node_type !== "Folder");
-  // Subfolders inside this folder
   const subfolders = folder.children.filter((c) => c.node_type === "Folder");
 
+  const headerStyle = currentColorObj
+    ? { background: `linear-gradient(135deg, ${currentColorObj.primary}, ${currentColorObj.secondary})` }
+    : undefined;
+
+  const wrapperStyle = currentColorObj
+    ? { backgroundColor: currentColorObj.bg }
+    : undefined;
+
   return (
-    <div className="shelf-wrapper">
-      <header className="shelf-header-blueprint">
+    <div className="shelf-wrapper" style={wrapperStyle}>
+      <header className="shelf-header-blueprint" style={headerStyle}>
         <div className="shelf-title-plate" onClick={() => setIsExpanded((prev) => !prev)}>
           <span className="shelf-chevron">{isExpanded ? "▼" : "▶"}</span>
           <FolderIcon size={16} />
@@ -91,6 +153,44 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
         </div>
 
         <div className="shelf-actions">
+          <div className="color-picker-wrapper">
+            <button
+              onClick={() => setIsColorPickerOpen((prev) => !prev)}
+              className="shelf-mini-btn pencil-btn"
+              title="Customize Folder Color Palette"
+            >
+              <PencilIcon size={13} /> Color
+            </button>
+
+            {isColorPickerOpen && (
+              <div className="color-picker-popover" onClick={(e) => e.stopPropagation()}>
+                <div className="color-picker-header">
+                  <span>Folder Colors (16 Options)</span>
+                  <button
+                    onClick={() => setIsColorPickerOpen(false)}
+                    className="popover-close-btn"
+                  >
+                    <CloseIcon size={12} />
+                  </button>
+                </div>
+                <div className="color-palette-grid">
+                  {FOLDER_COLOR_PALETTE.map((color) => (
+                    <button
+                      key={color.id}
+                      className={`color-dot-btn ${currentColorId === color.id ? "selected" : ""}`}
+                      style={{ background: `linear-gradient(135deg, ${color.primary}, ${color.secondary})` }}
+                      title={color.name}
+                      onClick={() => {
+                        onSetFolderColor(folder.relative_path, color.id);
+                        setIsColorPickerOpen(false);
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           <button
             onClick={() => onAddFile(folder.relative_path)}
             className="shelf-mini-btn"
@@ -110,7 +210,6 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
 
       {isExpanded && (
         <div className="shelf-body">
-          {/* Direct Books Row */}
           {directFiles.length > 0 ? (
             <div className="books-row">
               {directFiles.map((file, idx) => (
@@ -137,7 +236,6 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
             )
           )}
 
-          {/* Architectural Wooden/Blueprint Shelf Line */}
           <div className="blueprint-shelf-bar">
             <div className="shelf-ticks">
               {Array.from({ length: 12 }).map((_, i) => (
@@ -146,11 +244,12 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
             </div>
           </div>
 
-          {/* Render Subfolders as Nested Sub-Shelves */}
           {subfolders.map((sub) => (
             <FolderShelf
               key={sub.relative_path}
               folder={sub}
+              folderColors={folderColors}
+              onSetFolderColor={onSetFolderColor}
               onSelectFile={onSelectFile}
               onAddFile={onAddFile}
               onRemoveItem={onRemoveItem}

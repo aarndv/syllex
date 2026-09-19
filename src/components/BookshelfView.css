@@ -116,6 +116,90 @@
   color: #ffffff;
 }
 
+/* Color Picker Popover & Pencil Icon Styling */
+.color-picker-wrapper {
+  position: relative;
+}
+
+.shelf-mini-btn.pencil-btn {
+  opacity: 0.65;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.shelf-header-blueprint:hover .shelf-mini-btn.pencil-btn {
+  opacity: 1;
+}
+
+.color-picker-popover {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background-color: #0d2217;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+  padding: 0.75rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 200;
+  width: 210px;
+}
+
+.color-picker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #e2f0d9;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.popover-close-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 0.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+}
+
+.popover-close-btn:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.color-palette-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.color-dot-btn {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.color-dot-btn:hover {
+  transform: scale(1.15);
+  border-color: #ffffff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+}
+
+.color-dot-btn.selected {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px #0d2217, 0 0 0 4px #ffffff;
+  transform: scale(1.1);
+}
+
 /* Shelf Body & Books Row */
 .shelf-body {
   padding: 1.5rem 1.25rem 0.5rem 1.25rem;
