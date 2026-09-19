@@ -114,6 +114,16 @@ Record decisions that are expensive to reverse or affect multiple parts of the a
 
 **Consequences:** The application must trigger standard "Save As" OS dialogs for all export workflows.
 
+## D-011 — Visual Theme Direction: Warm Academic Library
+
+**Status:** Accepted
+
+**Decision:** Establish a Warm Academic Library theme featuring Deep Forest Green (`#1b3627`), Soft Parchment/Cream (`#fbf9f4`), Warm Gold/Amber (`#d97706`), and full Academic Serif typography across all UI elements. Course cards are styled as library index cards.
+
+**Reason:** Creates an authentic, cozy, and distinguished academic atmosphere tailored for college students reading modules and studying.
+
+**Consequences:** Frontend CSS styling and components must adhere to the serif typography and parchment-forest green color scheme.
+
 ## D-012 — Markdown self-notes and module imports
 
 **Status:** Accepted

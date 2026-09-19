@@ -76,11 +76,15 @@ Application
 - Label icon-only controls for assistive technology.
 - Dark document rendering and interface theme are separate settings.
 
-## Visual Theme Direction
+## Visual Theme Direction: Warm Academic Library
 
-- **Interface Theme:** Follow the system theme by default, with explicit overrides (Light/Dark) available in user settings.
-- **Color Palette:** Neutral slate/zinc grays for the structure, using a subtle, academic accent color (like muted blue or indigo) to keep focus on the documents.
-- **Typography:** Clean, modern sans-serif (e.g., Inter, or system defaults like Segoe UI / San Francisco) for high legibility in UI elements.
-- **Icon Family:** Lucide or Radix Icons (clean, modern outline icons that complement the sans-serif typography).
-- **Density and Spacing:** Comfortable/Balanced scale (modern web app spacing that provides breathing room while keeping course lists scannable).
-- **Application Logo:** Use a simple placeholder for the MVP. A human-made illustration logo will be added in the future.
+- **Interface Theme:** Warm Academic Library aesthetic (Soft Parchment / Cream for light mode, Deep Midnight Forest `#0d1f14` for dark mode).
+- **Color Palette:** 
+  - **Primary Structure:** Deep Forest Green (`#1b3627`) headers and structural containers.
+  - **Background / Cards:** Warm Parchment / Cream (`#fbf9f4`) with subtle paper borders (`#e2d9c8`).
+  - **Accents & Badges:** Warm Gold / Amber (`#d97706` / `#b45309`) for primary actions and file tags.
+  - **Typography Color:** Deep Charcoal (`#262626`) for maximum legibility on parchment background.
+- **Typography:** Full Academic Serif (`Georgia`, `Garamond`, `Playfair Display`, or serif system font) across headers, course index cards, buttons, and badges.
+- **Icon & Card Style:** Traditional Library Index Cards with subtle borders, book/journal badge icons, and paper-card elevation shadows (`0 4px 12px rgba(27, 54, 39, 0.08)`).
+- **Density and Spacing:** Generous Library Desk spacing with distinct card margins and clear academic typography hierarchy.
+- **Application Logo:** Placeholder styled as a traditional library seal / emblem.

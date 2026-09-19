@@ -4,20 +4,21 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #0f172a;
+  background-color: #0d1f14;
   display: flex;
   flex-direction: column;
   z-index: 1000;
+  font-family: "Georgia", serif;
 }
 
 .pdf-viewer-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1.5rem;
-  background-color: #1e293b;
-  border-bottom: 1px solid #334155;
-  color: #f8fafc;
+  padding: 0.75rem 1.75rem;
+  background-color: #1b3627;
+  border-bottom: 2px solid #d97706;
+  color: #fbf9f4;
 }
 
 .toolbar-left,
@@ -29,24 +30,27 @@
 }
 
 .close-btn {
-  background-color: #334155;
-  color: #f8fafc;
-  border: none;
-  padding: 0.4rem 0.8rem;
+  background-color: #d97706;
+  color: #ffffff;
+  border: 1px solid #b45309;
+  padding: 0.4rem 0.9rem;
   border-radius: 4px;
+  font-family: "Georgia", serif;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
 .close-btn:hover {
-  background-color: #475569;
+  background-color: #b45309;
 }
 
 .doc-title {
   font-weight: 600;
-  font-size: 0.95rem;
-  color: #cbd5e1;
-  max-width: 300px;
+  font-size: 1rem;
+  color: #fbf9f4;
+  font-family: "Georgia", serif;
+  max-width: 320px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -54,12 +58,18 @@
 
 .toolbar-center button,
 .toolbar-right button {
-  background-color: #334155;
-  color: #f8fafc;
-  border: none;
-  padding: 0.35rem 0.75rem;
+  background-color: #2a4c38;
+  color: #fbf9f4;
+  border: 1px solid #3d684e;
+  padding: 0.35rem 0.8rem;
   border-radius: 4px;
+  font-family: "Georgia", serif;
   cursor: pointer;
+}
+
+.toolbar-center button:hover:not(:disabled),
+.toolbar-right button:hover:not(:disabled) {
+  background-color: #3d684e;
 }
 
 .toolbar-center button:disabled,
@@ -70,8 +80,9 @@
 
 .page-indicator,
 .zoom-indicator {
-  font-size: 0.85rem;
-  color: #94a3b8;
+  font-size: 0.9rem;
+  color: #e2d9c8;
+  font-family: "Georgia", serif;
 }
 
 .pdf-viewer-body {
@@ -81,28 +92,30 @@
   justify-content: center;
   align-items: flex-start;
   padding: 2rem;
-  background-color: #0f172a;
+  background-color: #0d1f14;
 }
 
 .canvas-container {
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
   background-color: #ffffff;
   border-radius: 4px;
   overflow: hidden;
+  border: 1px solid #264a34;
 }
 
 .pdf-loading,
 .pdf-error {
-  color: #f8fafc;
+  color: #fbf9f4;
+  font-family: "Georgia", serif;
   margin-top: 5rem;
   text-align: center;
 }
 
 .pdf-error p {
-  color: #ef4444;
+  color: #fca5a5;
 }
 
 .pdf-error .subtext {
-  color: #94a3b8;
-  font-size: 0.85rem;
+  color: #d4d4d4;
+  font-size: 0.9rem;
 }
