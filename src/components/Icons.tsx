@@ -223,3 +223,40 @@ export const TreeListIcon: React.FC<IconProps> = ({ className = "", size = 16, c
   </svg>
 );
 
+export const RefreshIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`inline-icon ${className}`}
+  >
+    <path d="M23 4v6h-6" />
+    <path d="M1 20v-6h6" />
+    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+  </svg>
+);
+
+export const ScrollIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`inline-icon ${className}`}
+  >
+    <path d="M12 3v18" />
+    <path d="m8 7 4-4 4 4" />
+    <path d="m8 17 4 4 4-4" />
+  </svg>
+);
+
+

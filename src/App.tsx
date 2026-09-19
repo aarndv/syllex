@@ -17,6 +17,7 @@ import {
   SettingsIcon,
   ShelfIcon,
   TreeListIcon,
+  RefreshIcon,
 } from "./components/Icons";
 import "./App.css";
 
@@ -228,6 +229,7 @@ function App() {
           onSelectNode={handleSelectFileNode}
           onAddFile={handleAddModule}
           onRemoveItem={handleRemoveItem}
+          onRefreshVault={() => scanVault(vaultPath)}
           onClose={() => setActiveNode(null)}
         />
       )}
@@ -289,6 +291,16 @@ function App() {
                   </div>
                 )}
               </div>
+
+              {vaultPath && (
+                <button
+                  onClick={() => scanVault(vaultPath)}
+                  className="icon-btn secondary-icon-btn"
+                  title="Refresh Vault Files"
+                >
+                  <RefreshIcon size={16} />
+                </button>
+              )}
 
               {vaultPath ? (
                 <button

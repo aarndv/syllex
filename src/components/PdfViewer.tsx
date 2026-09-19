@@ -3,7 +3,7 @@ import * as pdfjsLib from "pdfjs-dist";
 import { invoke } from "@tauri-apps/api/core";
 import { VaultNode } from "../types/vault";
 import { FileTree } from "./FileTree";
-import { FolderIcon, CloseIcon } from "./Icons";
+import { FolderIcon, CloseIcon, RefreshIcon, ScrollIcon } from "./Icons";
 import "./PdfViewer.css";
 
 // Set worker source to CDN / bundled worker URL
@@ -16,6 +16,7 @@ interface PdfViewerProps {
   onSelectNode: (node: VaultNode) => void;
   onAddFile: (folderRelPath?: string) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
+  onRefreshVault?: () => void;
   onClose: () => void;
 }
 
@@ -45,6 +46,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   onSelectNode,
   onAddFile,
   onRemoveItem,
+  onRefreshVault,
   onClose,
 }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(true);
@@ -52,6 +54,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [zoom, setZoom] = useState<number>(1.0);
+  const [isContinuousScroll, setIsContinuousScroll] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<DocumentViewMode>(() => {
     const saved = localStorage.getItem("syllex_pdf_view_mode") as DocumentViewMode;
     return VIEW_MODE_ORDER.includes(saved) ? saved : "original";
@@ -59,7 +62,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const singleCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const renderTaskRef = useRef<any>(null);
 
   const storageKey = `syllex_progress_${node.relative_path}`;
@@ -126,18 +129,19 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     };
   }, [vaultRoot, node.relative_path]);
 
+  // Single page mode canvas renderer effect
   useEffect(() => {
-    if (!pdfDoc || currentPage < 1 || currentPage > numPages) return;
+    if (isContinuousScroll || !pdfDoc || currentPage < 1 || currentPage > numPages) return;
 
     let isCancelled = false;
 
-    async function renderPage() {
+    async function renderSinglePage() {
       try {
         const page = await pdfDoc!.getPage(currentPage);
         if (isCancelled) return;
 
         const viewport = page.getViewport({ scale: zoom });
-        const canvas = canvasRef.current;
+        const canvas = singleCanvasRef.current;
         if (!canvas) return;
 
         const context = canvas.getContext("2d");
@@ -168,12 +172,12 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       }
     }
 
-    renderPage();
+    renderSinglePage();
 
     return () => {
       isCancelled = true;
     };
-  }, [pdfDoc, currentPage, zoom, numPages]);
+  }, [pdfDoc, currentPage, zoom, numPages, isContinuousScroll]);
 
   function handlePrevPage() {
     if (currentPage > 1) {
@@ -225,13 +229,24 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           <h3>
             <FolderIcon size={16} /> Vault Explorer
           </h3>
-          <button
-            onClick={() => setIsDrawerOpen(false)}
-            className="drawer-toggle-btn"
-            title="Collapse sidebar"
-          >
-            <CloseIcon size={14} />
-          </button>
+          <div className="drawer-header-actions">
+            {onRefreshVault && (
+              <button
+                onClick={onRefreshVault}
+                className="drawer-toggle-btn"
+                title="Refresh vault directory"
+              >
+                <RefreshIcon size={14} />
+              </button>
+            )}
+            <button
+              onClick={() => setIsDrawerOpen(false)}
+              className="drawer-toggle-btn"
+              title="Collapse sidebar"
+            >
+              <CloseIcon size={14} />
+            </button>
+          </div>
         </div>
         <div className="drawer-tree-container">
           <FileTree
@@ -263,14 +278,29 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           </div>
 
           <div className="toolbar-center">
-            <button onClick={handlePrevPage} disabled={currentPage <= 1}>
-              Prev
-            </button>
-            <span className="page-indicator">
-              Page {currentPage} of {numPages || 1}
-            </span>
-            <button onClick={handleNextPage} disabled={currentPage >= numPages}>
-              Next
+            {!isContinuousScroll ? (
+              <>
+                <button onClick={handlePrevPage} disabled={currentPage <= 1}>
+                  Prev
+                </button>
+                <span className="page-indicator">
+                  Page {currentPage} of {numPages || 1}
+                </span>
+                <button onClick={handleNextPage} disabled={currentPage >= numPages}>
+                  Next
+                </button>
+              </>
+            ) : (
+              <span className="page-indicator">
+                {numPages} {numPages === 1 ? "Page" : "Pages"} (Continuous)
+              </span>
+            )}
+            <button
+              onClick={() => setIsContinuousScroll((prev) => !prev)}
+              className={`scroll-toggle-btn ${isContinuousScroll ? "active" : ""}`}
+              title="Toggle Continuous Scroll / Single Page Mode"
+            >
+              <ScrollIcon size={14} /> {isContinuousScroll ? "Continuous" : "Single Page"}
             </button>
           </div>
 
@@ -309,13 +339,88 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             </div>
           )}
 
-          {!loading && !error && (
-            <div className={`canvas-container mode-${viewMode}`}>
-              <canvas ref={canvasRef} />
-            </div>
+          {!loading && !error && pdfDoc && (
+            isContinuousScroll ? (
+              <div className="continuous-scroll-list">
+                {Array.from({ length: numPages }).map((_, idx) => (
+                  <PdfPageCanvas
+                    key={idx + 1}
+                    pdfDoc={pdfDoc}
+                    pageNum={idx + 1}
+                    zoom={zoom}
+                    viewMode={viewMode}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className={`canvas-container mode-${viewMode}`}>
+                <canvas ref={singleCanvasRef} />
+              </div>
+            )
           )}
         </main>
       </div>
     </div>
   );
 };
+
+const PdfPageCanvas: React.FC<{
+  pdfDoc: pdfjsLib.PDFDocumentProxy;
+  pageNum: number;
+  zoom: number;
+  viewMode: DocumentViewMode;
+}> = React.memo(({ pdfDoc, pageNum, zoom, viewMode }) => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const renderTaskRef = useRef<any>(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function renderPage() {
+      try {
+        const page = await pdfDoc.getPage(pageNum);
+        if (isCancelled) return;
+
+        const viewport = page.getViewport({ scale: zoom });
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const context = canvas.getContext("2d");
+        if (!context) return;
+
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        if (renderTaskRef.current) {
+          renderTaskRef.current.cancel();
+        }
+
+        const renderContext = {
+          canvasContext: context,
+          viewport,
+          canvas,
+        };
+
+        const renderTask = page.render(renderContext);
+        renderTaskRef.current = renderTask;
+        await renderTask.promise;
+      } catch (err: any) {
+        if (err.name !== "RenderingCancelledException") {
+          console.error(`Page ${pageNum} render error:`, err);
+        }
+      }
+    }
+
+    renderPage();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [pdfDoc, pageNum, zoom]);
+
+  return (
+    <div className={`canvas-container mode-${viewMode}`}>
+      <canvas ref={canvasRef} />
+    </div>
+  );
+});
