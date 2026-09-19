@@ -384,7 +384,7 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
         </button>
       </div>
 
-      <div className="book-label-frame">
+      <div className="book-spine-content">
         <div className="book-spine-icon">
           {ext === "MD" ? <BookIcon size={18} /> : <FileIcon size={18} />}
         </div>
@@ -393,16 +393,15 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
 
       <div className="book-spine-footer">
         {savedPage ? (
-          <div className="book-bookmark-ribbon active">
-            <span className="ribbon-tail" />
-            <span className="ribbon-text">PG {savedPage}</span>
-          </div>
+          <span className="book-progress-ribbon">Page {savedPage}</span>
         ) : (
-          <div className="book-bookmark-ribbon unread">
-            <span className="ribbon-tail" />
-            <span className="ribbon-text">UNREAD</span>
-          </div>
+          <span className="book-unread-tag">Unread</span>
         )}
+      </div>
+
+      <div className="book-binding-lines">
+        <span className="binding-line" />
+        <span className="binding-line" />
       </div>
     </div>
   );

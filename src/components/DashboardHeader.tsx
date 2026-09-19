@@ -112,7 +112,11 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ courseCount, f
   }, []);
 
   return (
-    <div className="dashboard-header-card">
+    <div className="dashboard-header-card book-spine-header-card">
+      <div className="spine-book-ridge-left" />
+      <div className="spine-foil-bar top" />
+      <div className="spine-foil-bar bottom" />
+
       <div className="dashboard-header-main">
         <div className="dashboard-badge-row">
           <span className="dashboard-time-badge">{timeLabel} Session</span>
@@ -141,3 +145,4 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ courseCount, f
     </div>
   );
 };
+

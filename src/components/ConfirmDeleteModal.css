@@ -1,0 +1,258 @@
+/* Delete Confirmation Modal */
+.delete-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(3px);
+  z-index: 1100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: deleteModalFade 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes deleteModalFade {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.delete-modal-card {
+  background-color: #0d2217;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-radius: 10px;
+  width: 90%;
+  max-width: 460px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.delete-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1.15rem;
+  background-color: #143222;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.25);
+}
+
+.delete-modal-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.delete-modal-close-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 4px;
+}
+
+.delete-modal-close-btn:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.delete-modal-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.delete-prompt-text {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #ffffff;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.delete-modal-note {
+  font-size: 0.76rem;
+  color: #e2f0d9;
+  font-style: italic;
+  opacity: 0.85;
+}
+
+.delete-modal-footer {
+  padding: 0.85rem 1.15rem;
+  background-color: #08170f;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.primary-btn.delete-btn {
+  background-color: #dc2626;
+  border-color: #b91c1c;
+  color: #ffffff;
+}
+
+.primary-btn.delete-btn:hover {
+  background-color: #b91c1c;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+/* Floating Undo Toast Banner */
+.undo-toast-bar {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #0d2217;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+  padding: 0.65rem 1.15rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  z-index: 1200;
+  min-width: 320px;
+  max-width: 90vw;
+  animation: undoToastSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes undoToastSlideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 16px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.undo-toast-info {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.undo-toast-text {
+  font-size: 0.85rem;
+  color: #ffffff;
+}
+
+.undo-timer-tag {
+  font-size: 0.68rem;
+  font-family: monospace;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #e2f0d9;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+}
+
+.undo-toast-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.undo-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: #059669;
+  color: #ffffff;
+  border: 1px solid #10b981;
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.undo-action-btn:hover {
+  background-color: #047857;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+.undo-dismiss-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.undo-dismiss-btn:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Light Theme Botanical Parchment Blueprint Overrides */
+html[data-theme="light"] .delete-modal-card {
+  background-color: #fbf9f4;
+  border-color: #143222;
+  box-shadow: 0 16px 40px rgba(20, 50, 34, 0.2);
+}
+
+html[data-theme="light"] .delete-modal-header {
+  background-color: #eee9df;
+  border-bottom-color: #143222;
+}
+
+html[data-theme="light"] .delete-modal-header h3 {
+  color: #143222;
+}
+
+html[data-theme="light"] .delete-modal-close-btn {
+  color: #143222;
+}
+
+html[data-theme="light"] .delete-prompt-text {
+  color: #143222;
+}
+
+html[data-theme="light"] .delete-modal-note {
+  color: #244230;
+}
+
+html[data-theme="light"] .delete-modal-footer {
+  background-color: #eee9df;
+  border-top-color: #143222;
+}
+
+html[data-theme="light"] .undo-toast-bar {
+  background-color: #fbf9f4;
+  border-color: #143222;
+  box-shadow: 0 10px 30px rgba(20, 50, 34, 0.18);
+}
+
+html[data-theme="light"] .undo-toast-text {
+  color: #143222;
+}
+
+html[data-theme="light"] .undo-timer-tag {
+  background-color: #eee9df;
+  border: 1px solid #143222;
+  color: #143222;
+}
+
+html[data-theme="light"] .undo-dismiss-btn {
+  color: #143222;
+}

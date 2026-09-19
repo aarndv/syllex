@@ -12,6 +12,7 @@ import { SidebarAcademicWidget } from "./components/SidebarAcademicWidget";
 import { SidebarTodoList } from "./components/SidebarTodoList";
 import { QuickSearchModal, SearchResultItem } from "./components/QuickSearchModal";
 import { SearchPreviewDrawer } from "./components/SearchPreviewDrawer";
+import { ConfirmDeleteModal, UndoToast } from "./components/ConfirmDeleteModal";
 import {
   PlusIcon,
   FolderIcon,
@@ -42,7 +43,19 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [selectedSearchItem, setSelectedSearchItem] = useState<SearchResultItem | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{
+    relativePath: string;
+    isFolder: boolean;
+    name: string;
+  } | null>(null);
+  const [undoStash, setUndoStash] = useState<{
+    relativePath: string;
+    isFolder: boolean;
+    name: string;
+    timerId: any;
+  } | null>(null);
   const [activeViewMode, setActiveViewMode] = useState<"bookshelf" | "tree">("bookshelf");
+
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -168,27 +181,68 @@ function App() {
     }
   }
 
-  async function handleRemoveItem(relativePath: string, isFolder: boolean) {
+  function handleRemoveItem(relativePath: string, isFolder: boolean) {
     if (!vaultPath) return;
-    const confirmMsg = isFolder
-      ? `Are you sure you want to remove the folder "${relativePath}" and all its contents?`
-      : `Are you sure you want to remove "${relativePath}"?`;
+    const name = relativePath.split("/").pop() || relativePath;
+    setPendingDelete({ relativePath, isFolder, name });
+  }
 
-    if (!window.confirm(confirmMsg)) return;
+  function handleConfirmDelete() {
+    if (!pendingDelete || !vaultPath) return;
 
-    try {
-      await invoke("remove_item", {
-        vaultRoot: vaultPath,
-        relativePath,
-      });
-      if (activeNode?.relative_path === relativePath) {
-        setActiveNode(null);
+    const { relativePath, isFolder, name } = pendingDelete;
+    const currentVault = vaultPath;
+
+    // Clear previous pending undo timer if any and remove immediately
+    if (undoStash) {
+      clearTimeout(undoStash.timerId);
+      invoke("remove_item", { vaultRoot: currentVault, relativePath: undoStash.relativePath }).catch(() => {});
+    }
+
+    if (activeNode?.relative_path === relativePath) {
+      setActiveNode(null);
+    }
+
+    setPendingDelete(null);
+
+    // Schedule final deletion after 6 seconds
+    const timerId = setTimeout(async () => {
+      try {
+        await invoke("remove_item", {
+          vaultRoot: currentVault,
+          relativePath,
+        });
+        await scanVault(currentVault);
+      } catch (err: any) {
+        setError(typeof err === "string" ? err : err.message || "Failed to remove item");
+      } finally {
+        setUndoStash(null);
       }
-      await scanVault(vaultPath);
-    } catch (err: any) {
-      setError(typeof err === "string" ? err : err.message || "Failed to remove item");
+    }, 6000);
+
+    setUndoStash({ relativePath, isFolder, name, timerId });
+  }
+
+  function handleUndoDelete() {
+    if (!undoStash) return;
+    clearTimeout(undoStash.timerId);
+    setUndoStash(null);
+    if (vaultPath) {
+      scanVault(vaultPath);
     }
   }
+
+  function handleDismissUndoToast() {
+    if (!undoStash || !vaultPath) return;
+    clearTimeout(undoStash.timerId);
+    const { relativePath } = undoStash;
+    const currentVault = vaultPath;
+    setUndoStash(null);
+    invoke("remove_item", { vaultRoot: currentVault, relativePath })
+      .then(() => scanVault(currentVault))
+      .catch((err: any) => setError(typeof err === "string" ? err : err.message || "Failed to remove item"));
+  }
+
 
   function handleSelectFileNode(node: VaultNode) {
     const isFile = typeof node.node_type === "object" && "File" in node.node_type;
@@ -292,6 +346,23 @@ function App() {
           setActiveViewMode("bookshelf");
         }}
       />
+
+      <ConfirmDeleteModal
+        isOpen={!!pendingDelete}
+        itemName={pendingDelete?.name || ""}
+        isFolder={pendingDelete?.isFolder || false}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+
+      {undoStash && (
+        <UndoToast
+          itemName={undoStash.name}
+          onUndo={handleUndoDelete}
+          onDismiss={handleDismissUndoToast}
+        />
+      )}
+
 
       <header className="app-header">
         <h1>Syllex</h1>
