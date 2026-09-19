@@ -1,0 +1,239 @@
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(13, 31, 20, 0.65);
+  backdrop-filter: blur(3px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 1.5rem;
+}
+
+.vault-manager-card {
+  background-color: #ffffff;
+  border: 1px solid #e2d9c8;
+  border-top: 4px solid #1b3627;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 540px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+}
+
+.vault-manager-header {
+  padding: 1rem 1.25rem;
+  background-color: #fcfaf7;
+  border-bottom: 1px solid #efeae1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vault-manager-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1b3627;
+  font-weight: 700;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #737373;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.modal-close-btn:hover {
+  background-color: #efeae1;
+  color: #1b3627;
+}
+
+.vault-manager-body {
+  padding: 1.25rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.modal-error-banner {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.manager-section h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1b3627;
+}
+
+.section-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.default-path-box {
+  background-color: #f7f3eb;
+  border: 1px solid #efeae1;
+  padding: 0.6rem 0.85rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #262626;
+  word-break: break-all;
+}
+
+.default-path-box .path-text {
+  font-family: monospace;
+}
+
+.primary-btn.full-width,
+.secondary-btn.full-width {
+  width: 100%;
+  text-align: center;
+  padding: 0.65rem 1rem;
+}
+
+.secondary-btn.small {
+  padding: 0.25rem 0.65rem;
+  font-size: 0.75rem;
+}
+
+.subvaults-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.subvault-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0.85rem;
+  background-color: #ffffff;
+  border: 1px solid #e2d9c8;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.subvault-item:hover {
+  background-color: #f7f3eb;
+  border-color: #3d684e;
+}
+
+.subvault-item.active {
+  background-color: #efeae1;
+  border-left: 3px solid #1b3627;
+}
+
+.subvault-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.subvault-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1b3627;
+}
+
+.subvault-count {
+  font-size: 0.75rem;
+  color: #737373;
+}
+
+.subvault-open-btn {
+  background-color: #1b3627;
+  color: #ffffff;
+  border: none;
+  padding: 0.3rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.subvault-open-btn.current {
+  background-color: #2a4c38;
+  color: #fbf9f4;
+  opacity: 0.85;
+}
+
+.loading-subtext,
+.empty-subtext {
+  font-size: 0.85rem;
+  color: #737373;
+  font-style: italic;
+  margin: 0;
+}
+
+/* Dark Mode Styles */
+@media (prefers-color-scheme: dark) {
+  .vault-manager-card {
+    background-color: #142a1d;
+    border-color: #264a34;
+    border-top-color: #264a34;
+  }
+
+  .vault-manager-header {
+    background-color: #1b3627;
+    border-bottom-color: #264a34;
+  }
+
+  .vault-manager-header h2,
+  .manager-section h3,
+  .subvault-name {
+    color: #fbf9f4;
+  }
+
+  .default-path-box {
+    background-color: #1b3627;
+    border-color: #264a34;
+    color: #e2e8f0;
+  }
+
+  .subvault-item {
+    background-color: #1b3627;
+    border-color: #264a34;
+  }
+
+  .subvault-item:hover {
+    background-color: #264a34;
+  }
+
+  .subvault-item.active {
+    background-color: #264a34;
+    border-left-color: #3d684e;
+  }
+
+  .subvault-count,
+  .loading-subtext,
+  .empty-subtext {
+    color: #a3a3a3;
+  }
+}

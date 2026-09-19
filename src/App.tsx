@@ -5,23 +5,31 @@ import { VaultScanResult, VaultNode } from "./types/vault";
 import { FileTree } from "./components/FileTree";
 import { PdfViewer } from "./components/PdfViewer";
 import { DashboardHeader } from "./components/DashboardHeader";
+import { VaultManagerModal } from "./components/VaultManagerModal";
 import "./App.css";
 
 const VAULT_STORAGE_KEY = "syllex_selected_vault_path";
+const DEFAULT_VAULTS_ROOT_KEY = "syllex_default_vaults_root_path";
 
 function App() {
   const [vaultPath, setVaultPath] = useState<string | null>(null);
+  const [defaultVaultsRoot, setDefaultVaultsRoot] = useState<string | null>(null);
   const [scanResult, setScanResult] = useState<VaultScanResult | null>(null);
   const [activeNode, setActiveNode] = useState<VaultNode | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState<boolean>(false);
+  const [isVaultManagerOpen, setIsVaultManagerOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const savedPath = localStorage.getItem(VAULT_STORAGE_KEY);
     if (savedPath) {
       setVaultPath(savedPath);
       scanVault(savedPath);
+    }
+    const savedDefaultRoot = localStorage.getItem(DEFAULT_VAULTS_ROOT_KEY);
+    if (savedDefaultRoot) {
+      setDefaultVaultsRoot(savedDefaultRoot);
     }
   }, []);
 
@@ -36,24 +44,6 @@ function App() {
       setScanResult(null);
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function handleSelectVault() {
-    try {
-      const selected = await open({
-        directory: true,
-        multiple: false,
-        title: "Select Course Vault Directory",
-      });
-
-      if (selected && typeof selected === "string") {
-        setVaultPath(selected);
-        localStorage.setItem(VAULT_STORAGE_KEY, selected);
-        await scanVault(selected);
-      }
-    } catch (err: any) {
-      setError(err.message || "Failed to select directory");
     }
   }
 
@@ -163,8 +153,29 @@ function App() {
     return { courses, files };
   }, [scanResult]);
 
+  function handleSetDefaultVaultsRoot(path: string) {
+    setDefaultVaultsRoot(path);
+    localStorage.setItem(DEFAULT_VAULTS_ROOT_KEY, path);
+  }
+
+  function handleSelectVaultPath(path: string) {
+    setVaultPath(path);
+    localStorage.setItem(VAULT_STORAGE_KEY, path);
+    scanVault(path);
+  }
+
   return (
     <div className="app-layout">
+      {isVaultManagerOpen && (
+        <VaultManagerModal
+          currentVaultPath={vaultPath}
+          defaultVaultsRoot={defaultVaultsRoot}
+          onSelectVaultPath={handleSelectVaultPath}
+          onSetDefaultVaultsRoot={handleSetDefaultVaultsRoot}
+          onClose={() => setIsVaultManagerOpen(false)}
+        />
+      )}
+
       {activeNode && vaultPath && scanResult && (
         <PdfViewer
           vaultRoot={vaultPath}
@@ -186,48 +197,58 @@ function App() {
           <div className="sidebar-header">
             <span className="sidebar-title">Course Explorer</span>
             <div className="vault-actions">
-              {vaultPath && (
-                <div className="plus-menu-wrapper">
-                  <button
-                    onClick={() => setIsPlusMenuOpen((prev) => !prev)}
-                    className="icon-btn primary-icon-btn"
-                    title="Add module or create folder"
-                  >
-                    +
-                  </button>
-                  {isPlusMenuOpen && (
-                    <div className="plus-dropdown">
-                      <button
-                        onClick={() => {
-                          setIsPlusMenuOpen(false);
-                          handleCreateFolder();
-                        }}
-                      >
-                        📁 New Folder
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsPlusMenuOpen(false);
-                          handleAddModule();
-                        }}
-                      >
-                        📄 Add Module
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+              <div className="plus-menu-wrapper">
+                <button
+                  onClick={() => setIsPlusMenuOpen((prev) => !prev)}
+                  className="icon-btn primary-icon-btn"
+                  title="Create vault, new folder, or add module"
+                >
+                  +
+                </button>
+                {isPlusMenuOpen && (
+                  <div className="plus-dropdown">
+                    <button
+                      onClick={() => {
+                        setIsPlusMenuOpen(false);
+                        setIsVaultManagerOpen(true);
+                      }}
+                    >
+                      ➕ Create / Manage Vaults
+                    </button>
+                    {vaultPath && (
+                      <>
+                        <button
+                          onClick={() => {
+                            setIsPlusMenuOpen(false);
+                            handleCreateFolder();
+                          }}
+                        >
+                          📁 New Folder
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsPlusMenuOpen(false);
+                            handleAddModule();
+                          }}
+                        >
+                          📄 Add Module
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {vaultPath ? (
                 <button
-                  onClick={handleSelectVault}
+                  onClick={() => setIsVaultManagerOpen(true)}
                   className="icon-btn secondary-icon-btn"
-                  title="Change Vault Directory"
+                  title="Switch / Manage Vaults"
                 >
                   ⇄
                 </button>
               ) : (
-                <button onClick={handleSelectVault} className="primary-btn">
+                <button onClick={() => setIsVaultManagerOpen(true)} className="primary-btn">
                   Select Vault
                 </button>
               )}
@@ -260,9 +281,9 @@ function App() {
               <DashboardHeader />
               <div className="empty-state">
                 <h2>No Vault Selected</h2>
-                <p>Select a local folder containing your college course modules to get started.</p>
-                <button onClick={handleSelectVault} className="primary-btn large">
-                  Open Vault Directory
+                <p>Create a new vault or select an existing local course folder to get started.</p>
+                <button onClick={() => setIsVaultManagerOpen(true)} className="primary-btn large">
+                  Open Vault Manager
                 </button>
               </div>
             </>

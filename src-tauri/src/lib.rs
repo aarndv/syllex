@@ -29,6 +29,16 @@ fn remove_item(vault_root: String, relative_path: String) -> Result<(), String> 
     vault::remove_item(vault_root, &relative_path)
 }
 
+#[tauri::command]
+fn create_vault(parent_dir: String, vault_name: String) -> Result<String, String> {
+    vault::create_vault(parent_dir, &vault_name)
+}
+
+#[tauri::command]
+fn list_subvaults(parent_dir: String) -> Result<Vec<vault::VaultSummary>, String> {
+    vault::list_subvaults(parent_dir)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -39,7 +49,9 @@ pub fn run() {
             add_module_to_vault,
             read_module_bytes,
             create_folder,
-            remove_item
+            remove_item,
+            create_vault,
+            list_subvaults
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

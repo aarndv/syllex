@@ -285,6 +285,110 @@ pub fn remove_item<P: AsRef<Path>>(vault_root: P, relative_path: &str) -> Result
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct VaultSummary {
+    pub name: String,
+    pub path: String,
+    pub file_count: usize,
+}
+
+/// Creates a new vault folder inside a designated parent directory.
+pub fn create_vault<P: AsRef<Path>>(parent_dir: P, vault_name: &str) -> Result<String, String> {
+    let trimmed_name = vault_name.trim();
+    if trimmed_name.is_empty() {
+        return Err("Vault name cannot be empty".to_string());
+    }
+    if trimmed_name.contains('/') || trimmed_name.contains('\\') || trimmed_name.contains("..") {
+        return Err("Vault name contains invalid path characters".to_string());
+    }
+
+    let parent = parent_dir.as_ref();
+    if !parent.exists() {
+        return Err("Default vault directory does not exist".to_string());
+    }
+
+    let parent_canon = parent
+        .canonicalize()
+        .map_err(|e| format!("Failed to canonicalize parent path: {}", e))?;
+
+    if !parent_canon.is_dir() {
+        return Err("Default vault parent path is not a directory".to_string());
+    }
+
+    let target_dir = parent_canon.join(trimmed_name);
+
+    if target_dir.exists() {
+        return Err(format!(
+            "A vault named '{}' already exists in that folder",
+            trimmed_name
+        ));
+    }
+
+    std::fs::create_dir_all(&target_dir)
+        .map_err(|e| format!("Failed to create vault directory: {}", e))?;
+
+    let canonical_target = target_dir
+        .canonicalize()
+        .map_err(|e| format!("Failed to resolve new vault path: {}", e))?;
+
+    if !canonical_target.starts_with(&parent_canon) {
+        return Err("Created vault escapes parent directory boundary".to_string());
+    }
+
+    Ok(canonical_target.to_string_lossy().to_string())
+}
+
+/// Lists all subvaults (first-level folders) located in the default vaults directory.
+pub fn list_subvaults<P: AsRef<Path>>(parent_dir: P) -> Result<Vec<VaultSummary>, String> {
+    let parent = parent_dir.as_ref();
+    if !parent.exists() || !parent.is_dir() {
+        return Ok(Vec::new());
+    }
+
+    let parent_canon = parent
+        .canonicalize()
+        .map_err(|e| format!("Failed to canonicalize parent path: {}", e))?;
+
+    let entries = match std::fs::read_dir(&parent_canon) {
+        Ok(e) => e,
+        Err(_) => return Ok(Vec::new()),
+    };
+
+    let mut result = Vec::new();
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            let name = entry.file_name().to_string_lossy().to_string();
+            let file_count = match scan_vault(&path) {
+                Ok(scan_res) => count_vault_files(&scan_res.root_nodes),
+                Err(_) => 0,
+            };
+
+            let canon_path = path.canonicalize().unwrap_or(path.clone());
+            result.push(VaultSummary {
+                name,
+                path: canon_path.to_string_lossy().to_string(),
+                file_count,
+            });
+        }
+    }
+
+    result.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    Ok(result)
+}
+
+fn count_vault_files(nodes: &[VaultNode]) -> usize {
+    let mut count = 0;
+    for node in nodes {
+        match &node.node_type {
+            VaultNodeType::File(_) => count += 1,
+            VaultNodeType::Folder => count += count_vault_files(&node.children),
+        }
+    }
+    count
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -327,5 +431,27 @@ mod tests {
             initial_pdf_meta.modified().unwrap(),
             post_pdf_meta.modified().unwrap()
         );
+    }
+
+    #[test]
+    fn test_create_vault_and_list_subvaults() {
+        let parent_dir = tempdir().unwrap();
+        let parent_path = parent_dir.path();
+
+        let v1_path = create_vault(parent_path, "Course 2026").unwrap();
+        assert!(Path::new(&v1_path).exists());
+
+        let v2_path = create_vault(parent_path, "Biology 101").unwrap();
+        assert!(Path::new(&v2_path).exists());
+
+        // Attempt invalid names
+        assert!(create_vault(parent_path, "../outside").is_err());
+        assert!(create_vault(parent_path, "  ").is_err());
+        assert!(create_vault(parent_path, "Course 2026").is_err()); // duplicate
+
+        let subvaults = list_subvaults(parent_path).unwrap();
+        assert_eq!(subvaults.len(), 2);
+        assert_eq!(subvaults[0].name, "Biology 101");
+        assert_eq!(subvaults[1].name, "Course 2026");
     }
 }

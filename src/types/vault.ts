@@ -14,3 +14,9 @@ export interface VaultScanResult {
   root_path: string;
   root_nodes: VaultNode[];
 }
+
+export interface VaultSummary {
+  name: string;
+  path: string;
+  file_count: number;
+}
