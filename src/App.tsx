@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { VaultScanResult, VaultNode } from "./types/vault";
 import { FileTree } from "./components/FileTree";
 import { PdfViewer } from "./components/PdfViewer";
+import { DashboardHeader } from "./components/DashboardHeader";
 import "./App.css";
 
 const VAULT_STORAGE_KEY = "syllex_selected_vault_path";
@@ -142,6 +143,26 @@ function App() {
     }
   }
 
+  const vaultStats = useMemo(() => {
+    if (!scanResult) return { courses: 0, files: 0 };
+    let courses = 0;
+    let files = 0;
+
+    function traverse(nodes: VaultNode[], isRootLevel: boolean) {
+      for (const node of nodes) {
+        if (node.node_type === "Folder") {
+          if (isRootLevel) courses++;
+          traverse(node.children, false);
+        } else {
+          files++;
+        }
+      }
+    }
+
+    traverse(scanResult.root_nodes, true);
+    return { courses, files };
+  }, [scanResult]);
+
   return (
     <div className="app-layout">
       {activeNode && vaultPath && scanResult && (
@@ -225,13 +246,16 @@ function App() {
         )}
 
         {!vaultPath && !loading && (
-          <div className="empty-state">
-            <h2>No Vault Selected</h2>
-            <p>Select a local folder containing your college course modules to get started.</p>
-            <button onClick={handleSelectVault} className="primary-btn large">
-              Open Vault Directory
-            </button>
-          </div>
+          <>
+            <DashboardHeader />
+            <div className="empty-state">
+              <h2>No Vault Selected</h2>
+              <p>Select a local folder containing your college course modules to get started.</p>
+              <button onClick={handleSelectVault} className="primary-btn large">
+                Open Vault Directory
+              </button>
+            </div>
+          </>
         )}
 
         {loading && (
@@ -242,6 +266,10 @@ function App() {
 
         {scanResult && !loading && (
           <div className="vault-view">
+            <DashboardHeader
+              courseCount={vaultStats.courses}
+              fileCount={vaultStats.files}
+            />
             {scanResult.root_nodes.length === 0 ? (
               <div className="empty-state">
                 <p>No files or folders found in this vault.</p>
