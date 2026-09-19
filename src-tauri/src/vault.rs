@@ -238,17 +238,14 @@ pub fn read_module_bytes<P: AsRef<Path>>(
 }
 
 /// Creates a new folder inside the vault.
-pub fn create_folder<P: AsRef<Path>>(
-    vault_root: P,
-    relative_path: &str,
-) -> Result<(), String> {
+pub fn create_folder<P: AsRef<Path>>(vault_root: P, relative_path: &str) -> Result<(), String> {
     let vault_canon = vault_root
         .as_ref()
         .canonicalize()
         .map_err(|e| format!("Invalid vault path: {}", e))?;
 
     let target_dir = vault_canon.join(relative_path);
-    
+
     // Check path traversal
     let parent = target_dir
         .parent()
@@ -261,15 +258,11 @@ pub fn create_folder<P: AsRef<Path>>(
         return Err("Target folder escapes vault boundary".to_string());
     }
 
-    std::fs::create_dir_all(&target_dir)
-        .map_err(|e| format!("Failed to create folder: {}", e))
+    std::fs::create_dir_all(&target_dir).map_err(|e| format!("Failed to create folder: {}", e))
 }
 
 /// Removes a folder or module file inside the vault.
-pub fn remove_item<P: AsRef<Path>>(
-    vault_root: P,
-    relative_path: &str,
-) -> Result<(), String> {
+pub fn remove_item<P: AsRef<Path>>(vault_root: P, relative_path: &str) -> Result<(), String> {
     let vault_canon = vault_root
         .as_ref()
         .canonicalize()
@@ -288,8 +281,7 @@ pub fn remove_item<P: AsRef<Path>>(
         std::fs::remove_dir_all(&target_canon)
             .map_err(|e| format!("Failed to remove folder: {}", e))
     } else {
-        std::fs::remove_file(&target_canon)
-            .map_err(|e| format!("Failed to remove file: {}", e))
+        std::fs::remove_file(&target_canon).map_err(|e| format!("Failed to remove file: {}", e))
     }
 }
 
@@ -331,6 +323,9 @@ mod tests {
         // Verify source files are untouched
         let post_pdf_meta = fs::metadata(&pdf_path).unwrap();
         assert_eq!(initial_pdf_meta.len(), post_pdf_meta.len());
-        assert_eq!(initial_pdf_meta.modified().unwrap(), post_pdf_meta.modified().unwrap());
+        assert_eq!(
+            initial_pdf_meta.modified().unwrap(),
+            post_pdf_meta.modified().unwrap()
+        );
     }
 }
