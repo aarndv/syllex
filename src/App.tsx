@@ -242,10 +242,6 @@ function App() {
 
         {scanResult && !loading && (
           <div className="vault-view">
-            <div className="vault-info">
-              <h3>Vault Root: <code>{scanResult.root_path}</code></h3>
-            </div>
-
             {scanResult.root_nodes.length === 0 ? (
               <div className="empty-state">
                 <p>No files or folders found in this vault.</p>
@@ -256,7 +252,10 @@ function App() {
             ) : (
               <div className="tree-explorer-card">
                 <div className="tree-card-header">
-                  <h4>📂 Course Directory Tree</h4>
+                  <span className="tree-card-vault-path" title={scanResult.root_path}>
+                    <span className="path-icon">📂</span>
+                    <span className="path-text">{scanResult.root_path}</span>
+                  </span>
                 </div>
                 <div className="tree-card-body">
                   <FileTree
