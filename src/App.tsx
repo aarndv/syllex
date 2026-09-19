@@ -10,6 +10,8 @@ import { VaultManagerModal } from "./components/VaultManagerModal";
 import { SettingsModal, AppSettings, DEFAULT_SETTINGS } from "./components/SettingsModal";
 import { SidebarAcademicWidget } from "./components/SidebarAcademicWidget";
 import { SidebarTodoList } from "./components/SidebarTodoList";
+import { QuickSearchModal, SearchResultItem } from "./components/QuickSearchModal";
+import { SearchPreviewDrawer } from "./components/SearchPreviewDrawer";
 import {
   PlusIcon,
   FolderIcon,
@@ -20,6 +22,7 @@ import {
   ShelfIcon,
   TreeListIcon,
   RefreshIcon,
+  SearchIcon,
 } from "./components/Icons";
 import "./App.css";
 
@@ -37,7 +40,21 @@ function App() {
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState<boolean>(false);
   const [isVaultManagerOpen, setIsVaultManagerOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+  const [selectedSearchItem, setSelectedSearchItem] = useState<SearchResultItem | null>(null);
   const [activeViewMode, setActiveViewMode] = useState<"bookshelf" | "tree">("bookshelf");
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, []);
+
 
   const [settings, setSettings] = useState<AppSettings>(() => {
     const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
@@ -251,16 +268,54 @@ function App() {
         />
       )}
 
+      <QuickSearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        rootNodes={scanResult?.root_nodes || []}
+        onSelectResult={(item) => {
+          setIsSearchOpen(false);
+          setSelectedSearchItem(item);
+        }}
+      />
+
+      <SearchPreviewDrawer
+        item={selectedSearchItem}
+        onClose={() => setSelectedSearchItem(null)}
+        onOpenItem={(item) => {
+          setSelectedSearchItem(null);
+          if (item.node.node_type !== "Folder") {
+            handleSelectFileNode(item.node);
+          }
+        }}
+        onLocateOnBookshelf={() => {
+          setSelectedSearchItem(null);
+          setActiveViewMode("bookshelf");
+        }}
+      />
+
       <header className="app-header">
         <h1>Syllex</h1>
-        <button
-          onClick={() => setIsSettingsOpen(true)}
-          className="icon-btn secondary-icon-btn"
-          title="Open Settings"
-        >
-          <SettingsIcon size={18} />
-        </button>
+        <div className="header-actions-group">
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="search-trigger-btn"
+            title="Quick Search across vaults (Ctrl+K)"
+          >
+            <SearchIcon size={16} />
+            <span className="search-btn-label">Quick Search</span>
+            <kbd className="search-shortcut-badge">Ctrl+K</kbd>
+          </button>
+
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="icon-btn secondary-icon-btn"
+            title="Open Settings"
+          >
+            <SettingsIcon size={18} />
+          </button>
+        </div>
       </header>
+
 
       <div className="app-workspace">
         <aside className="app-sidebar">

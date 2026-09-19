@@ -1,0 +1,336 @@
+/* Quick Search Modal Backdrop */
+.quick-search-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 900;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 5vh;
+  animation: searchFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes searchFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.quick-search-modal-card {
+  background-color: #0d2217;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-radius: 10px;
+  width: 90%;
+  max-width: 640px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+}
+
+.quick-search-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.15rem;
+  background-color: #143222;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.25);
+}
+
+.search-input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background-color: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  padding: 0.45rem 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.search-input-wrapper:focus-within {
+  border-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
+}
+
+.search-input-icon {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.quick-search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+}
+
+.quick-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.clear-query-btn,
+.quick-search-close-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.clear-query-btn:hover,
+.quick-search-close-btn:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Results List */
+.quick-search-results-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 52vh;
+}
+
+.search-empty-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.search-empty-hint {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-style: italic;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 6px;
+  background-color: rgba(22, 62, 38, 0.4);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.search-result-item:hover,
+.search-result-item.selected {
+  background-color: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.result-icon-col {
+  color: #e2f0d9;
+  display: flex;
+  align-items: center;
+}
+
+.result-info-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.result-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.result-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-type-badge {
+  font-size: 0.65rem;
+  font-family: monospace;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 3px;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.result-type-badge.badge-pdf {
+  border-color: rgba(252, 165, 165, 0.6);
+  color: #fca5a5;
+  background-color: rgba(153, 27, 27, 0.3);
+}
+
+.result-type-badge.badge-ppt,
+.result-type-badge.badge-pptx {
+  border-color: rgba(147, 197, 253, 0.6);
+  color: #93c5fd;
+  background-color: rgba(30, 58, 138, 0.3);
+}
+
+.result-type-badge.badge-md {
+  border-color: rgba(110, 231, 183, 0.6);
+  color: #6ee7b7;
+  background-color: rgba(6, 95, 70, 0.3);
+}
+
+.result-snippet-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.result-path {
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Footer Shortcuts */
+.quick-search-footer {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.55rem 1.15rem;
+  background-color: #08170f;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.footer-shortcut-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+kbd {
+  font-family: monospace;
+  background-color: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  font-size: 0.68rem;
+}
+
+/* Light Theme Botanical Parchment Blueprint Overrides */
+html[data-theme="light"] .quick-search-modal-card {
+  background-color: #fbf9f4;
+  border: 1.5px solid #143222;
+  box-shadow: 0 16px 40px rgba(20, 50, 34, 0.2);
+}
+
+html[data-theme="light"] .quick-search-header {
+  background-color: #eee9df;
+  border-bottom-color: #143222;
+}
+
+html[data-theme="light"] .search-input-wrapper {
+  background-color: #ffffff;
+  border-color: #143222;
+}
+
+html[data-theme="light"] .search-input-icon {
+  color: #143222;
+}
+
+html[data-theme="light"] .quick-search-input {
+  color: #143222;
+}
+
+html[data-theme="light"] .quick-search-input::placeholder {
+  color: rgba(20, 50, 34, 0.5);
+}
+
+html[data-theme="light"] .clear-query-btn,
+html[data-theme="light"] .quick-search-close-btn {
+  color: #143222;
+}
+
+html[data-theme="light"] .clear-query-btn:hover,
+html[data-theme="light"] .quick-search-close-btn:hover {
+  background-color: #eee9df;
+  color: #143222;
+}
+
+html[data-theme="light"] .search-result-item {
+  background-color: #eee9df;
+  border-color: #143222;
+}
+
+html[data-theme="light"] .search-result-item:hover,
+html[data-theme="light"] .search-result-item.selected {
+  background-color: #e4ddd0;
+  border-color: #143222;
+}
+
+html[data-theme="light"] .result-icon-col {
+  color: #143222;
+}
+
+html[data-theme="light"] .result-title {
+  color: #143222;
+}
+
+html[data-theme="light"] .result-snippet-row {
+  color: #244230;
+}
+
+html[data-theme="light"] .search-empty-state {
+  color: #143222;
+}
+
+html[data-theme="light"] .search-empty-hint {
+  color: #3b5c47;
+}
+
+html[data-theme="light"] .quick-search-footer {
+  background-color: #eee9df;
+  border-top-color: #143222;
+  color: #143222;
+}
+
+html[data-theme="light"] kbd {
+  background-color: #ffffff;
+  border-color: #143222;
+  color: #143222;
+}

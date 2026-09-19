@@ -65,6 +65,60 @@ body::before {
   font-family: inherit;
 }
 
+.header-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.search-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #2a4c38;
+  color: #fbf9f4;
+  border: 1px solid #3d684e;
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.search-trigger-btn:hover {
+  background-color: #3d684e;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.search-shortcut-badge {
+  font-size: 0.68rem;
+  font-family: monospace;
+  background-color: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  color: #ffffff;
+}
+
+html[data-theme="light"] .search-trigger-btn {
+  background-color: #eee9df;
+  color: #143222;
+  border: 1.5px solid #143222;
+}
+
+html[data-theme="light"] .search-trigger-btn:hover {
+  background-color: #143222;
+  color: #ffffff;
+}
+
+html[data-theme="light"] .search-shortcut-badge {
+  background-color: #ffffff;
+  border-color: #143222;
+  color: #143222;
+}
+
+
 .vault-actions {
   display: flex;
   align-items: center;
