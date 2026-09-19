@@ -1,11 +1,10 @@
 .dashboard-header-card {
   background-color: #ffffff;
   border: 1px solid #e2d9c8;
-  border-left: 4px solid #d97706;
   border-radius: 8px;
   padding: 1.5rem 1.75rem;
   margin-bottom: 1.75rem;
-  box-shadow: 0 4px 12px rgba(27, 54, 39, 0.05);
+  box-shadow: 0 4px 12px rgba(27, 54, 39, 0.04);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -82,7 +81,7 @@
 .stat-value {
   font-size: 1.35rem;
   font-weight: 700;
-  color: #d97706;
+  color: #1b3627;
   line-height: 1.1;
 }
 
@@ -100,8 +99,7 @@
   .dashboard-header-card {
     background-color: #142a1d;
     border-color: #264a34;
-    border-left-color: #d97706;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
   .dashboard-time-badge {
@@ -128,7 +126,7 @@
   }
 
   .stat-value {
-    color: #f59e0b;
+    color: #fbf9f4;
   }
 
   .stat-label {

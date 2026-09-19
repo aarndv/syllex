@@ -34,7 +34,7 @@
   align-items: center;
   padding: 1rem 1.25rem;
   background-color: #1b3627;
-  border-bottom: 2px solid #d97706;
+  border-bottom: 2px solid #264a34;
   color: #fbf9f4;
 }
 
@@ -61,12 +61,12 @@
 
 .drawer-toggle-btn.expand {
   margin-right: 0.5rem;
-  background-color: #d97706;
-  border-color: #b45309;
+  background-color: #2a4c38;
+  border-color: #3d684e;
 }
 
 .drawer-toggle-btn.expand:hover {
-  background-color: #b45309;
+  background-color: #3d684e;
 }
 
 .drawer-tree-container {
@@ -90,7 +90,7 @@
   align-items: center;
   padding: 0.75rem 1.75rem;
   background-color: #1b3627;
-  border-bottom: 2px solid #d97706;
+  border-bottom: 2px solid #264a34;
   color: #fbf9f4;
 }
 
@@ -103,9 +103,9 @@
 }
 
 .close-btn {
-  background-color: #d97706;
-  color: #ffffff;
-  border: 1px solid #b45309;
+  background-color: #2a4c38;
+  color: #fbf9f4;
+  border: 1px solid #3d684e;
   padding: 0.4rem 0.9rem;
   border-radius: 4px;
   font-family: inherit;
@@ -115,7 +115,7 @@
 }
 
 .close-btn:hover {
-  background-color: #b45309;
+  background-color: #3d684e;
 }
 
 .doc-title {
