@@ -8,6 +8,7 @@ import { PdfViewer } from "./components/PdfViewer";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { VaultManagerModal } from "./components/VaultManagerModal";
 import { SettingsModal, AppSettings, DEFAULT_SETTINGS } from "./components/SettingsModal";
+import { SidebarAcademicWidget } from "./components/SidebarAcademicWidget";
 import {
   PlusIcon,
   FolderIcon,
@@ -50,10 +51,25 @@ function App() {
   });
 
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", settings.theme);
+    function applyTheme() {
+      let effectiveTheme: "dark" | "light" = "dark";
+      if (settings.theme === "system") {
+        effectiveTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      } else {
+        effectiveTheme = settings.theme;
+      }
+      document.documentElement.setAttribute("data-theme", effectiveTheme);
+    }
+
+    applyTheme();
     document.documentElement.setAttribute("data-font-style", settings.fontStyle);
     document.documentElement.setAttribute("data-font-size", settings.fontSize);
     localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const listener = () => applyTheme();
+    mediaQuery.addEventListener("change", listener);
+    return () => mediaQuery.removeEventListener("change", listener);
   }, [settings]);
 
   useEffect(() => {
@@ -248,7 +264,7 @@ function App() {
       <div className="app-workspace">
         <aside className="app-sidebar">
           <div className="sidebar-header">
-            <span className="sidebar-title">Course Explorer</span>
+            <SidebarAcademicWidget />
             <div className="vault-actions">
               <div className="plus-menu-wrapper">
                 <button

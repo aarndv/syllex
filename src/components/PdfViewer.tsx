@@ -305,20 +305,23 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           </div>
 
           <div className="toolbar-right">
-            <select
-              value={viewMode}
-              onChange={(e) => handleSelectViewMode(e.target.value as DocumentViewMode)}
-              className={`view-mode-select ${viewMode}`}
-              title="Select Reading Filter Mode (Shortcut: Press 'D' to cycle)"
-            >
-              <option value="original">Original</option>
-              <option value="fast-dark">Fast Dark Mode</option>
-              <option value="sepia">Warm Sepia</option>
-              <option value="dark-sepia">Midnight Sepia</option>
-              <option value="grayscale">Monochrome Grayscale</option>
-              <option value="high-contrast-dark">High Contrast Dark</option>
-              <option value="ocean-dark">Ocean Dark Blue</option>
-            </select>
+            <div className="filter-dropdown-group">
+              <span className="filter-group-label">Dark Mode Filter:</span>
+              <select
+                value={viewMode}
+                onChange={(e) => handleSelectViewMode(e.target.value as DocumentViewMode)}
+                className={`view-mode-select ${viewMode}`}
+                title="Select Dark Mode Reading Filter (Shortcut: Press 'D' to cycle)"
+              >
+                <option value="original">Original (Full Color)</option>
+                <option value="fast-dark">Fast Dark Mode</option>
+                <option value="sepia">Warm Sepia</option>
+                <option value="dark-sepia">Midnight Sepia</option>
+                <option value="grayscale">Monochrome Grayscale</option>
+                <option value="high-contrast-dark">High Contrast Dark</option>
+                <option value="ocean-dark">Ocean Dark Blue</option>
+              </select>
+            </div>
             <button onClick={handleZoomOut} disabled={zoom <= 0.5}>
               -
             </button>

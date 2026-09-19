@@ -1,0 +1,173 @@
+.academic-sidebar-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  font-family: inherit;
+  position: relative;
+}
+
+.sidebar-clock-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgba(10, 28, 18, 0.9);
+  padding: 0.4rem 0.65rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.clock-time-display {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #ffffff;
+  font-family: monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.clock-digits {
+  color: #ffffff;
+}
+
+.widget-edit-btn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.7);
+  border-radius: 3px;
+  padding: 0.2rem 0.4rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.widget-edit-btn:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: #ffffff;
+}
+
+/* Edit Form Popover */
+.academic-edit-popover {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 0.5rem;
+  background-color: #0d2217;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+  padding: 0.85rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 300;
+}
+
+.edit-popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #e2f0d9;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.edit-popover-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.form-field label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #e2f0d9;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.form-field input {
+  background-color: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  padding: 0.3rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  outline: none;
+}
+
+.form-field input:focus {
+  border-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Academic Trackers List */
+.academic-trackers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.academic-tracker-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.35rem 0.5rem;
+  background-color: rgba(22, 62, 38, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.tracker-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+}
+
+.tracker-name {
+  color: #e2f0d9;
+  font-weight: 500;
+}
+
+.tracker-value {
+  color: #ffffff;
+  font-family: monospace;
+  font-size: 0.75rem;
+}
+
+.tracker-value.bold {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.tracker-progress-bg {
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.tracker-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #059669, #10b981);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.tracker-progress-fill.year {
+  background: linear-gradient(90deg, #0284c7, #38bdf8);
+}

@@ -215,13 +215,12 @@ body::before {
 }
 
 .sidebar-header {
-  padding: 0.65rem 0.85rem;
-  background-color: #f7f3eb;
-  border-bottom: 1px solid #efeae1;
+  padding: 0.85rem 0.85rem;
+  background-color: #0a1c12;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.35);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.85rem;
 }
 
 .sidebar-title {

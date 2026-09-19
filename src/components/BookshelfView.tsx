@@ -159,7 +159,7 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
               className="shelf-mini-btn pencil-btn"
               title="Customize Folder Color Palette"
             >
-              <PencilIcon size={13} /> Color
+              <PencilIcon size={13} />
             </button>
 
             {isColorPickerOpen && (
