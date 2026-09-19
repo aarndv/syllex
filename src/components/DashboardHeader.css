@@ -100,3 +100,45 @@
   margin-top: 0.2rem;
   opacity: 0.8;
 }
+
+/* Light Theme Botanical Parchment Blueprint Overrides */
+html[data-theme="light"] .dashboard-header-card {
+  background-color: #eee9df;
+  border-color: #143222;
+  box-shadow: 0 4px 16px rgba(20, 50, 34, 0.08);
+}
+
+html[data-theme="light"] .dashboard-time-badge {
+  background-color: #143222;
+  color: #ffffff;
+  border-color: #0b1d14;
+}
+
+html[data-theme="light"] .dashboard-date-text {
+  color: #143222;
+  opacity: 0.9;
+}
+
+html[data-theme="light"] .dashboard-greeting-title {
+  color: #143222;
+}
+
+html[data-theme="light"] .dashboard-motivational-subtitle {
+  color: #244230;
+  opacity: 0.9;
+}
+
+html[data-theme="light"] .dashboard-stats-strip {
+  background-color: #fbf9f4;
+  border-color: #143222;
+}
+
+html[data-theme="light"] .stat-value {
+  color: #143222;
+}
+
+html[data-theme="light"] .stat-label {
+  color: #244230;
+  opacity: 0.9;
+}
+

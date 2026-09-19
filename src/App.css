@@ -708,14 +708,119 @@ html[data-theme="dark"] .plus-dropdown button:hover {
   color: #fbf9f4;
 }
 
+/* Refined Parchment Blueprint Light Theme */
 html[data-theme="light"] {
-  color: #262626;
-  background-color: #fbf9f4;
+  color: #12281c;
+  background-color: #f5f1e8;
 }
 
 html[data-theme="light"] body {
-  background-color: #fbf9f4;
+  background-color: #f5f1e8;
+  background-image: 
+    linear-gradient(rgba(27, 54, 39, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(27, 54, 39, 0.05) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: #12281c;
 }
+
+html[data-theme="light"] .app-header {
+  background-color: #143222;
+  border-bottom: 2px solid #0b1d14;
+  color: #f8f6f0;
+}
+
+html[data-theme="light"] .app-sidebar {
+  background-color: #eee9df;
+  border-right: 1.5px solid #143222;
+}
+
+html[data-theme="light"] .sidebar-header {
+  background-color: #e4ddd0;
+  border-bottom: 1.5px solid #143222;
+}
+
+html[data-theme="light"] .tree-explorer-card,
+html[data-theme="light"] .empty-state {
+  background-color: #fbf9f4;
+  border: 1.5px solid #143222;
+  box-shadow: 0 4px 16px rgba(27, 54, 39, 0.08);
+}
+
+html[data-theme="light"] .tree-card-header {
+  background-color: #eee9df;
+  border-bottom: 1.5px solid #143222;
+}
+
+html[data-theme="light"] .tree-card-vault-path {
+  color: #143222;
+}
+
+html[data-theme="light"] .tree-label.folder-label {
+  color: #143222;
+  font-weight: 700;
+}
+
+html[data-theme="light"] .tree-label {
+  color: #244230;
+}
+
+html[data-theme="light"] .tree-row:hover {
+  background-color: #e4ddd0;
+}
+
+html[data-theme="light"] .tree-row.is-active {
+  background-color: #d8cebd;
+  border-left: 3.5px solid #143222;
+}
+
+html[data-theme="light"] .primary-btn {
+  background-color: #143222;
+  color: #ffffff;
+  border: 1.5px solid #0b1d14;
+}
+
+html[data-theme="light"] .primary-btn:hover {
+  background-color: #1e4530;
+  box-shadow: 0 4px 12px rgba(20, 50, 34, 0.2);
+}
+
+html[data-theme="light"] .secondary-btn {
+  background-color: #eee9df;
+  color: #143222;
+  border: 1.5px solid #143222;
+}
+
+html[data-theme="light"] .secondary-btn:hover {
+  background-color: #143222;
+  color: #ffffff;
+}
+
+html[data-theme="light"] .view-mode-toolbar-blueprint {
+  background-color: #f7f4ed;
+  border: 1.5px solid #143222;
+  box-shadow: 0 2px 8px rgba(20, 50, 34, 0.06);
+}
+
+html[data-theme="light"] .view-toggle-button-group {
+  background-color: #eee9df;
+  border: 1px solid #143222;
+}
+
+html[data-theme="light"] .toggle-mode-btn {
+  color: #2a4c38;
+}
+
+html[data-theme="light"] .toggle-mode-btn:hover {
+  background-color: #e0d8c8;
+  color: #143222;
+}
+
+html[data-theme="light"] .toggle-mode-btn.active {
+  background-color: #143222;
+  color: #ffffff;
+  border-color: #0b1d14;
+}
+
 
 /* Blueprint View Mode Toolbar */
 .view-mode-toolbar-blueprint {

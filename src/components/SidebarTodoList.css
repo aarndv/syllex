@@ -191,3 +191,90 @@
   color: #fca5a5;
   background-color: rgba(239, 68, 68, 0.2);
 }
+
+/* Light Theme Botanical Parchment Blueprint Overrides */
+html[data-theme="light"] .sidebar-todo-card {
+  background-color: #eee9df;
+  border-color: #143222;
+  box-shadow: 0 4px 14px rgba(20, 50, 34, 0.08);
+}
+
+html[data-theme="light"] .todo-header {
+  border-bottom-color: #143222;
+}
+
+html[data-theme="light"] .todo-title {
+  color: #143222;
+}
+
+html[data-theme="light"] .todo-badge {
+  background-color: #e4ddd0;
+  color: #143222;
+  border-color: #143222;
+}
+
+html[data-theme="light"] .todo-input {
+  background-color: #fbf9f4;
+  border-color: #143222;
+  color: #143222;
+}
+
+html[data-theme="light"] .todo-input::placeholder {
+  color: rgba(20, 50, 34, 0.5);
+}
+
+html[data-theme="light"] .todo-input:focus {
+  background-color: #ffffff;
+  border-color: #143222;
+}
+
+html[data-theme="light"] .todo-add-btn {
+  background-color: #143222;
+  color: #ffffff;
+  border-color: #0b1d14;
+}
+
+html[data-theme="light"] .todo-add-btn:hover {
+  background-color: #1e4530;
+}
+
+html[data-theme="light"] .todo-empty-text {
+  color: rgba(20, 50, 34, 0.6);
+}
+
+html[data-theme="light"] .todo-item {
+  background-color: #fbf9f4;
+  border-color: #143222;
+}
+
+html[data-theme="light"] .todo-item:hover {
+  background-color: #e4ddd0;
+}
+
+html[data-theme="light"] .todo-checkbox {
+  border-color: #143222;
+}
+
+html[data-theme="light"] .todo-text {
+  color: #143222;
+}
+
+html[data-theme="light"] .todo-edit-input {
+  background-color: #ffffff;
+  border-color: #143222;
+  color: #143222;
+}
+
+html[data-theme="light"] .todo-item.completed .todo-text {
+  color: rgba(20, 50, 34, 0.5);
+}
+
+html[data-theme="light"] .todo-delete-btn {
+  color: rgba(20, 50, 34, 0.4);
+}
+
+html[data-theme="light"] .todo-delete-btn:hover {
+  color: #dc2626;
+  background-color: #fee2e2;
+}
+

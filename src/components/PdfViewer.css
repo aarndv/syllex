@@ -335,3 +335,74 @@
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
 }
 
+/* Light Theme Botanical Parchment Blueprint Overrides */
+html[data-theme="light"] .pdf-viewer-overlay {
+  background-color: #f5f1e8;
+}
+
+html[data-theme="light"] .pdf-drawer {
+  background-color: #eee9df;
+  border-right-color: #143222;
+}
+
+html[data-theme="light"] .drawer-header {
+  background-color: #143222;
+  border-bottom-color: #0b1d14;
+  color: #ffffff;
+}
+
+html[data-theme="light"] .drawer-toggle-btn {
+  background-color: #eee9df;
+  color: #143222;
+  border-color: #143222;
+}
+
+html[data-theme="light"] .drawer-toggle-btn:hover {
+  background-color: #143222;
+  color: #ffffff;
+}
+
+html[data-theme="light"] .pdf-viewer-toolbar {
+  background-color: #143222;
+  border-bottom-color: #0b1d14;
+  color: #ffffff;
+}
+
+html[data-theme="light"] .close-btn {
+  background-color: #eee9df;
+  color: #143222;
+  border-color: #143222;
+}
+
+html[data-theme="light"] .close-btn:hover {
+  background-color: #ffffff;
+  color: #143222;
+}
+
+html[data-theme="light"] .doc-title {
+  color: #ffffff;
+}
+
+html[data-theme="light"] .scroll-toggle-btn {
+  background-color: #eee9df;
+  color: #143222;
+  border-color: #143222;
+}
+
+html[data-theme="light"] .scroll-toggle-btn:hover {
+  background-color: #143222;
+  color: #ffffff;
+}
+
+html[data-theme="light"] .scroll-toggle-btn.active {
+  background-color: #143222;
+  color: #ffffff;
+  border-color: #0b1d14;
+}
+
+html[data-theme="light"] .pdf-loading,
+html[data-theme="light"] .pdf-error {
+  color: #143222;
+}
+
+

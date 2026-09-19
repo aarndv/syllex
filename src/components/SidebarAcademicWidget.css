@@ -171,3 +171,68 @@
 .tracker-progress-fill.year {
   background: linear-gradient(90deg, #0284c7, #38bdf8);
 }
+
+/* Light Theme Botanical Parchment Blueprint Overrides */
+html[data-theme="light"] .sidebar-clock-header {
+  background-color: #e4ddd0;
+  border-color: #143222;
+}
+
+html[data-theme="light"] .clock-time-display {
+  color: #143222;
+}
+
+html[data-theme="light"] .clock-digits {
+  color: #143222;
+}
+
+html[data-theme="light"] .widget-edit-btn {
+  border-color: #143222;
+  color: #143222;
+}
+
+html[data-theme="light"] .widget-edit-btn:hover {
+  background-color: #143222;
+  color: #ffffff;
+}
+
+html[data-theme="light"] .academic-edit-popover {
+  background-color: #fbf9f4;
+  border-color: #143222;
+  box-shadow: 0 8px 24px rgba(20, 50, 34, 0.15);
+}
+
+html[data-theme="light"] .edit-popover-header {
+  color: #143222;
+  border-bottom-color: #143222;
+}
+
+html[data-theme="light"] .form-field label {
+  color: #143222;
+}
+
+html[data-theme="light"] .form-field input {
+  background-color: #ffffff;
+  border-color: #143222;
+  color: #143222;
+}
+
+html[data-theme="light"] .academic-tracker-item {
+  background-color: #eee9df;
+  border-color: #143222;
+}
+
+html[data-theme="light"] .tracker-name {
+  color: #143222;
+}
+
+html[data-theme="light"] .tracker-value,
+html[data-theme="light"] .tracker-value.bold {
+  color: #143222;
+}
+
+html[data-theme="light"] .tracker-progress-bg {
+  background-color: #e4ddd0;
+  border-color: #143222;
+}
+
