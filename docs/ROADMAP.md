@@ -38,9 +38,9 @@ Acceptance criteria:
 
 ## M4 — Fast document dark mode
 
-- [ ] Add Original and Fast Dark modes
-- [ ] Keep the operation reversible and view-only
-- [ ] Test text-heavy, illustrated, and already-dark documents
+- [x] Add Original and Fast Dark modes
+- [x] Keep the operation reversible and view-only
+- [x] Test text-heavy, illustrated, and already-dark documents
 
 ## M5 — PowerPoint conversion
 

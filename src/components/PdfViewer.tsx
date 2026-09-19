@@ -32,6 +32,10 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [zoom, setZoom] = useState<number>(1.0);
+  const [viewMode, setViewMode] = useState<"original" | "fast-dark">(() => {
+    const saved = localStorage.getItem("syllex_pdf_view_mode");
+    return saved === "fast-dark" ? "fast-dark" : "original";
+  });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,6 +43,14 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const renderTaskRef = useRef<any>(null);
 
   const storageKey = `syllex_progress_${node.relative_path}`;
+
+  function handleToggleViewMode() {
+    setViewMode((prev) => {
+      const next = prev === "original" ? "fast-dark" : "original";
+      localStorage.setItem("syllex_pdf_view_mode", next);
+      return next;
+    });
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -164,8 +176,10 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         handleNextPage();
       } else if (e.key === "+" || e.key === "=") {
         handleZoomIn();
-      } else if (e.key === "-") {
+      } else if (e.key === "-" || e.key === "_") {
         handleZoomOut();
+      } else if (e.key.toLowerCase() === "d") {
+        handleToggleViewMode();
       } else if (e.key === "Escape") {
         onClose();
       }
@@ -232,6 +246,13 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           </div>
 
           <div className="toolbar-right">
+            <button
+              onClick={handleToggleViewMode}
+              className={`view-mode-toggle ${viewMode}`}
+              title="Toggle Document View Mode (Key: D)"
+            >
+              {viewMode === "original" ? "☀️ Original" : "🌙 Fast Dark"}
+            </button>
             <button onClick={handleZoomOut} disabled={zoom <= 0.5}>
               -
             </button>
@@ -253,7 +274,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           )}
 
           {!loading && !error && (
-            <div className="canvas-container">
+            <div className={`canvas-container ${viewMode}`}>
               <canvas ref={canvasRef} />
             </div>
           )}
