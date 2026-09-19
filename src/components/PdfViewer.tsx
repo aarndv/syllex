@@ -41,19 +41,10 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const storageKey = `syllex_progress_${node.relative_path}`;
 
   useEffect(() => {
-    const savedPage = localStorage.getItem(storageKey);
-    if (savedPage) {
-      const pageNum = parseInt(savedPage, 10);
-      if (!isNaN(pageNum) && pageNum > 0) {
-        setCurrentPage(pageNum);
-      }
-    }
-  }, [node.relative_path]);
-
-  useEffect(() => {
     let isMounted = true;
     setLoading(true);
     setError(null);
+    setCurrentPage(1);
 
     async function loadPdf() {
       try {
@@ -69,6 +60,16 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         if (isMounted) {
           setPdfDoc(doc);
           setNumPages(doc.numPages);
+
+          const savedPage = localStorage.getItem(storageKey);
+          let initialPage = 1;
+          if (savedPage) {
+            const parsed = parseInt(savedPage, 10);
+            if (!isNaN(parsed) && parsed > 0) {
+              initialPage = Math.min(parsed, doc.numPages);
+            }
+          }
+          setCurrentPage(initialPage);
           setLoading(false);
         }
       } catch (err: any) {
