@@ -144,11 +144,17 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
     <div className="shelf-wrapper" style={wrapperStyle}>
       <header className="shelf-header-blueprint" style={headerStyle}>
         <div className="shelf-title-plate" onClick={() => setIsExpanded((prev) => !prev)}>
-          <span className="shelf-chevron">{isExpanded ? "▼" : "▶"}</span>
-          <FolderIcon size={16} />
-          <h3 className="shelf-title">{folder.name}</h3>
+          <span className="shelf-chevron-badge">{isExpanded ? "▼" : "▶"}</span>
+          <div className="folder-icon-emblem">
+            <FolderIcon size={16} />
+          </div>
+          <div className="shelf-title-wrapper">
+            <h3 className="shelf-title">{folder.name}</h3>
+            <span className="shelf-title-sub">COLLECTION ARCHIVE</span>
+          </div>
           <span className="shelf-count-badge">
-            {folder.children.length} {folder.children.length === 1 ? "item" : "items"}
+            <span className="count-num">{folder.children.length}</span>
+            <span className="count-label">{folder.children.length === 1 ? "ITEM" : "ITEMS"}</span>
           </span>
         </div>
 
@@ -282,10 +288,16 @@ const ShelfSection: React.FC<ShelfSectionProps> = ({
     <div className="shelf-wrapper">
       <header className="shelf-header-blueprint">
         <div className="shelf-title-plate">
-          <BookIcon size={16} />
-          <h3 className="shelf-title">{title}</h3>
+          <div className="folder-icon-emblem">
+            <BookIcon size={16} />
+          </div>
+          <div className="shelf-title-wrapper">
+            <h3 className="shelf-title">{title}</h3>
+            <span className="shelf-title-sub">GENERAL VAULT MODULES</span>
+          </div>
           <span className="shelf-count-badge">
-            {files.length} {files.length === 1 ? "module" : "modules"}
+            <span className="count-num">{files.length}</span>
+            <span className="count-label">{files.length === 1 ? "MODULE" : "MODULES"}</span>
           </span>
         </div>
 
@@ -353,8 +365,13 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
       onClick={() => onSelectFile(node)}
       title={`Open ${node.name}`}
     >
+      <div className="book-spine-ridge-left" />
+
       <div className="book-spine-header">
-        <span className={`book-type-badge ${ext.toLowerCase()}`}>{ext}</span>
+        <span className={`book-type-badge ${ext.toLowerCase()}`}>
+          <span className="badge-dot" />
+          {ext}
+        </span>
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -367,25 +384,27 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
         </button>
       </div>
 
-      <div className="book-spine-content">
+      <div className="book-label-frame">
         <div className="book-spine-icon">
-          <FileIcon size={20} />
+          {ext === "MD" ? <BookIcon size={18} /> : <FileIcon size={18} />}
         </div>
         <span className="book-spine-title">{node.name}</span>
       </div>
 
       <div className="book-spine-footer">
         {savedPage ? (
-          <span className="book-progress-ribbon">Page {savedPage}</span>
+          <div className="book-bookmark-ribbon active">
+            <span className="ribbon-tail" />
+            <span className="ribbon-text">PG {savedPage}</span>
+          </div>
         ) : (
-          <span className="book-unread-tag">Unread</span>
+          <div className="book-bookmark-ribbon unread">
+            <span className="ribbon-tail" />
+            <span className="ribbon-text">UNREAD</span>
+          </div>
         )}
-      </div>
-
-      <div className="book-binding-lines">
-        <span className="binding-line" />
-        <span className="binding-line" />
       </div>
     </div>
   );
 };
+
