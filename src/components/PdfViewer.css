@@ -158,24 +158,28 @@
   font-family: inherit;
 }
 
-.view-mode-toggle {
+.view-mode-select {
   background-color: #2a4c38;
   color: #fbf9f4;
   border: 1px solid #3d684e;
-  padding: 0.35rem 0.85rem;
+  padding: 0.35rem 0.65rem;
   border-radius: 4px;
   font-family: inherit;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
+  outline: none;
   transition: all 0.2s ease;
   margin-right: 0.5rem;
 }
 
-.view-mode-toggle.fast-dark {
-  background-color: #111827;
-  color: #e2e8f0;
-  border-color: #374151;
+.view-mode-select:hover {
+  background-color: #3d684e;
+}
+
+.view-mode-select option {
+  background-color: #1b3627;
+  color: #fbf9f4;
 }
 
 .pdf-viewer-body {
@@ -197,14 +201,65 @@
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.canvas-container.fast-dark {
+.canvas-container canvas {
+  transition: filter 0.2s ease;
+}
+
+/* Document Reading Filter Modes */
+.canvas-container.mode-original {
+  background-color: #ffffff;
+  border-color: #264a34;
+}
+.canvas-container.mode-original canvas {
+  filter: none;
+}
+
+.canvas-container.mode-fast-dark {
   background-color: #121212;
   border-color: #3d684e;
 }
-
-.canvas-container.fast-dark canvas {
+.canvas-container.mode-fast-dark canvas {
   filter: invert(0.92) hue-rotate(180deg);
-  transition: filter 0.2s ease;
+}
+
+.canvas-container.mode-sepia {
+  background-color: #fcf6e8;
+  border-color: #d4c5a9;
+}
+.canvas-container.mode-sepia canvas {
+  filter: sepia(0.65) contrast(0.95) brightness(0.95);
+}
+
+.canvas-container.mode-dark-sepia {
+  background-color: #1a1612;
+  border-color: #4a3d31;
+}
+.canvas-container.mode-dark-sepia canvas {
+  filter: invert(0.92) hue-rotate(180deg) sepia(0.35);
+}
+
+.canvas-container.mode-grayscale {
+  background-color: #ffffff;
+  border-color: #525252;
+}
+.canvas-container.mode-grayscale canvas {
+  filter: grayscale(1) contrast(1.05);
+}
+
+.canvas-container.mode-high-contrast-dark {
+  background-color: #000000;
+  border-color: #555555;
+}
+.canvas-container.mode-high-contrast-dark canvas {
+  filter: invert(1) contrast(1.3) brightness(0.9);
+}
+
+.canvas-container.mode-ocean-dark {
+  background-color: #0b192c;
+  border-color: #1e3e62;
+}
+.canvas-container.mode-ocean-dark canvas {
+  filter: invert(0.9) hue-rotate(200deg) saturate(1.2);
 }
 
 .pdf-loading,

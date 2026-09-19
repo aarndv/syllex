@@ -18,6 +18,25 @@ interface PdfViewerProps {
   onClose: () => void;
 }
 
+export type DocumentViewMode =
+  | "original"
+  | "fast-dark"
+  | "sepia"
+  | "dark-sepia"
+  | "grayscale"
+  | "high-contrast-dark"
+  | "ocean-dark";
+
+const VIEW_MODE_ORDER: DocumentViewMode[] = [
+  "original",
+  "fast-dark",
+  "sepia",
+  "dark-sepia",
+  "grayscale",
+  "high-contrast-dark",
+  "ocean-dark",
+];
+
 export const PdfViewer: React.FC<PdfViewerProps> = ({
   vaultRoot,
   node,
@@ -32,9 +51,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [zoom, setZoom] = useState<number>(1.0);
-  const [viewMode, setViewMode] = useState<"original" | "fast-dark">(() => {
-    const saved = localStorage.getItem("syllex_pdf_view_mode");
-    return saved === "fast-dark" ? "fast-dark" : "original";
+  const [viewMode, setViewMode] = useState<DocumentViewMode>(() => {
+    const saved = localStorage.getItem("syllex_pdf_view_mode") as DocumentViewMode;
+    return VIEW_MODE_ORDER.includes(saved) ? saved : "original";
   });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,11 +63,18 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
 
   const storageKey = `syllex_progress_${node.relative_path}`;
 
-  function handleToggleViewMode() {
+  function handleSelectViewMode(mode: DocumentViewMode) {
+    setViewMode(mode);
+    localStorage.setItem("syllex_pdf_view_mode", mode);
+  }
+
+  function cycleViewMode() {
     setViewMode((prev) => {
-      const next = prev === "original" ? "fast-dark" : "original";
-      localStorage.setItem("syllex_pdf_view_mode", next);
-      return next;
+      const idx = VIEW_MODE_ORDER.indexOf(prev);
+      const nextIdx = (idx + 1) % VIEW_MODE_ORDER.length;
+      const nextMode = VIEW_MODE_ORDER[nextIdx];
+      localStorage.setItem("syllex_pdf_view_mode", nextMode);
+      return nextMode;
     });
   }
 
@@ -179,7 +205,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       } else if (e.key === "-" || e.key === "_") {
         handleZoomOut();
       } else if (e.key.toLowerCase() === "d") {
-        handleToggleViewMode();
+        cycleViewMode();
       } else if (e.key === "Escape") {
         onClose();
       }
@@ -246,13 +272,20 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           </div>
 
           <div className="toolbar-right">
-            <button
-              onClick={handleToggleViewMode}
-              className={`view-mode-toggle ${viewMode}`}
-              title="Toggle Document View Mode (Key: D)"
+            <select
+              value={viewMode}
+              onChange={(e) => handleSelectViewMode(e.target.value as DocumentViewMode)}
+              className={`view-mode-select ${viewMode}`}
+              title="Select Reading Filter Mode (Shortcut: Press 'D' to cycle)"
             >
-              {viewMode === "original" ? "☀️ Original" : "🌙 Fast Dark"}
-            </button>
+              <option value="original">☀️ Original</option>
+              <option value="fast-dark">🌙 Fast Dark</option>
+              <option value="sepia">📜 Warm Sepia</option>
+              <option value="dark-sepia">🕯️ Midnight Sepia</option>
+              <option value="grayscale">📷 Grayscale</option>
+              <option value="high-contrast-dark">⚡ High Contrast</option>
+              <option value="ocean-dark">🌊 Ocean Dark</option>
+            </select>
             <button onClick={handleZoomOut} disabled={zoom <= 0.5}>
               -
             </button>
@@ -274,7 +307,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           )}
 
           {!loading && !error && (
-            <div className={`canvas-container ${viewMode}`}>
+            <div className={`canvas-container mode-${viewMode}`}>
               <canvas ref={canvasRef} />
             </div>
           )}
