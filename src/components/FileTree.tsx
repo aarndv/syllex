@@ -74,7 +74,6 @@ const FileTreeNode: React.FC<{
       <li className="tree-item-group">
         <div
           className="tree-row folder-row"
-          style={{ paddingLeft: `${depth * 0.8 + 0.4}rem` }}
           onClick={() => setIsOpen((prev) => !prev)}
         >
           <span className="tree-chevron">{isOpen ? "▾" : "▸"}</span>
@@ -108,10 +107,7 @@ const FileTreeNode: React.FC<{
         {isOpen && (
           <ul className="tree-sub-list">
             {node.children.length === 0 ? (
-              <li
-                className="tree-empty-sub"
-                style={{ paddingLeft: `${(depth + 1) * 0.8 + 1.2}rem` }}
-              >
+              <li className="tree-empty-sub">
                 (Empty directory)
               </li>
             ) : (
@@ -140,9 +136,9 @@ const FileTreeNode: React.FC<{
     <li className="tree-item-single">
       <div
         className={`tree-row file-row ${isActive ? "is-active" : ""}`}
-        style={{ paddingLeft: `${depth * 0.8 + 1.2}rem` }}
         onClick={() => onSelectFile(node)}
       >
+        <span className="tree-chevron-placeholder" />
         <span className={`tree-type-pill ${badgeStr.toLowerCase()}`}>
           {badgeStr}
         </span>

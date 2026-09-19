@@ -14,6 +14,7 @@ function App() {
   const [activeNode, setActiveNode] = useState<VaultNode | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPlusMenuOpen, setIsPlusMenuOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const savedPath = localStorage.getItem(VAULT_STORAGE_KEY);
@@ -159,21 +160,58 @@ function App() {
         <h1>Syllex</h1>
         <div className="vault-actions">
           {vaultPath && (
-            <>
-              <button onClick={handleCreateFolder} className="primary-btn">
-                + New Folder
+            <div className="plus-menu-wrapper">
+              <button
+                onClick={() => setIsPlusMenuOpen((prev) => !prev)}
+                className="icon-btn primary-icon-btn"
+                title="Add module or create folder"
+              >
+                +
               </button>
-              <button onClick={() => handleAddModule()} className="primary-btn">
-                + Add Module
-              </button>
-            </>
+              {isPlusMenuOpen && (
+                <div className="plus-dropdown">
+                  <button
+                    onClick={() => {
+                      setIsPlusMenuOpen(false);
+                      handleCreateFolder();
+                    }}
+                  >
+                    📁 New Folder
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsPlusMenuOpen(false);
+                      handleAddModule();
+                    }}
+                  >
+                    📄 Add Module
+                  </button>
+                </div>
+              )}
+            </div>
           )}
-          <button onClick={handleSelectVault} className="secondary-btn">
-            {vaultPath ? "Change Vault" : "Select Vault"}
-          </button>
+
+          {vaultPath ? (
+            <button
+              onClick={handleSelectVault}
+              className="icon-btn secondary-icon-btn"
+              title="Change Vault Directory"
+            >
+              ⇄
+            </button>
+          ) : (
+            <button onClick={handleSelectVault} className="primary-btn">
+              Select Vault
+            </button>
+          )}
+
           {vaultPath && (
-            <button onClick={handleClearVault} className="secondary-btn">
-              Close Vault
+            <button
+              onClick={handleClearVault}
+              className="icon-btn close-icon-btn"
+              title="Close Vault"
+            >
+              ✕
             </button>
           )}
         </div>
