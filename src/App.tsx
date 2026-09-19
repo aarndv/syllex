@@ -3,11 +3,21 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { VaultScanResult, VaultNode } from "./types/vault";
 import { FileTree } from "./components/FileTree";
+import { BookshelfView } from "./components/BookshelfView";
 import { PdfViewer } from "./components/PdfViewer";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { VaultManagerModal } from "./components/VaultManagerModal";
 import { SettingsModal, AppSettings, DEFAULT_SETTINGS } from "./components/SettingsModal";
-import { PlusIcon, FolderIcon, FileIcon, SwitchIcon, CloseIcon, SettingsIcon } from "./components/Icons";
+import {
+  PlusIcon,
+  FolderIcon,
+  FileIcon,
+  SwitchIcon,
+  CloseIcon,
+  SettingsIcon,
+  ShelfIcon,
+  TreeListIcon,
+} from "./components/Icons";
 import "./App.css";
 
 const VAULT_STORAGE_KEY = "syllex_selected_vault_path";
@@ -24,6 +34,7 @@ function App() {
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState<boolean>(false);
   const [isVaultManagerOpen, setIsVaultManagerOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [activeViewMode, setActiveViewMode] = useState<"bookshelf" | "tree">("bookshelf");
 
   const [settings, setSettings] = useState<AppSettings>(() => {
     const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
@@ -342,6 +353,32 @@ function App() {
                 fileCount={vaultStats.files}
               />
 
+              <div className="view-mode-toolbar-blueprint">
+                <span className="tree-card-vault-path" title={scanResult.root_path}>
+                  <span className="path-icon">
+                    <FolderIcon size={14} />
+                  </span>
+                  <span className="path-text">{scanResult.root_path}</span>
+                </span>
+
+                <div className="view-toggle-button-group">
+                  <button
+                    className={`toggle-mode-btn ${activeViewMode === "bookshelf" ? "active" : ""}`}
+                    onClick={() => setActiveViewMode("bookshelf")}
+                    title="Bookshelf Bookstore View"
+                  >
+                    <ShelfIcon size={14} /> Bookshelves
+                  </button>
+                  <button
+                    className={`toggle-mode-btn ${activeViewMode === "tree" ? "active" : ""}`}
+                    onClick={() => setActiveViewMode("tree")}
+                    title="Tree Explorer View"
+                  >
+                    <TreeListIcon size={14} /> Explorer Tree
+                  </button>
+                </div>
+              </div>
+
               {scanResult.root_nodes.length === 0 ? (
                 <div className="empty-state">
                   <p>No files or folders found in this vault.</p>
@@ -349,16 +386,15 @@ function App() {
                     Add First Module
                   </button>
                 </div>
+              ) : activeViewMode === "bookshelf" ? (
+                <BookshelfView
+                  nodes={scanResult.root_nodes}
+                  onSelectFile={handleSelectFileNode}
+                  onAddFile={handleAddModule}
+                  onRemoveItem={handleRemoveItem}
+                />
               ) : (
                 <div className="tree-explorer-card">
-                  <div className="tree-card-header">
-                    <span className="tree-card-vault-path" title={scanResult.root_path}>
-                      <span className="path-icon">
-                        <FolderIcon size={14} />
-                      </span>
-                      <span className="path-text">{scanResult.root_path}</span>
-                    </span>
-                  </div>
                   <div className="tree-card-body">
                     <FileTree
                       nodes={scanResult.root_nodes}

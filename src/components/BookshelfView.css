@@ -1,0 +1,364 @@
+/* Bookshelf Container & Blueprint Grid Styling */
+.bookshelf-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 0.5rem 0;
+  font-family: inherit;
+}
+
+.empty-bookshelf-notice {
+  text-align: center;
+  padding: 3.5rem 2rem;
+  background-color: rgba(22, 62, 38, 0.4);
+  border: 1.5px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: #e2f0d9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Blueprint Shelf Wrapper */
+.shelf-wrapper {
+  background-color: rgba(22, 62, 38, 0.5);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.shelf-wrapper:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Shelf Header Plate */
+.shelf-header-blueprint {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  background-color: rgba(14, 40, 24, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  user-select: none;
+}
+
+.shelf-title-plate {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  cursor: pointer;
+  color: #ffffff;
+}
+
+.shelf-chevron {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  width: 1rem;
+}
+
+.shelf-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #ffffff;
+}
+
+.shelf-count-badge {
+  font-size: 0.75rem;
+  font-family: monospace;
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #e2f0d9;
+  padding: 0.15rem 0.55rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.shelf-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.shelf-mini-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shelf-mini-btn:hover {
+  background-color: rgba(255, 255, 255, 0.22);
+  border-color: #ffffff;
+}
+
+.shelf-mini-btn.delete {
+  background-color: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+.shelf-mini-btn.delete:hover {
+  background-color: rgba(239, 68, 68, 0.35);
+  border-color: #fca5a5;
+  color: #ffffff;
+}
+
+/* Shelf Body & Books Row */
+.shelf-body {
+  padding: 1.5rem 1.25rem 0.5rem 1.25rem;
+}
+
+.books-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1.25rem;
+  padding-bottom: 0.75rem;
+}
+
+.empty-shelf-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 0.5rem;
+}
+
+.empty-shelf-text {
+  font-size: 0.85rem;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.shelf-add-link {
+  background: none;
+  border: 1px dashed rgba(255, 255, 255, 0.35);
+  color: #e2f0d9;
+  padding: 0.25rem 0.65rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+}
+
+.shelf-add-link:hover {
+  border-color: #ffffff;
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Architectural Wooden/Blueprint Shelf Line Bar */
+.blueprint-shelf-bar {
+  height: 12px;
+  background-color: rgba(14, 40, 24, 0.9);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  border-radius: 3px;
+  margin-top: 0.5rem;
+  margin-bottom: 1.25rem;
+  position: relative;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.shelf-ticks {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+  padding: 0 1rem;
+  opacity: 0.5;
+}
+
+.tick-mark {
+  width: 1px;
+  height: 60%;
+  background-color: #ffffff;
+}
+
+/* Individual Book Spine Standing Card */
+.book-spine-card {
+  width: 140px;
+  height: 180px;
+  background-color: #1a452b;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-radius: 6px 8px 8px 6px;
+  box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.3), inset 3px 0 6px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.85rem;
+  box-sizing: border-box;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+  user-select: none;
+}
+
+/* Standing Book Lift & Hover Effect */
+.book-spine-card:hover {
+  transform: translateY(-8px) scale(1.03);
+  border-color: #ffffff;
+  box-shadow: -6px 12px 20px rgba(0, 0, 0, 0.4), 0 0 12px rgba(255, 255, 255, 0.2);
+  z-index: 10;
+}
+
+/* Subtle Color Variations on Dark Green Palette */
+.book-spine-card.variant-0 {
+  background-color: #1a452b;
+}
+
+.book-spine-card.variant-1 {
+  background-color: #143b24;
+}
+
+.book-spine-card.variant-2 {
+  background-color: #204e32;
+}
+
+.book-spine-card.variant-3 {
+  background-color: #183e27;
+}
+
+/* Book Spine Binder Line Details */
+.book-binding-lines {
+  position: absolute;
+  top: 0;
+  left: 10px;
+  height: 100%;
+  width: 4px;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.binding-line {
+  width: 1px;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.25);
+}
+
+.book-spine-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.book-type-badge {
+  font-size: 0.65rem;
+  font-family: monospace;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+}
+
+.book-type-badge.pdf {
+  border-color: rgba(252, 165, 165, 0.6);
+  color: #fca5a5;
+  background-color: rgba(153, 27, 27, 0.3);
+}
+
+.book-type-badge.ppt,
+.book-type-badge.pptx {
+  border-color: rgba(147, 197, 253, 0.6);
+  color: #93c5fd;
+  background-color: rgba(30, 58, 138, 0.3);
+}
+
+.book-type-badge.md {
+  border-color: rgba(110, 231, 183, 0.6);
+  color: #6ee7b7;
+  background-color: rgba(6, 95, 70, 0.3);
+}
+
+.book-delete-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  padding: 0.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.book-spine-card:hover .book-delete-btn {
+  opacity: 1;
+}
+
+.book-delete-btn:hover {
+  color: #fca5a5;
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+.book-spine-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 0.4rem;
+  padding: 0 0.2rem;
+}
+
+.book-spine-icon {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.book-spine-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
+.book-spine-footer {
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.book-progress-ribbon {
+  font-size: 0.65rem;
+  font-family: monospace;
+  color: #e2f0d9;
+  background-color: rgba(255, 255, 255, 0.15);
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: inline-block;
+}
+
+.book-unread-tag {
+  font-size: 0.65rem;
+  font-family: monospace;
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
+}

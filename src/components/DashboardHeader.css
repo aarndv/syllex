@@ -1,16 +1,21 @@
 .dashboard-header-card {
-  background-color: #ffffff;
-  border: 1px solid #e2d9c8;
+  background-color: rgba(22, 62, 38, 0.75);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
   border-radius: 8px;
   padding: 1.5rem 1.75rem;
   margin-bottom: 1.75rem;
-  box-shadow: 0 4px 12px rgba(27, 54, 39, 0.04);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 1.5rem;
   flex-wrap: wrap;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dashboard-header-card:hover {
+  border-color: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .dashboard-header-main {
@@ -30,24 +35,25 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  background-color: #f7f3eb;
-  color: #1b3627;
-  border: 1px solid #e2d9c8;
-  padding: 0.15rem 0.5rem;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 0.2rem 0.65rem;
   border-radius: 4px;
 }
 
 .dashboard-date-text {
   font-size: 0.8rem;
-  color: #737373;
+  color: #e2f0d9;
   font-weight: 500;
+  opacity: 0.85;
 }
 
 .dashboard-greeting-title {
   margin: 0 0 0.35rem 0;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1b3627;
+  color: #ffffff;
   letter-spacing: -0.01em;
   line-height: 1.3;
 }
@@ -55,18 +61,18 @@
 .dashboard-motivational-subtitle {
   margin: 0;
   font-size: 0.85rem;
-  color: #525252;
+  color: #e2f0d9;
   font-style: italic;
   line-height: 1.4;
-  opacity: 0.9;
+  opacity: 0.85;
 }
 
 .dashboard-stats-strip {
   display: flex;
   align-items: center;
   gap: 1.25rem;
-  background-color: #fcfaf7;
-  border: 1px solid #efeae1;
+  background-color: rgba(14, 40, 24, 0.85);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
   padding: 0.75rem 1.25rem;
   border-radius: 6px;
 }
@@ -81,7 +87,7 @@
 .stat-value {
   font-size: 1.35rem;
   font-weight: 700;
-  color: #1b3627;
+  color: #ffffff;
   line-height: 1.1;
 }
 
@@ -90,46 +96,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #737373;
+  color: #e2f0d9;
   margin-top: 0.2rem;
-}
-
-/* Dark mode styles */
-@media (prefers-color-scheme: dark) {
-  .dashboard-header-card {
-    background-color: #142a1d;
-    border-color: #264a34;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  .dashboard-time-badge {
-    background-color: #1b3627;
-    color: #fbf9f4;
-    border-color: #264a34;
-  }
-
-  .dashboard-date-text {
-    color: #a3a3a3;
-  }
-
-  .dashboard-greeting-title {
-    color: #fbf9f4;
-  }
-
-  .dashboard-motivational-subtitle {
-    color: #cbd5e1;
-  }
-
-  .dashboard-stats-strip {
-    background-color: #1b3627;
-    border-color: #264a34;
-  }
-
-  .stat-value {
-    color: #fbf9f4;
-  }
-
-  .stat-label {
-    color: #a3a3a3;
-  }
+  opacity: 0.8;
 }
