@@ -282,6 +282,15 @@ body {
   border-radius: 3px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  display: inline-block;
+  min-width: 2.2rem;
+  text-align: center;
+}
+
+.tree-type-pill.dir {
+  background-color: #efeae1;
+  color: #1b3627;
+  border: 1px solid #d4ceb8;
 }
 
 .tree-type-pill.pdf {
@@ -369,5 +378,11 @@ body {
     background-color: #1b3627;
     border-color: #264a34;
     color: #fbf9f4;
+  }
+
+  .tree-type-pill.dir {
+    background-color: #1b3627;
+    color: #fbf9f4;
+    border-color: #264a34;
   }
 }

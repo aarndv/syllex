@@ -60,6 +60,7 @@ Adding or replacing a major dependency requires an entry in `docs/DECISIONS.md` 
 ## Change discipline
 
 - Work on one roadmap item or narrowly described task at a time.
+- Always stage, commit, and push changes to git whenever a task or file change is made, unless explicitly instructed otherwise by the user.
 - Prefer the smallest change that fully satisfies the task.
 - Do not refactor unrelated code.
 - Do not silently change documented requirements.

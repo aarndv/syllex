@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { VaultNode, VaultNodeType } from "../types/vault";
 
 interface FileTreeProps {
@@ -9,7 +9,7 @@ interface FileTreeProps {
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
 }
 
-export const FileTree: React.FC<FileTreeProps> = ({
+export const FileTree: React.FC<FileTreeProps> = React.memo(({
   nodes,
   activePath,
   onSelectFile,
@@ -37,7 +37,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
       )}
     </div>
   );
-};
+});
 
 const FileTreeNode: React.FC<{
   node: VaultNode;
@@ -46,15 +46,27 @@ const FileTreeNode: React.FC<{
   onSelectFile: (node: VaultNode) => void;
   onAddFile: (targetFolderRelPath?: string) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
-}> = ({ node, depth, activePath, onSelectFile, onAddFile, onRemoveItem }) => {
-  const [isOpen, setIsOpen] = useState<boolean>(true);
+}> = React.memo(({ node, depth, activePath, onSelectFile, onAddFile, onRemoveItem }) => {
+  // Check if active path is inside this folder tree to auto-expand only active lineage
+  const containsActive = useMemo(() => {
+    if (!activePath) return false;
+    return activePath.startsWith(node.relative_path + "/");
+  }, [activePath, node.relative_path]);
+
+  // Start with all subfolders closed by default unless it contains active file
+  const [isOpen, setIsOpen] = useState<boolean>(containsActive);
+
   const isFolder = node.node_type === "Folder";
 
-  function getFileTypeLabel(type: VaultNodeType): string {
+  function getThreeLetterBadge(type: VaultNodeType): string {
     if (typeof type === "object" && "File" in type) {
-      return type.File;
+      const raw = type.File.toUpperCase();
+      if (raw === "PPTX" || raw === "PPT") return "PPT";
+      if (raw === "PDF") return "PDF";
+      if (raw === "MD") return "MD";
+      return raw.slice(0, 3);
     }
-    return "Folder";
+    return "DIR";
   }
 
   if (isFolder) {
@@ -62,11 +74,11 @@ const FileTreeNode: React.FC<{
       <li className="tree-item-group">
         <div
           className="tree-row folder-row"
-          style={{ paddingLeft: `${depth * 1.2 + 0.5}rem` }}
+          style={{ paddingLeft: `${depth * 0.8 + 0.4}rem` }}
           onClick={() => setIsOpen((prev) => !prev)}
         >
           <span className="tree-chevron">{isOpen ? "▾" : "▸"}</span>
-          <span className="tree-folder-icon">📁</span>
+          <span className="tree-type-pill dir">DIR</span>
           <span className="tree-label folder-label">{node.name}</span>
 
           <div className="tree-item-actions">
@@ -98,7 +110,7 @@ const FileTreeNode: React.FC<{
             {node.children.length === 0 ? (
               <li
                 className="tree-empty-sub"
-                style={{ paddingLeft: `${(depth + 1) * 1.2 + 1.2}rem` }}
+                style={{ paddingLeft: `${(depth + 1) * 0.8 + 1.2}rem` }}
               >
                 (Empty directory)
               </li>
@@ -121,18 +133,18 @@ const FileTreeNode: React.FC<{
     );
   }
 
-  const fileTypeStr = getFileTypeLabel(node.node_type);
+  const badgeStr = getThreeLetterBadge(node.node_type);
   const isActive = activePath === node.relative_path;
 
   return (
     <li className="tree-item-single">
       <div
         className={`tree-row file-row ${isActive ? "is-active" : ""}`}
-        style={{ paddingLeft: `${depth * 1.2 + 1.4}rem` }}
+        style={{ paddingLeft: `${depth * 0.8 + 1.2}rem` }}
         onClick={() => onSelectFile(node)}
       >
-        <span className={`tree-type-pill ${fileTypeStr.toLowerCase()}`}>
-          {fileTypeStr}
+        <span className={`tree-type-pill ${badgeStr.toLowerCase()}`}>
+          {badgeStr}
         </span>
         <span className="tree-label file-label">{node.name}</span>
 
@@ -149,4 +161,4 @@ const FileTreeNode: React.FC<{
       </div>
     </li>
   );
-};
+});
