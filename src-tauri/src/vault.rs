@@ -316,9 +316,9 @@ mod tests {
 
         let res = scan_vault(root_path).unwrap();
 
-        assert_eq!(res.courses.len(), 1);
-        assert_eq!(res.courses[0].name, "CS101");
-        assert_eq!(res.courses[0].modules.len(), 2);
+        assert_eq!(res.root_nodes.len(), 1);
+        assert_eq!(res.root_nodes[0].name, "CS101");
+        assert_eq!(res.root_nodes[0].children.len(), 2);
 
         // Verify source files are untouched
         let post_pdf_meta = fs::metadata(&pdf_path).unwrap();
