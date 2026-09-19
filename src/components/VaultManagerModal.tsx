@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { VaultSummary } from "../types/vault";
+import { FolderIcon, CloseIcon, PlusIcon } from "./Icons";
 import "./VaultManagerModal.css";
 
 interface VaultManagerModalProps {
@@ -118,7 +119,7 @@ export const VaultManagerModal: React.FC<VaultManagerModalProps> = ({
         <header className="vault-manager-header">
           <h2>Vault Manager</h2>
           <button onClick={onClose} className="modal-close-btn" title="Close modal">
-            ✕
+            <CloseIcon size={16} />
           </button>
         </header>
 
@@ -138,7 +139,9 @@ export const VaultManagerModal: React.FC<VaultManagerModalProps> = ({
               </button>
             </div>
             <div className="default-path-box">
-              <span className="path-icon">📂</span>
+              <span className="path-icon">
+                <FolderIcon size={16} />
+              </span>
               <span className="path-text">
                 {defaultVaultsRoot ? defaultVaultsRoot : "No default storage location configured"}
               </span>
@@ -148,7 +151,7 @@ export const VaultManagerModal: React.FC<VaultManagerModalProps> = ({
           {/* Create New Vault Button */}
           <section className="manager-section create-section">
             <button onClick={handleCreateNewVault} className="primary-btn full-width">
-              ➕ Create New Vault
+              <PlusIcon size={16} /> Create New Vault
             </button>
           </section>
 
@@ -175,7 +178,9 @@ export const VaultManagerModal: React.FC<VaultManagerModalProps> = ({
                         }}
                       >
                         <div className="subvault-info">
-                          <span className="subvault-name">📂 {vault.name}</span>
+                          <span className="subvault-name">
+                            <FolderIcon size={14} /> {vault.name}
+                          </span>
                           <span className="subvault-count">
                             {vault.file_count} {vault.file_count === 1 ? "module" : "modules"}
                           </span>
@@ -209,3 +214,4 @@ export const VaultManagerModal: React.FC<VaultManagerModalProps> = ({
     </div>
   );
 };
+

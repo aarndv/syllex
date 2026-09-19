@@ -6,10 +6,13 @@ import { FileTree } from "./components/FileTree";
 import { PdfViewer } from "./components/PdfViewer";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { VaultManagerModal } from "./components/VaultManagerModal";
+import { SettingsModal, AppSettings, DEFAULT_SETTINGS } from "./components/SettingsModal";
+import { PlusIcon, FolderIcon, FileIcon, SwitchIcon, CloseIcon, SettingsIcon } from "./components/Icons";
 import "./App.css";
 
 const VAULT_STORAGE_KEY = "syllex_selected_vault_path";
 const DEFAULT_VAULTS_ROOT_KEY = "syllex_default_vaults_root_path";
+const SETTINGS_STORAGE_KEY = "syllex_app_settings";
 
 function App() {
   const [vaultPath, setVaultPath] = useState<string | null>(null);
@@ -20,6 +23,26 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState<boolean>(false);
   const [isVaultManagerOpen, setIsVaultManagerOpen] = useState<boolean>(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (saved) {
+      try {
+        return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+      } catch {
+        return DEFAULT_SETTINGS;
+      }
+    }
+    return DEFAULT_SETTINGS;
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", settings.theme);
+    document.documentElement.setAttribute("data-font-style", settings.fontStyle);
+    document.documentElement.setAttribute("data-font-size", settings.fontSize);
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  }, [settings]);
 
   useEffect(() => {
     const savedPath = localStorage.getItem(VAULT_STORAGE_KEY);
@@ -166,6 +189,16 @@ function App() {
 
   return (
     <div className="app-layout">
+      {isSettingsOpen && (
+        <SettingsModal
+          settings={settings}
+          defaultVaultsRoot={defaultVaultsRoot}
+          onUpdateSettings={setSettings}
+          onSetDefaultVaultsRoot={handleSetDefaultVaultsRoot}
+          onClose={() => setIsSettingsOpen(false)}
+        />
+      )}
+
       {isVaultManagerOpen && (
         <VaultManagerModal
           currentVaultPath={vaultPath}
@@ -190,6 +223,13 @@ function App() {
 
       <header className="app-header">
         <h1>Syllex</h1>
+        <button
+          onClick={() => setIsSettingsOpen(true)}
+          className="icon-btn secondary-icon-btn"
+          title="Open Settings"
+        >
+          <SettingsIcon size={18} />
+        </button>
       </header>
 
       <div className="app-workspace">
@@ -203,7 +243,7 @@ function App() {
                   className="icon-btn primary-icon-btn"
                   title="Create vault, new folder, or add module"
                 >
-                  +
+                  <PlusIcon size={16} />
                 </button>
                 {isPlusMenuOpen && (
                   <div className="plus-dropdown">
@@ -213,7 +253,7 @@ function App() {
                         setIsVaultManagerOpen(true);
                       }}
                     >
-                      ➕ Create / Manage Vaults
+                      <PlusIcon size={14} /> Create / Manage Vaults
                     </button>
                     {vaultPath && (
                       <>
@@ -223,7 +263,7 @@ function App() {
                             handleCreateFolder();
                           }}
                         >
-                          📁 New Folder
+                          <FolderIcon size={14} /> New Folder
                         </button>
                         <button
                           onClick={() => {
@@ -231,7 +271,7 @@ function App() {
                             handleAddModule();
                           }}
                         >
-                          📄 Add Module
+                          <FileIcon size={14} /> Add Module
                         </button>
                       </>
                     )}
@@ -245,7 +285,7 @@ function App() {
                   className="icon-btn secondary-icon-btn"
                   title="Switch / Manage Vaults"
                 >
-                  ⇄
+                  <SwitchIcon size={16} />
                 </button>
               ) : (
                 <button onClick={() => setIsVaultManagerOpen(true)} className="primary-btn">
@@ -259,7 +299,7 @@ function App() {
                   className="icon-btn close-icon-btn"
                   title="Close Vault"
                 >
-                  ✕
+                  <CloseIcon size={16} />
                 </button>
               )}
             </div>
@@ -313,7 +353,9 @@ function App() {
                 <div className="tree-explorer-card">
                   <div className="tree-card-header">
                     <span className="tree-card-vault-path" title={scanResult.root_path}>
-                      <span className="path-icon">📂</span>
+                      <span className="path-icon">
+                        <FolderIcon size={14} />
+                      </span>
                       <span className="path-text">{scanResult.root_path}</span>
                     </span>
                   </div>

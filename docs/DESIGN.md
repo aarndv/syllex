@@ -85,6 +85,6 @@ Application
   - **Accents & Badges:** Warm Gold / Amber (`#d97706` / `#b45309`) for primary actions and file tags.
   - **Typography Color:** Deep Charcoal (`#262626`) for maximum legibility on parchment background.
 - **Typography:** Full Academic Serif (`Georgia`, `Garamond`, `Playfair Display`, or serif system font) across headers, course index cards, buttons, and badges.
-- **Icon & Card Style:** Traditional Library Index Cards with subtle borders, book/journal badge icons, and paper-card elevation shadows (`0 4px 12px rgba(27, 54, 39, 0.08)`).
+- **Icon & Card Style:** Traditional Library Index Cards with subtle borders, book/journal badge icons, and paper-card elevation shadows (`0 4px 12px rgba(27, 54, 39, 0.08)`). **Icons Directive:** Never use emojis for UI icons, buttons, labels, badges, or tree elements. Use vector SVG icons, clean CSS glyphs, or explicit typography labels.
 - **Density and Spacing:** Generous Library Desk spacing with distinct card margins and clear academic typography hierarchy.
 - **Application Logo:** Placeholder styled as a traditional library seal / emblem.

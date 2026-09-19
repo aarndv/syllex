@@ -3,6 +3,7 @@ import * as pdfjsLib from "pdfjs-dist";
 import { invoke } from "@tauri-apps/api/core";
 import { VaultNode } from "../types/vault";
 import { FileTree } from "./FileTree";
+import { FolderIcon, CloseIcon } from "./Icons";
 import "./PdfViewer.css";
 
 // Set worker source to CDN / bundled worker URL
@@ -221,13 +222,15 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     <div className={`pdf-viewer-overlay ${isDrawerOpen ? "drawer-open" : "drawer-closed"}`}>
       <aside className="pdf-drawer">
         <div className="drawer-header">
-          <h3>📂 Vault Explorer</h3>
+          <h3>
+            <FolderIcon size={16} /> Vault Explorer
+          </h3>
           <button
             onClick={() => setIsDrawerOpen(false)}
             className="drawer-toggle-btn"
             title="Collapse sidebar"
           >
-            ◀
+            <CloseIcon size={14} />
           </button>
         </div>
         <div className="drawer-tree-container">
@@ -250,24 +253,24 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                 className="drawer-toggle-btn expand"
                 title="Expand sidebar"
               >
-                📂 Files
+                <FolderIcon size={14} /> Files
               </button>
             )}
             <button onClick={onClose} className="close-btn">
-              ✕ Back
+              <CloseIcon size={14} /> Back
             </button>
             <span className="doc-title">{node.name}</span>
           </div>
 
           <div className="toolbar-center">
             <button onClick={handlePrevPage} disabled={currentPage <= 1}>
-              ◀ Prev
+              Prev
             </button>
             <span className="page-indicator">
               Page {currentPage} of {numPages || 1}
             </span>
             <button onClick={handleNextPage} disabled={currentPage >= numPages}>
-              Next ▶
+              Next
             </button>
           </div>
 
@@ -278,13 +281,13 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               className={`view-mode-select ${viewMode}`}
               title="Select Reading Filter Mode (Shortcut: Press 'D' to cycle)"
             >
-              <option value="original">☀️ Original</option>
-              <option value="fast-dark">🌙 Fast Dark</option>
-              <option value="sepia">📜 Warm Sepia</option>
-              <option value="dark-sepia">🕯️ Midnight Sepia</option>
-              <option value="grayscale">📷 Grayscale</option>
-              <option value="high-contrast-dark">⚡ High Contrast</option>
-              <option value="ocean-dark">🌊 Ocean Dark</option>
+              <option value="original">Original</option>
+              <option value="fast-dark">Fast Dark Mode</option>
+              <option value="sepia">Warm Sepia</option>
+              <option value="dark-sepia">Midnight Sepia</option>
+              <option value="grayscale">Monochrome Grayscale</option>
+              <option value="high-contrast-dark">High Contrast Dark</option>
+              <option value="ocean-dark">Ocean Dark Blue</option>
             </select>
             <button onClick={handleZoomOut} disabled={zoom <= 0.5}>
               -

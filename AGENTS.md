@@ -23,6 +23,7 @@ Do not treat unresolved items as permission to invent requirements.
 - Application metadata belongs in the platform application-data directory.
 - Do not synchronize a live SQLite database through a file-sync service.
 - Do not introduce accounts, telemetry, advertisements, cloud storage, a web server, or remote AI features unless explicitly approved.
+- Never use emojis for UI icons, buttons, labels, badges, or tree elements. Use clean SVG icons, CSS glyphs, or explicit typography labels.
 - The Syllex name is established, but visual branding and theme are intentionally undecided. Do not invent a visual system.
 
 ## Approved baseline stack

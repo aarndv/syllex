@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { VaultNode, VaultNodeType } from "../types/vault";
+import { PlusIcon, CloseIcon } from "./Icons";
 
 interface FileTreeProps {
   nodes: VaultNode[];
@@ -89,7 +90,7 @@ const FileTreeNode: React.FC<{
               className="tree-mini-btn"
               title="Add file to folder"
             >
-              +
+              <PlusIcon size={12} />
             </button>
             <button
               onClick={(e) => {
@@ -99,7 +100,7 @@ const FileTreeNode: React.FC<{
               className="tree-mini-btn delete"
               title="Delete folder"
             >
-              ✕
+              <CloseIcon size={12} />
             </button>
           </div>
         </div>
@@ -152,7 +153,7 @@ const FileTreeNode: React.FC<{
           className="tree-mini-btn delete"
           title="Delete file"
         >
-          ✕
+          <CloseIcon size={12} />
         </button>
       </div>
     </li>
