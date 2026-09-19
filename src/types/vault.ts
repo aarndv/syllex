@@ -1,20 +1,16 @@
 export type ModuleFileType = 'Pdf' | 'Ppt' | 'Pptx' | 'Md';
 
-export interface ModuleItem {
-  relative_path: string;
-  file_name: string;
-  file_type: ModuleFileType;
-  size_bytes: number;
-}
+export type VaultNodeType = { File: ModuleFileType } | 'Folder';
 
-export interface CourseItem {
+export interface VaultNode {
   name: string;
   relative_path: string;
-  modules: ModuleItem[];
+  node_type: VaultNodeType;
+  size_bytes?: number;
+  children: VaultNode[];
 }
 
 export interface VaultScanResult {
   root_path: string;
-  courses: CourseItem[];
-  root_modules: ModuleItem[];
+  root_nodes: VaultNode[];
 }

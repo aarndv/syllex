@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import { invoke } from "@tauri-apps/api/core";
-import { ModuleItem } from "../types/vault";
+import { VaultNode } from "../types/vault";
+import { FileTree } from "./FileTree";
 import "./PdfViewer.css";
 
 // Set worker source to CDN / bundled worker URL
@@ -9,11 +10,24 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs
 
 interface PdfViewerProps {
   vaultRoot: string;
-  module: ModuleItem;
+  node: VaultNode;
+  allNodes: VaultNode[];
+  onSelectNode: (node: VaultNode) => void;
+  onAddFile: (folderRelPath?: string) => void;
+  onRemoveItem: (relPath: string, isFolder: boolean) => void;
   onClose: () => void;
 }
 
-export const PdfViewer: React.FC<PdfViewerProps> = ({ vaultRoot, module, onClose }) => {
+export const PdfViewer: React.FC<PdfViewerProps> = ({
+  vaultRoot,
+  node,
+  allNodes,
+  onSelectNode,
+  onAddFile,
+  onRemoveItem,
+  onClose,
+}) => {
+  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(true);
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -24,7 +38,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ vaultRoot, module, onClose
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const renderTaskRef = useRef<any>(null);
 
-  const storageKey = `syllex_progress_${module.relative_path}`;
+  const storageKey = `syllex_progress_${node.relative_path}`;
 
   useEffect(() => {
     const savedPage = localStorage.getItem(storageKey);
@@ -34,7 +48,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ vaultRoot, module, onClose
         setCurrentPage(pageNum);
       }
     }
-  }, [module.relative_path]);
+  }, [node.relative_path]);
 
   useEffect(() => {
     let isMounted = true;
@@ -45,7 +59,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ vaultRoot, module, onClose
       try {
         const fileBytes = await invoke<number[]>("read_module_bytes", {
           vaultRoot,
-          relativePath: module.relative_path,
+          relativePath: node.relative_path,
         });
 
         const uint8Array = new Uint8Array(fileBytes);
@@ -70,7 +84,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ vaultRoot, module, onClose
     return () => {
       isMounted = false;
     };
-  }, [vaultRoot, module.relative_path]);
+  }, [vaultRoot, node.relative_path]);
 
   useEffect(() => {
     if (!pdfDoc || currentPage < 1 || currentPage > numPages) return;
@@ -141,55 +155,109 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ vaultRoot, module, onClose
     setZoom((prev) => Math.max(prev - 0.2, 0.5));
   }
 
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "ArrowLeft") {
+        handlePrevPage();
+      } else if (e.key === "ArrowRight") {
+        handleNextPage();
+      } else if (e.key === "+" || e.key === "=") {
+        handleZoomIn();
+      } else if (e.key === "-") {
+        handleZoomOut();
+      } else if (e.key === "Escape") {
+        onClose();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [currentPage, numPages, zoom]);
+
   return (
-    <div className="pdf-viewer-overlay">
-      <header className="pdf-viewer-toolbar">
-        <div className="toolbar-left">
-          <button onClick={onClose} className="close-btn">
-            ✕ Back
-          </button>
-          <span className="doc-title">{module.file_name}</span>
-        </div>
-
-        <div className="toolbar-center">
-          <button onClick={handlePrevPage} disabled={currentPage <= 1}>
-            ◀ Prev
-          </button>
-          <span className="page-indicator">
-            Page {currentPage} of {numPages || 1}
-          </span>
-          <button onClick={handleNextPage} disabled={currentPage >= numPages}>
-            Next ▶
+    <div className={`pdf-viewer-overlay ${isDrawerOpen ? "drawer-open" : "drawer-closed"}`}>
+      <aside className="pdf-drawer">
+        <div className="drawer-header">
+          <h3>📂 Vault Explorer</h3>
+          <button
+            onClick={() => setIsDrawerOpen(false)}
+            className="drawer-toggle-btn"
+            title="Collapse sidebar"
+          >
+            ◀
           </button>
         </div>
-
-        <div className="toolbar-right">
-          <button onClick={handleZoomOut} disabled={zoom <= 0.5}>
-            -
-          </button>
-          <span className="zoom-indicator">{Math.round(zoom * 100)}%</span>
-          <button onClick={handleZoomIn} disabled={zoom >= 3.0}>
-            +
-          </button>
+        <div className="drawer-tree-container">
+          <FileTree
+            nodes={allNodes}
+            activePath={node.relative_path}
+            onSelectFile={onSelectNode}
+            onAddFile={onAddFile}
+            onRemoveItem={onRemoveItem}
+          />
         </div>
-      </header>
+      </aside>
 
-      <main className="pdf-viewer-body">
-        {loading && <div className="pdf-loading">Loading PDF document...</div>}
-
-        {error && (
-          <div className="pdf-error">
-            <p><strong>Error loading document:</strong> {error}</p>
-            <p className="subtext">The PDF file may be protected or corrupted.</p>
+      <div className="pdf-main-area">
+        <header className="pdf-viewer-toolbar">
+          <div className="toolbar-left">
+            {!isDrawerOpen && (
+              <button
+                onClick={() => setIsDrawerOpen(true)}
+                className="drawer-toggle-btn expand"
+                title="Expand sidebar"
+              >
+                📂 Files
+              </button>
+            )}
+            <button onClick={onClose} className="close-btn">
+              ✕ Back
+            </button>
+            <span className="doc-title">{node.name}</span>
           </div>
-        )}
 
-        {!loading && !error && (
-          <div className="canvas-container">
-            <canvas ref={canvasRef} />
+          <div className="toolbar-center">
+            <button onClick={handlePrevPage} disabled={currentPage <= 1}>
+              ◀ Prev
+            </button>
+            <span className="page-indicator">
+              Page {currentPage} of {numPages || 1}
+            </span>
+            <button onClick={handleNextPage} disabled={currentPage >= numPages}>
+              Next ▶
+            </button>
           </div>
-        )}
-      </main>
+
+          <div className="toolbar-right">
+            <button onClick={handleZoomOut} disabled={zoom <= 0.5}>
+              -
+            </button>
+            <span className="zoom-indicator">{Math.round(zoom * 100)}%</span>
+            <button onClick={handleZoomIn} disabled={zoom >= 3.0}>
+              +
+            </button>
+          </div>
+        </header>
+
+        <main className="pdf-viewer-body">
+          {loading && <div className="pdf-loading">Loading PDF document...</div>}
+
+          {error && (
+            <div className="pdf-error">
+              <p><strong>Error loading document:</strong> {error}</p>
+              <p className="subtext">The PDF file may be protected or corrupted.</p>
+            </div>
+          )}
+
+          {!loading && !error && (
+            <div className="canvas-container">
+              <canvas ref={canvasRef} />
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 };

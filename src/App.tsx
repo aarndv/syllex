@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
-import { VaultScanResult, CourseItem, ModuleItem } from "./types/vault";
+import { VaultScanResult, VaultNode } from "./types/vault";
+import { FileTree } from "./components/FileTree";
 import { PdfViewer } from "./components/PdfViewer";
 import "./App.css";
 
@@ -10,7 +11,7 @@ const VAULT_STORAGE_KEY = "syllex_selected_vault_path";
 function App() {
   const [vaultPath, setVaultPath] = useState<string | null>(null);
   const [scanResult, setScanResult] = useState<VaultScanResult | null>(null);
-  const [activeModule, setActiveModule] = useState<ModuleItem | null>(null);
+  const [activeNode, setActiveNode] = useState<VaultNode | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,10 +59,11 @@ function App() {
     localStorage.removeItem(VAULT_STORAGE_KEY);
     setVaultPath(null);
     setScanResult(null);
+    setActiveNode(null);
     setError(null);
   }
 
-  async function handleAddModule(targetCourseRelPath?: string) {
+  async function handleAddModule(targetFolderRelPath?: string) {
     if (!vaultPath) return;
     try {
       const selected = await open({
@@ -79,7 +81,7 @@ function App() {
       if (selected && typeof selected === "string") {
         await invoke("add_module_to_vault", {
           vaultRoot: vaultPath,
-          targetCourseRelPath: targetCourseRelPath || null,
+          targetCourseRelPath: targetFolderRelPath || null,
           sourceFilePath: selected,
         });
         await scanVault(vaultPath);
@@ -89,21 +91,67 @@ function App() {
     }
   }
 
-  function handleOpenModule(mod: ModuleItem) {
-    if (mod.file_type === "Pdf") {
-      setActiveModule(mod);
+  async function handleCreateFolder() {
+    if (!vaultPath) return;
+    const folderName = window.prompt("Enter new folder name (e.g. CS101 or CS101/Lectures):");
+    if (!folderName || !folderName.trim()) return;
+
+    try {
+      await invoke("create_folder", {
+        vaultRoot: vaultPath,
+        relativePath: folderName.trim(),
+      });
+      await scanVault(vaultPath);
+    } catch (err: any) {
+      setError(typeof err === "string" ? err : err.message || "Failed to create folder");
+    }
+  }
+
+  async function handleRemoveItem(relativePath: string, isFolder: boolean) {
+    if (!vaultPath) return;
+    const confirmMsg = isFolder
+      ? `Are you sure you want to remove the folder "${relativePath}" and all its contents?`
+      : `Are you sure you want to remove "${relativePath}"?`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      await invoke("remove_item", {
+        vaultRoot: vaultPath,
+        relativePath,
+      });
+      if (activeNode?.relative_path === relativePath) {
+        setActiveNode(null);
+      }
+      await scanVault(vaultPath);
+    } catch (err: any) {
+      setError(typeof err === "string" ? err : err.message || "Failed to remove item");
+    }
+  }
+
+  function handleSelectFileNode(node: VaultNode) {
+    const isFile = typeof node.node_type === "object" && "File" in node.node_type;
+    if (!isFile) return;
+
+    const fileType = (node.node_type as { File: string }).File;
+    if (fileType === "Pdf") {
+      setActiveNode(node);
     } else {
-      setError(`Opening ${mod.file_type} files directly in viewer is coming in later milestones.`);
+      setError(`Viewing ${fileType} files is coming in later milestones.`);
     }
   }
 
   return (
     <div className="app-layout">
-      {activeModule && vaultPath && (
+      {activeNode && vaultPath && scanResult && (
         <PdfViewer
           vaultRoot={vaultPath}
-          module={activeModule}
-          onClose={() => setActiveModule(null)}
+          node={activeNode}
+          allNodes={scanResult.root_nodes}
+          onSelectNode={handleSelectFileNode}
+          onAddFile={handleAddModule}
+          onRemoveItem={handleRemoveItem}
+          onClose={() => setActiveNode(null)}
         />
       )}
 
@@ -111,9 +159,14 @@ function App() {
         <h1>Syllex</h1>
         <div className="vault-actions">
           {vaultPath && (
-            <button onClick={() => handleAddModule()} className="primary-btn">
-              + Add Module
-            </button>
+            <>
+              <button onClick={handleCreateFolder} className="primary-btn">
+                + New Folder
+              </button>
+              <button onClick={() => handleAddModule()} className="primary-btn">
+                + Add Module
+              </button>
+            </>
           )}
           <button onClick={handleSelectVault} className="secondary-btn">
             {vaultPath ? "Change Vault" : "Select Vault"}
@@ -145,7 +198,7 @@ function App() {
 
         {loading && (
           <div className="loading-state">
-            <p>Scanning vault modules...</p>
+            <p>Scanning vault directory tree...</p>
           </div>
         )}
 
@@ -155,79 +208,27 @@ function App() {
               <h3>Vault Root: <code>{scanResult.root_path}</code></h3>
             </div>
 
-            {scanResult.courses.length === 0 && scanResult.root_modules.length === 0 ? (
+            {scanResult.root_nodes.length === 0 ? (
               <div className="empty-state">
-                <p>No supported course modules (.pdf, .ppt, .pptx, .md) found in this vault.</p>
+                <p>No files or folders found in this vault.</p>
                 <button onClick={() => handleAddModule()} className="primary-btn">
                   Add First Module
                 </button>
               </div>
             ) : (
-              <div className="courses-grid">
-                {scanResult.courses.map((course: CourseItem) => (
-                  <section key={course.relative_path} className="course-card">
-                    <div className="course-card-header">
-                      <h4>📚 {course.name}</h4>
-                      <button
-                        onClick={() => handleAddModule(course.relative_path)}
-                        className="add-file-btn"
-                        title="Add file to this course"
-                      >
-                        + Add File
-                      </button>
-                    </div>
-                    <p className="module-count">{course.modules.length} module(s)</p>
-                    <ul className="module-list">
-                      {course.modules.map((mod: ModuleItem) => (
-                        <li
-                          key={mod.relative_path}
-                          className="module-item clickable"
-                          onClick={() => handleOpenModule(mod)}
-                        >
-                          <span className={`file-tag ${mod.file_type.toLowerCase()}`}>
-                            {mod.file_type}
-                          </span>
-                          <span className="file-name">{mod.file_name}</span>
-                          <span className="file-size">
-                            {(mod.size_bytes / 1024).toFixed(1)} KB
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                ))}
-
-                {scanResult.root_modules.length > 0 && (
-                  <section className="course-card unassigned">
-                    <div className="course-card-header">
-                      <h4>📄 General Modules</h4>
-                      <button
-                        onClick={() => handleAddModule()}
-                        className="add-file-btn"
-                        title="Add file to vault root"
-                      >
-                        + Add File
-                      </button>
-                    </div>
-                    <ul className="module-list">
-                      {scanResult.root_modules.map((mod: ModuleItem) => (
-                        <li
-                          key={mod.relative_path}
-                          className="module-item clickable"
-                          onClick={() => handleOpenModule(mod)}
-                        >
-                          <span className={`file-tag ${mod.file_type.toLowerCase()}`}>
-                            {mod.file_type}
-                          </span>
-                          <span className="file-name">{mod.file_name}</span>
-                          <span className="file-size">
-                            {(mod.size_bytes / 1024).toFixed(1)} KB
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                )}
+              <div className="tree-explorer-card">
+                <div className="tree-card-header">
+                  <h4>📂 Course Directory Tree</h4>
+                </div>
+                <div className="tree-card-body">
+                  <FileTree
+                    nodes={scanResult.root_nodes}
+                    activePath={activeNode?.relative_path}
+                    onSelectFile={handleSelectFileNode}
+                    onAddFile={handleAddModule}
+                    onRemoveItem={handleRemoveItem}
+                  />
+                </div>
               </div>
             )}
           </div>

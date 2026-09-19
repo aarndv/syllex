@@ -19,6 +19,16 @@ fn read_module_bytes(vault_root: String, relative_path: String) -> Result<Vec<u8
     vault::read_module_bytes(vault_root, &relative_path)
 }
 
+#[tauri::command]
+fn create_folder(vault_root: String, relative_path: String) -> Result<(), String> {
+    vault::create_folder(vault_root, &relative_path)
+}
+
+#[tauri::command]
+fn remove_item(vault_root: String, relative_path: String) -> Result<(), String> {
+    vault::remove_item(vault_root, &relative_path)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -27,7 +37,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             scan_vault,
             add_module_to_vault,
-            read_module_bytes
+            read_module_bytes,
+            create_folder,
+            remove_item
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

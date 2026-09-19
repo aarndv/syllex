@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use std::path::Path;
-use walkdir::WalkDir;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ModuleFileType {
@@ -18,18 +17,25 @@ pub struct ModuleItem {
     pub size_bytes: u64,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum VaultNodeType {
+    File(ModuleFileType),
+    Folder,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CourseItem {
+pub struct VaultNode {
     pub name: String,
     pub relative_path: String,
-    pub modules: Vec<ModuleItem>,
+    pub node_type: VaultNodeType,
+    pub size_bytes: Option<u64>,
+    pub children: Vec<VaultNode>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VaultScanResult {
     pub root_path: String,
-    pub courses: Vec<CourseItem>,
-    pub root_modules: Vec<ModuleItem>,
+    pub root_nodes: Vec<VaultNode>,
 }
 
 /// Recursively scans a selected vault directory.
@@ -47,91 +53,79 @@ pub fn scan_vault<P: AsRef<Path>>(root_path: P) -> Result<VaultScanResult, Strin
         .canonicalize()
         .map_err(|e| format!("Failed to resolve vault path: {}", e))?;
 
-    let mut courses_map: std::collections::BTreeMap<String, Vec<ModuleItem>> =
-        std::collections::BTreeMap::new();
-    let mut root_modules: Vec<ModuleItem> = Vec::new();
+    fn scan_dir(canonical_root: &Path, current_dir: &Path) -> Vec<VaultNode> {
+        let mut nodes = Vec::new();
+        let entries = match std::fs::read_dir(current_dir) {
+            Ok(e) => e,
+            Err(_) => return nodes,
+        };
 
-    for entry in WalkDir::new(&canonical_root)
-        .into_iter()
-        .filter_map(|e| e.ok())
-    {
-        let path = entry.path();
-        if path.is_file() {
-            // Path traversal guard
-            let canonical_file = match path.canonicalize() {
+        let mut entries_vec: Vec<_> = entries.filter_map(|e| e.ok()).collect();
+        entries_vec.sort_by_key(|e| e.file_name());
+
+        for entry in entries_vec {
+            let path = entry.path();
+            let canonical_path = match path.canonicalize() {
                 Ok(c) => c,
                 Err(_) => continue,
             };
 
-            if !canonical_file.starts_with(&canonical_root) {
+            if !canonical_path.starts_with(canonical_root) {
                 continue;
             }
 
-            let ext = match path.extension().and_then(|s| s.to_str()) {
-                Some(e) => e.to_lowercase(),
-                None => continue,
-            };
-
-            let file_type = match ext.as_str() {
-                "pdf" => ModuleFileType::Pdf,
-                "ppt" => ModuleFileType::Ppt,
-                "pptx" => ModuleFileType::Pptx,
-                "md" => ModuleFileType::Md,
-                _ => continue,
-            };
-
-            let rel_path = match path.strip_prefix(&canonical_root) {
+            let name = entry.file_name().to_string_lossy().to_string();
+            let rel_path = match path.strip_prefix(canonical_root) {
                 Ok(r) => r.to_string_lossy().to_string(),
                 Err(_) => continue,
             };
 
-            let file_name = path
-                .file_name()
-                .unwrap_or_default()
-                .to_string_lossy()
-                .to_string();
+            if path.is_dir() {
+                let children = scan_dir(canonical_root, &path);
+                nodes.push(VaultNode {
+                    name,
+                    relative_path: rel_path,
+                    node_type: VaultNodeType::Folder,
+                    size_bytes: None,
+                    children,
+                });
+            } else if path.is_file() {
+                let ext = match path.extension().and_then(|s| s.to_str()) {
+                    Some(e) => e.to_lowercase(),
+                    None => continue,
+                };
 
-            let metadata = match path.metadata() {
-                Ok(m) => m,
-                Err(_) => continue,
-            };
+                let file_type = match ext.as_str() {
+                    "pdf" => ModuleFileType::Pdf,
+                    "ppt" => ModuleFileType::Ppt,
+                    "pptx" => ModuleFileType::Pptx,
+                    "md" => ModuleFileType::Md,
+                    _ => continue,
+                };
 
-            let module = ModuleItem {
-                relative_path: rel_path.clone(),
-                file_name,
-                file_type,
-                size_bytes: metadata.len(),
-            };
+                let metadata = match path.metadata() {
+                    Ok(m) => m,
+                    Err(_) => continue,
+                };
 
-            let components: Vec<_> = path
-                .strip_prefix(&canonical_root)
-                .unwrap_or(Path::new(""))
-                .components()
-                .collect();
-
-            if components.len() > 1 {
-                // First-level folder is the course name
-                let course_name = components[0].as_os_str().to_string_lossy().to_string();
-                courses_map.entry(course_name).or_default().push(module);
-            } else {
-                root_modules.push(module);
+                nodes.push(VaultNode {
+                    name,
+                    relative_path: rel_path,
+                    node_type: VaultNodeType::File(file_type),
+                    size_bytes: Some(metadata.len()),
+                    children: Vec::new(),
+                });
             }
         }
+
+        nodes
     }
 
-    let courses = courses_map
-        .into_iter()
-        .map(|(name, modules)| CourseItem {
-            relative_path: name.clone(),
-            name,
-            modules,
-        })
-        .collect();
+    let root_nodes = scan_dir(&canonical_root, &canonical_root);
 
     Ok(VaultScanResult {
         root_path: canonical_root.to_string_lossy().to_string(),
-        courses,
-        root_modules,
+        root_nodes,
     })
 }
 
@@ -241,6 +235,62 @@ pub fn read_module_bytes<P: AsRef<Path>>(
     }
 
     std::fs::read(&file_canon).map_err(|e| format!("Failed to read module file: {}", e))
+}
+
+/// Creates a new folder inside the vault.
+pub fn create_folder<P: AsRef<Path>>(
+    vault_root: P,
+    relative_path: &str,
+) -> Result<(), String> {
+    let vault_canon = vault_root
+        .as_ref()
+        .canonicalize()
+        .map_err(|e| format!("Invalid vault path: {}", e))?;
+
+    let target_dir = vault_canon.join(relative_path);
+    
+    // Check path traversal
+    let parent = target_dir
+        .parent()
+        .ok_or_else(|| "Invalid folder path".to_string())?;
+    let parent_canon = parent
+        .canonicalize()
+        .map_err(|e| format!("Parent directory does not exist: {}", e))?;
+
+    if !parent_canon.starts_with(&vault_canon) {
+        return Err("Target folder escapes vault boundary".to_string());
+    }
+
+    std::fs::create_dir_all(&target_dir)
+        .map_err(|e| format!("Failed to create folder: {}", e))
+}
+
+/// Removes a folder or module file inside the vault.
+pub fn remove_item<P: AsRef<Path>>(
+    vault_root: P,
+    relative_path: &str,
+) -> Result<(), String> {
+    let vault_canon = vault_root
+        .as_ref()
+        .canonicalize()
+        .map_err(|e| format!("Invalid vault path: {}", e))?;
+
+    let target = vault_canon.join(relative_path);
+    let target_canon = target
+        .canonicalize()
+        .map_err(|e| format!("Target item not found: {}", e))?;
+
+    if !target_canon.starts_with(&vault_canon) || target_canon == vault_canon {
+        return Err("Cannot delete items outside or equal to vault root".to_string());
+    }
+
+    if target_canon.is_dir() {
+        std::fs::remove_dir_all(&target_canon)
+            .map_err(|e| format!("Failed to remove folder: {}", e))
+    } else {
+        std::fs::remove_file(&target_canon)
+            .map_err(|e| format!("Failed to remove file: {}", e))
+    }
 }
 
 #[cfg(test)]

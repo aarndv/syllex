@@ -91,7 +91,7 @@ body {
 
 .app-content {
   flex: 1;
-  padding: 2.5rem;
+  padding: 2.5rem 1.5rem;
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
@@ -144,140 +144,171 @@ body {
   border: 1px solid #e2d9c8;
 }
 
-.courses-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 1.75rem;
-}
-
-/* Library Index Card Style */
-.course-card {
+/* Minimal Tree Explorer Card */
+.tree-explorer-card {
   background-color: #ffffff;
   border: 1px solid #e2d9c8;
   border-top: 4px solid #1b3627;
   border-radius: 6px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(27, 54, 39, 0.06);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 16px rgba(27, 54, 39, 0.06);
+  overflow: hidden;
 }
 
-.course-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(27, 54, 39, 0.1);
-}
-
-.course-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.tree-card-header {
+  background-color: #fcfaf7;
+  padding: 1rem 1.5rem;
   border-bottom: 1px solid #efeae1;
-  padding-bottom: 0.75rem;
-  margin-bottom: 0.75rem;
 }
 
-.course-card h4 {
+.tree-card-header h4 {
   margin: 0;
   font-size: 1.2rem;
-  font-family: "Georgia", serif;
   color: #1b3627;
-}
-
-.add-file-btn {
-  background-color: #fcfaf7;
-  border: 1px solid #d97706;
-  border-radius: 4px;
-  font-size: 0.8rem;
   font-family: "Georgia", serif;
-  font-weight: 600;
-  color: #b45309;
-  padding: 0.25rem 0.6rem;
-  cursor: pointer;
-  transition: all 0.2s;
 }
 
-.add-file-btn:hover {
-  background-color: #d97706;
-  color: #ffffff;
+.tree-card-body {
+  padding: 1rem;
 }
 
-.module-count {
-  font-size: 0.85rem;
-  color: #737373;
-  font-style: italic;
-  margin: 0 0 1rem 0;
+/* Minimal FileTree Component Styling */
+.file-tree-container {
+  font-family: "Georgia", serif;
 }
 
-.module-list {
+.tree-root-list,
+.tree-sub-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-.module-item {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.6rem;
-  border-bottom: 1px solid #f5f0e6;
-  border-radius: 4px;
+.tree-item-group,
+.tree-item-single {
+  margin: 0;
 }
 
-.module-item.clickable {
+.tree-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 4px;
   cursor: pointer;
+  user-select: none;
   transition: background-color 0.15s ease;
 }
 
-.module-item.clickable:hover {
+.tree-row:hover {
   background-color: #f7f3eb;
 }
 
-.module-item:last-child {
-  border-bottom: none;
+.tree-row.is-active {
+  background-color: #efeae1;
+  border-left: 3px solid #d97706;
 }
 
-.file-tag {
-  font-size: 0.7rem;
-  font-family: "Georgia", serif;
-  font-weight: 700;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.tree-chevron {
+  font-size: 0.8rem;
+  color: #737373;
+  width: 1rem;
+  display: inline-block;
+  text-align: center;
 }
 
-.file-tag.pdf {
-  background-color: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fca5a5;
+.tree-folder-icon {
+  font-size: 1rem;
 }
 
-.file-tag.ppt,
-.file-tag.pptx {
-  background-color: #ffedd5;
-  color: #9a3412;
-  border: 1px solid #fdba74;
-}
-
-.file-tag.md {
-  background-color: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #6ee7b7;
-}
-
-.file-name {
+.tree-label {
   flex: 1;
   font-size: 0.95rem;
-  font-family: "Georgia", serif;
   color: #262626;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.file-size {
+.tree-label.folder-label {
+  font-weight: 600;
+  color: #1b3627;
+}
+
+.tree-item-actions {
+  display: flex;
+  gap: 0.3rem;
+  opacity: 0.3;
+  transition: opacity 0.2s;
+}
+
+.tree-row:hover .tree-item-actions,
+.tree-row:hover .tree-mini-btn {
+  opacity: 1;
+}
+
+.tree-mini-btn {
+  background: none;
+  border: 1px solid #d97706;
+  color: #b45309;
+  border-radius: 3px;
   font-size: 0.75rem;
+  padding: 0.05rem 0.35rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0.3;
+}
+
+.tree-mini-btn:hover {
+  background-color: #d97706;
+  color: #ffffff;
+}
+
+.tree-mini-btn.delete {
+  border-color: #e2d9c8;
   color: #a3a3a3;
-  font-family: monospace;
+}
+
+.tree-mini-btn.delete:hover {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-color: #fca5a5;
+}
+
+.tree-type-pill {
+  font-size: 0.65rem;
+  font-family: "Georgia", serif;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tree-type-pill.pdf {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.tree-type-pill.ppt,
+.tree-type-pill.pptx {
+  background-color: #ffedd5;
+  color: #9a3412;
+  border: 1px solid #fdba74;
+}
+
+.tree-type-pill.md {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.tree-empty-notice,
+.tree-empty-sub {
+  font-style: italic;
+  font-size: 0.85rem;
+  color: #a3a3a3;
+  padding: 0.3rem 0;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -295,28 +326,39 @@ body {
     border-bottom-color: #b45309;
   }
 
-  .course-card,
+  .tree-explorer-card,
   .empty-state {
     background-color: #142a1d;
     border-color: #264a34;
     border-top-color: #d97706;
   }
 
-  .course-card h4,
-  .empty-state h2 {
+  .tree-card-header {
+    background-color: #1b3627;
+    border-bottom-color: #264a34;
+  }
+
+  .tree-card-header h4,
+  .empty-state h2,
+  .tree-label.folder-label {
     color: #fbf9f4;
+  }
+
+  .tree-label {
+    color: #e2e8f0;
+  }
+
+  .tree-row:hover {
+    background-color: #1b3627;
+  }
+
+  .tree-row.is-active {
+    background-color: #1b3627;
+    border-left-color: #d97706;
   }
 
   .empty-state p {
     color: #a3a3a3;
-  }
-
-  .module-item.clickable:hover {
-    background-color: #1b3627;
-  }
-
-  .file-name {
-    color: #e2e8f0;
   }
 
   .vault-info {
