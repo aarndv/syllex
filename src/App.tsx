@@ -177,8 +177,13 @@ function App() {
         />
       )}
 
+      {/* Desktop Application Header / Toolbar */}
       <header className="app-header">
-        <h1>Syllex</h1>
+        <div className="header-brand">
+          <span className="app-title">Syllex</span>
+          {vaultPath && <span className="header-vault-badge">Local Vault</span>}
+        </div>
+
         <div className="vault-actions">
           {vaultPath && (
             <div className="plus-menu-wrapper">
@@ -222,7 +227,7 @@ function App() {
             </button>
           ) : (
             <button onClick={handleSelectVault} className="primary-btn">
-              Select Vault
+              Open Vault
             </button>
           )}
 
@@ -238,67 +243,126 @@ function App() {
         </div>
       </header>
 
-      <main className="app-content">
-        {error && (
-          <div className="error-banner">
-            <p><strong>Error:</strong> {error}</p>
-          </div>
-        )}
-
-        {!vaultPath && !loading && (
-          <>
-            <DashboardHeader />
-            <div className="empty-state">
-              <h2>No Vault Selected</h2>
-              <p>Select a local folder containing your college course modules to get started.</p>
-              <button onClick={handleSelectVault} className="primary-btn large">
-                Open Vault Directory
-              </button>
-            </div>
-          </>
-        )}
-
-        {loading && (
-          <div className="loading-state">
-            <p>Scanning vault directory tree...</p>
-          </div>
-        )}
-
+      {/* Desktop Workspace Split View */}
+      <div className="app-workspace">
         {scanResult && !loading && (
-          <div className="vault-view">
-            <DashboardHeader
-              courseCount={vaultStats.courses}
-              fileCount={vaultStats.files}
-            />
-            {scanResult.root_nodes.length === 0 ? (
-              <div className="empty-state">
-                <p>No files or folders found in this vault.</p>
-                <button onClick={() => handleAddModule()} className="primary-btn">
-                  Add First Module
+          <aside className="app-sidebar">
+            <div className="sidebar-header">
+              <span className="sidebar-title">Course Explorer</span>
+              <div className="sidebar-quick-actions">
+                <button
+                  onClick={() => handleCreateFolder()}
+                  className="sidebar-action-btn"
+                  title="New Folder"
+                >
+                  📁+
+                </button>
+                <button
+                  onClick={() => handleAddModule()}
+                  className="sidebar-action-btn"
+                  title="Add Module"
+                >
+                  📄+
                 </button>
               </div>
-            ) : (
-              <div className="tree-explorer-card">
-                <div className="tree-card-header">
-                  <span className="tree-card-vault-path" title={scanResult.root_path}>
-                    <span className="path-icon">📂</span>
-                    <span className="path-text">{scanResult.root_path}</span>
-                  </span>
-                </div>
-                <div className="tree-card-body">
-                  <FileTree
-                    nodes={scanResult.root_nodes}
-                    activePath={activeNode?.relative_path}
-                    onSelectFile={handleSelectFileNode}
-                    onAddFile={handleAddModule}
-                    onRemoveItem={handleRemoveItem}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+            </div>
+            <div className="sidebar-content">
+              {scanResult.root_nodes.length === 0 ? (
+                <div className="sidebar-empty">No items found</div>
+              ) : (
+                <FileTree
+                  nodes={scanResult.root_nodes}
+                  activePath={activeNode?.relative_path}
+                  onSelectFile={handleSelectFileNode}
+                  onAddFile={handleAddModule}
+                  onRemoveItem={handleRemoveItem}
+                />
+              )}
+            </div>
+          </aside>
         )}
-      </main>
+
+        <main className="app-main-content">
+          {error && (
+            <div className="error-banner">
+              <p><strong>Error:</strong> {error}</p>
+            </div>
+          )}
+
+          {!vaultPath && !loading && (
+            <div className="welcome-container">
+              <DashboardHeader />
+              <div className="empty-state">
+                <h2>No Vault Selected</h2>
+                <p>Select a local folder containing your college course modules to get started.</p>
+                <button onClick={handleSelectVault} className="primary-btn large">
+                  Open Vault Directory
+                </button>
+              </div>
+            </div>
+          )}
+
+          {loading && (
+            <div className="loading-state">
+              <p>Scanning vault directory tree...</p>
+            </div>
+          )}
+
+          {scanResult && !loading && (
+            <div className="dashboard-view">
+              <DashboardHeader
+                courseCount={vaultStats.courses}
+                fileCount={vaultStats.files}
+              />
+
+              {scanResult.root_nodes.length === 0 ? (
+                <div className="empty-state">
+                  <p>No files or folders found in this vault.</p>
+                  <button onClick={() => handleAddModule()} className="primary-btn">
+                    Add First Module
+                  </button>
+                </div>
+              ) : (
+                <div className="workspace-card">
+                  <div className="workspace-card-header">
+                    <span className="workspace-card-title">Vault Path</span>
+                    <span className="workspace-card-path" title={scanResult.root_path}>
+                      📂 {scanResult.root_path}
+                    </span>
+                  </div>
+                  <div className="workspace-card-body">
+                    <FileTree
+                      nodes={scanResult.root_nodes}
+                      activePath={activeNode?.relative_path}
+                      onSelectFile={handleSelectFileNode}
+                      onAddFile={handleAddModule}
+                      onRemoveItem={handleRemoveItem}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* Desktop Footer Status Bar */}
+      <footer className="app-statusbar">
+        <div className="statusbar-left">
+          <span className={`status-dot ${vaultPath ? "online" : ""}`} />
+          <span className="statusbar-path" title={vaultPath || "No active vault"}>
+            {vaultPath ? scanResult?.root_path : "No active vault selected"}
+          </span>
+        </div>
+        <div className="statusbar-right">
+          {vaultPath && (
+            <span className="statusbar-item">
+              {vaultStats.courses} {vaultStats.courses === 1 ? "Course" : "Courses"} • {vaultStats.files} {vaultStats.files === 1 ? "Module" : "Modules"}
+            </span>
+          )}
+          <span className="statusbar-item tag">Local-First</span>
+        </div>
+      </footer>
     </div>
   );
 }
