@@ -147,6 +147,23 @@
   word-break: break-word;
 }
 
+.todo-edit-input {
+  flex: 1;
+  background-color: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: #ffffff;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  outline: none;
+}
+
+.todo-edit-input:focus {
+  border-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.22);
+}
+
 .todo-item.completed .todo-text {
   text-decoration: line-through;
   color: rgba(255, 255, 255, 0.6);
