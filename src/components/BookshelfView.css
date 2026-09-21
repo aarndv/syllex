@@ -32,7 +32,7 @@
 }
 
 .shelf-wrapper.has-open-picker {
-  z-index: 500;
+  z-index: 100;
 }
 
 .shelf-wrapper:hover {
@@ -56,7 +56,7 @@
 }
 
 .shelf-header-blueprint.has-open-picker {
-  z-index: 500;
+  z-index: 100;
 }
 
 .shelf-title-plate {
@@ -183,7 +183,6 @@
 /* Color Picker Popover & Pencil Icon Styling */
 .color-picker-wrapper {
   position: relative;
-  z-index: 510;
 }
 
 .shelf-mini-btn.pencil-btn {
@@ -204,7 +203,7 @@
   border-radius: 8px;
   padding: 0.75rem;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65);
-  z-index: 1000;
+  z-index: 200;
   width: 210px;
 }
 
