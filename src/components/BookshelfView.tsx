@@ -128,16 +128,21 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
 
   const currentColorId = folderColors[folder.relative_path];
   const currentColorObj = FOLDER_COLOR_PALETTE.find((c) => c.id === currentColorId);
+  const folderColor = currentColorObj ? currentColorObj.primary : "#059669";
 
   const directFiles = folder.children.filter((c) => c.node_type !== "Folder");
   const subfolders = folder.children.filter((c) => c.node_type === "Folder");
 
   const headerStyle = currentColorObj
-    ? { background: `linear-gradient(135deg, ${currentColorObj.primary}, ${currentColorObj.secondary})` }
+    ? { background: `linear-gradient(135deg, ${currentColorObj.primary} 0%, ${currentColorObj.secondary} 70%, rgba(13, 34, 23, 0.95) 100%)` }
     : undefined;
 
   const wrapperStyle = currentColorObj
-    ? { backgroundColor: currentColorObj.bg }
+    ? { background: `linear-gradient(180deg, ${currentColorObj.bg} 0%, rgba(13, 37, 23, 0.65) 100%)` }
+    : undefined;
+
+  const barStyle = currentColorObj
+    ? { background: `linear-gradient(180deg, ${currentColorObj.secondary} 0%, rgba(10, 28, 18, 0.95) 100%)` }
     : undefined;
 
   return (
@@ -222,6 +227,7 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
                 <BookSpineItem
                   key={file.relative_path}
                   node={file}
+                  folderColor={folderColor}
                   colorVariant={idx % 4}
                   onSelectFile={onSelectFile}
                   onRemoveItem={onRemoveItem}
@@ -242,7 +248,7 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
             )
           )}
 
-          <div className="blueprint-shelf-bar">
+          <div className="blueprint-shelf-bar" style={barStyle}>
             <div className="shelf-ticks">
               {Array.from({ length: 12 }).map((_, i) => (
                 <span key={i} className="tick-mark" />
@@ -318,6 +324,7 @@ const ShelfSection: React.FC<ShelfSectionProps> = ({
             <BookSpineItem
               key={file.relative_path}
               node={file}
+              folderColor="#059669"
               colorVariant={idx % 4}
               onSelectFile={onSelectFile}
               onRemoveItem={onRemoveItem}
@@ -345,6 +352,7 @@ function getFileExt(type: VaultNodeType): string {
 
 interface BookSpineItemProps {
   node: VaultNode;
+  folderColor?: string;
   colorVariant: number;
   onSelectFile: (node: VaultNode) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
@@ -352,6 +360,7 @@ interface BookSpineItemProps {
 
 const BookSpineItem: React.FC<BookSpineItemProps> = ({
   node,
+  folderColor,
   colorVariant,
   onSelectFile,
   onRemoveItem,
@@ -362,6 +371,7 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
   return (
     <div
       className={`book-spine-card variant-${colorVariant}`}
+      style={{ "--folder-hover-color": folderColor || "#059669" } as React.CSSProperties}
       onClick={() => onSelectFile(node)}
       title={`Open ${node.name}`}
     >

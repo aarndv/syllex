@@ -148,7 +148,8 @@
 
 .subvault-item.active {
   background-color: #efeae1;
-  border-left: 3px solid #1b3627;
+  border-color: #1b3627;
+  font-weight: 600;
 }
 
 .subvault-info {
@@ -228,7 +229,7 @@
 
   .subvault-item.active {
     background-color: #264a34;
-    border-left-color: #3d684e;
+    border-color: #3d684e;
   }
 
   .subvault-count,

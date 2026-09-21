@@ -22,7 +22,7 @@
 
 /* Blueprint Shelf Wrapper */
 .shelf-wrapper {
-  background-color: rgba(22, 62, 38, 0.5);
+  background: linear-gradient(180deg, rgba(22, 62, 38, 0.75) 0%, rgba(13, 37, 23, 0.9) 100%);
   border: 1.5px solid rgba(255, 255, 255, 0.3);
   border-radius: 6px;
   overflow: hidden;
@@ -41,7 +41,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.85rem 1.35rem;
-  background-color: rgba(14, 40, 24, 0.9);
+  background: linear-gradient(135deg, rgba(24, 66, 41, 0.95) 0%, rgba(14, 40, 24, 0.98) 60%, rgba(8, 24, 14, 1) 100%);
   border-bottom: 1.5px solid rgba(255, 255, 255, 0.25);
   user-select: none;
   position: relative;
@@ -303,7 +303,7 @@
 /* Architectural Wooden/Blueprint Shelf Line Bar */
 .blueprint-shelf-bar {
   height: 12px;
-  background-color: rgba(14, 40, 24, 0.9);
+  background: linear-gradient(180deg, rgba(30, 80, 50, 0.95) 0%, rgba(14, 40, 24, 0.98) 55%, rgba(6, 20, 12, 1) 100%);
   border: 1.5px solid rgba(255, 255, 255, 0.4);
   border-radius: 3px;
   margin-top: 0.5rem;
@@ -361,8 +361,8 @@
 /* Standing Book Lift & Hover Effect */
 .book-spine-card:hover {
   transform: translateY(-8px) scale(1.03);
-  border-color: #ffffff;
-  box-shadow: -6px 12px 20px rgba(0, 0, 0, 0.4), 0 0 12px rgba(255, 255, 255, 0.2);
+  border-color: var(--folder-hover-color, #059669);
+  box-shadow: -6px 12px 20px rgba(0, 0, 0, 0.4), 0 0 16px var(--folder-hover-color, rgba(5, 150, 105, 0.4));
   z-index: 10;
 }
 
@@ -525,13 +525,13 @@ html[data-theme="light"] .empty-bookshelf-notice {
 }
 
 html[data-theme="light"] .shelf-wrapper {
-  background-color: #fbf9f4;
+  background: linear-gradient(180deg, #fbf9f4 0%, #f3eee3 100%);
   border-color: #143222;
   box-shadow: 0 4px 16px rgba(20, 50, 34, 0.08);
 }
 
 html[data-theme="light"] .shelf-header-blueprint {
-  background-color: #eee9df;
+  background: linear-gradient(135deg, #eee9df 0%, #e4ddd0 60%, #dad2c3 100%);
   border-bottom-color: #143222;
 }
 
@@ -603,7 +603,7 @@ html[data-theme="light"] .popover-close-btn:hover {
 }
 
 html[data-theme="light"] .blueprint-shelf-bar {
-  background-color: #e4ddd0;
+  background: linear-gradient(180deg, #e8e1d4 0%, #d8cebd 60%, #c8bca9 100%);
   border-color: #143222;
   box-shadow: 0 2px 6px rgba(20, 50, 34, 0.1);
 }

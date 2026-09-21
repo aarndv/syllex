@@ -12,11 +12,14 @@ Syllex uses a **Warm Academic Library** aesthetic—a cozy, focused study sanctu
 - **Theme Palette:**
   - **Structural Containers & Headers:** Deep Forest Green (`#1b3627`) for navigation, headers, and major containers.
   - **Background & Card Surfaces:** Soft Warm Parchment / Cream (`#fbf9f4`) in light mode, Deep Midnight Forest (`#0d1f14`) in dark mode.
-  - **Card & Surface Borders:** Subtle Paper Border (`#e2d9c8`).
+  - **Card & Surface Borders:** Uniform Subtle Paper Border (`#e2d9c8` in light mode, `rgba(255,255,255,0.3)` in dark mode).
   - **Accents & Badges:** Warm Gold / Amber (`#d97706` / `#b45309`) for primary actions, active selection states, and file format tags.
   - **Typography Color:** Deep Charcoal (`#262626`) for high legibility and contrast on parchment backgrounds.
 - **Typography System:** Full **Academic Serif** typography (`Georgia`, `Garamond`, `Playfair Display`, or system serif) across structural headers, course index cards, book spine elements, buttons, badges, and tree view items.
-- **Card & Material Metaphors:** Traditional Library Index Cards and Book Spines featuring subtle paper borders, gold/amber badge accents, and delicate paper elevation shadows (`0 4px 12px rgba(27, 54, 39, 0.08)`).
+- **Card & Material Metaphors:** Traditional Library Index Cards and Book Spines featuring subtle uniform paper borders, gold/amber badge accents, and delicate paper elevation shadows (`0 4px 12px rgba(27, 54, 39, 0.08)`).
+- **Gradient Shelves:** Shelf containers, header plates, and shelf ledges must use multi-stop linear gradients to evoke physical depth, wood grain, and paper texture rather than flat solid blocks.
+- **Subfolder Book Hover Outline:** Hovering over any standing book spine card dynamically outlines the book (`border-color` and glow shadow) in the primary accent color of its containing subfolder (whether customized via color palette or using default forest green/teal).
+- **Strict Invariant — No Side Accent Stripes/Borders:** **Never** place accent colors on the sides of block elements or cards (such as colored `border-left` / `border-right` stripes or side accent bars). Block elements, welcome header cards, tree items, and modals must use clean 360-degree uniform border frames to maintain visual symmetry and structural integrity. (This explicitly prohibits side accent stripes such as the amber side border on the welcome card).
 - **Strict Iconography Directive:** **Never use emojis** for UI icons, buttons, labels, badges, or tree elements. Always use clean vector SVG icons, CSS glyphs, or explicit typography labels.
 - **Density & Layout:** Generous Library Desk spacing, avoiding cramped utility toolbars, while keeping the document reading area centered and uncluttered.
 
