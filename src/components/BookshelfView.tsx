@@ -146,8 +146,8 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
     : undefined;
 
   return (
-    <div className="shelf-wrapper" style={wrapperStyle}>
-      <header className="shelf-header-blueprint" style={headerStyle}>
+    <div className={`shelf-wrapper ${isColorPickerOpen ? "has-open-picker" : ""}`} style={wrapperStyle}>
+      <header className={`shelf-header-blueprint ${isColorPickerOpen ? "has-open-picker" : ""}`} style={headerStyle}>
         <div className="shelf-title-plate" onClick={() => setIsExpanded((prev) => !prev)}>
           <span className="shelf-chevron-badge">{isExpanded ? "▼" : "▶"}</span>
           <div className="folder-icon-emblem">
