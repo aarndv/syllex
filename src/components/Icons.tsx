@@ -328,6 +328,38 @@ export const SearchIcon: React.FC<IconProps> = ({ className = "", size = 16, col
   </svg>
 );
 
+export const ChevronLeftIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`inline-icon ${className}`}
+  >
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
+);
+
+export const ChevronRightIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`inline-icon ${className}`}
+  >
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
+);
+
 
 
 

@@ -3,7 +3,7 @@ import * as pdfjsLib from "pdfjs-dist";
 import { invoke } from "@tauri-apps/api/core";
 import { VaultNode } from "../types/vault";
 import { FileTree } from "./FileTree";
-import { FolderIcon, CloseIcon, RefreshIcon, ScrollIcon } from "./Icons";
+import { FolderIcon, CloseIcon, RefreshIcon, ScrollIcon, ChevronLeftIcon, ChevronRightIcon } from "./Icons";
 import "./PdfViewer.css";
 
 // Set worker source to CDN / bundled worker URL
@@ -39,6 +39,16 @@ const VIEW_MODE_ORDER: DocumentViewMode[] = [
   "ocean-dark",
 ];
 
+export const VIEW_MODE_LABELS: Record<DocumentViewMode, string> = {
+  "original": "Original (Full Color)",
+  "fast-dark": "Fast Dark Mode",
+  "sepia": "Warm Sepia",
+  "dark-sepia": "Midnight Sepia",
+  "grayscale": "Monochrome Grayscale",
+  "high-contrast-dark": "High Contrast Dark",
+  "ocean-dark": "Ocean Dark Blue",
+};
+
 export const PdfViewer: React.FC<PdfViewerProps> = ({
   vaultRoot,
   node,
@@ -62,15 +72,29 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingMessage, setLoadingMessage] = useState<string>("Loading document...");
   const [error, setError] = useState<string | null>(null);
+  const [filterToast, setFilterToast] = useState<string | null>(null);
 
   const singleCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const renderTaskRef = useRef<any>(null);
+  const toastTimerRef = useRef<any>(null);
 
   const storageKey = `syllex_progress_${node.relative_path}`;
+
+  function triggerFilterToast(mode: DocumentViewMode) {
+    const label = VIEW_MODE_LABELS[mode] || mode;
+    setFilterToast(label);
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+    toastTimerRef.current = setTimeout(() => {
+      setFilterToast(null);
+    }, 1800);
+  }
 
   function handleSelectViewMode(mode: DocumentViewMode) {
     setViewMode(mode);
     localStorage.setItem("syllex_pdf_view_mode", mode);
+    triggerFilterToast(mode);
   }
 
   function cycleViewMode() {
@@ -79,6 +103,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       const nextIdx = (idx + 1) % VIEW_MODE_ORDER.length;
       const nextMode = VIEW_MODE_ORDER[nextIdx];
       localStorage.setItem("syllex_pdf_view_mode", nextMode);
+      triggerFilterToast(nextMode);
       return nextMode;
     });
   }
@@ -284,74 +309,108 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             {!isDrawerOpen && (
               <button
                 onClick={() => setIsDrawerOpen(true)}
-                className="drawer-toggle-btn expand"
+                className="toolbar-btn expand-btn"
                 title="Expand sidebar"
               >
-                <FolderIcon size={14} /> Files
+                <FolderIcon size={14} /> <span>Files</span>
               </button>
             )}
-            <button onClick={onClose} className="close-btn">
-              <CloseIcon size={14} /> Back
+            <button onClick={onClose} className="toolbar-btn back-btn" title="Back to library (Esc)">
+              <CloseIcon size={14} /> <span>Back</span>
             </button>
-            <span className="doc-title">{node.name}</span>
+            <span className="doc-title" title={node.name}>{node.name}</span>
           </div>
 
           <div className="toolbar-center">
             {!isContinuousScroll ? (
-              <>
-                <button onClick={handlePrevPage} disabled={currentPage <= 1}>
-                  Prev
+              <div className="toolbar-control-group page-controls">
+                <button
+                  onClick={handlePrevPage}
+                  disabled={currentPage <= 1}
+                  className="toolbar-icon-btn"
+                  title="Previous Page (Left Arrow)"
+                >
+                  <ChevronLeftIcon size={14} />
                 </button>
                 <span className="page-indicator">
-                  Page {currentPage} of {numPages || 1}
+                  Page <strong>{currentPage}</strong> of <strong>{numPages || 1}</strong>
                 </span>
-                <button onClick={handleNextPage} disabled={currentPage >= numPages}>
-                  Next
+                <button
+                  onClick={handleNextPage}
+                  disabled={currentPage >= numPages}
+                  className="toolbar-icon-btn"
+                  title="Next Page (Right Arrow)"
+                >
+                  <ChevronRightIcon size={14} />
                 </button>
-              </>
+              </div>
             ) : (
-              <span className="page-indicator">
-                {numPages} {numPages === 1 ? "Page" : "Pages"} (Continuous)
-              </span>
+              <div className="toolbar-control-group page-controls">
+                <span className="page-indicator">
+                  <strong>{numPages}</strong> {numPages === 1 ? "Page" : "Pages"} (Continuous)
+                </span>
+              </div>
             )}
+
             <button
               onClick={() => setIsContinuousScroll((prev) => !prev)}
-              className={`scroll-toggle-btn ${isContinuousScroll ? "active" : ""}`}
+              className={`toolbar-btn scroll-toggle-btn ${isContinuousScroll ? "active" : ""}`}
               title="Toggle Continuous Scroll / Single Page Mode"
             >
-              <ScrollIcon size={14} /> {isContinuousScroll ? "Continuous" : "Single Page"}
+              <ScrollIcon size={14} /> <span>{isContinuousScroll ? "Continuous" : "Single Page"}</span>
             </button>
           </div>
 
           <div className="toolbar-right">
-            <div className="filter-dropdown-group">
-              <span className="filter-group-label">Dark Mode Filter:</span>
-              <select
-                value={viewMode}
-                onChange={(e) => handleSelectViewMode(e.target.value as DocumentViewMode)}
-                className={`view-mode-select ${viewMode}`}
-                title="Select Dark Mode Reading Filter (Shortcut: Press 'D' to cycle)"
-              >
-                <option value="original">Original (Full Color)</option>
-                <option value="fast-dark">Fast Dark Mode</option>
-                <option value="sepia">Warm Sepia</option>
-                <option value="dark-sepia">Midnight Sepia</option>
-                <option value="grayscale">Monochrome Grayscale</option>
-                <option value="high-contrast-dark">High Contrast Dark</option>
-                <option value="ocean-dark">Ocean Dark Blue</option>
-              </select>
+            <div className="filter-dropdown-group" title="Select Dark Mode Reading Filter (Shortcut: Press 'D' to cycle)">
+              <label htmlFor="view-mode-select" className="filter-group-label">Filter:</label>
+              <div className="custom-select-wrapper">
+                <select
+                  id="view-mode-select"
+                  value={viewMode}
+                  onChange={(e) => handleSelectViewMode(e.target.value as DocumentViewMode)}
+                  className={`view-mode-select mode-${viewMode}`}
+                >
+                  <option value="original">Original (Full Color)</option>
+                  <option value="fast-dark">Fast Dark Mode</option>
+                  <option value="sepia">Warm Sepia</option>
+                  <option value="dark-sepia">Midnight Sepia</option>
+                  <option value="grayscale">Monochrome Grayscale</option>
+                  <option value="high-contrast-dark">High Contrast Dark</option>
+                  <option value="ocean-dark">Ocean Dark Blue</option>
+                </select>
+              </div>
             </div>
-            <button onClick={handleZoomOut} disabled={zoom <= 0.5}>
-              -
-            </button>
-            <span className="zoom-indicator">{Math.round(zoom * 100)}%</span>
-            <button onClick={handleZoomIn} disabled={zoom >= 3.0}>
-              +
-            </button>
+
+            <div className="toolbar-control-group zoom-controls">
+              <button
+                onClick={handleZoomOut}
+                disabled={zoom <= 0.5}
+                className="toolbar-icon-btn"
+                title="Zoom Out (-)"
+              >
+                -
+              </button>
+              <span className="zoom-indicator">{Math.round(zoom * 100)}%</span>
+              <button
+                onClick={handleZoomIn}
+                disabled={zoom >= 3.0}
+                className="toolbar-icon-btn"
+                title="Zoom In (+)"
+              >
+                +
+              </button>
+            </div>
           </div>
         </header>
 
         <main className="pdf-viewer-body">
+          {filterToast && (
+            <div className="filter-toast-tooltip" role="status" aria-live="polite">
+              <span className="toast-filter-name">Reading Filter: <strong>{filterToast}</strong></span>
+              <span className="toast-shortcut-badge">Press 'D' to cycle</span>
+            </div>
+          )}
           {loading && <div className="pdf-loading">{loadingMessage}</div>}
 
           {error && (
