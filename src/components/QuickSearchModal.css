@@ -31,12 +31,12 @@
   border: 1.5px solid rgba(255, 255, 255, 0.35);
   border-radius: 10px;
   width: 90%;
-  max-width: 640px;
+  max-width: 680px;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  max-height: 80vh;
+  max-height: 82vh;
 }
 
 .quick-search-header {
@@ -45,7 +45,7 @@
   gap: 0.75rem;
   padding: 0.85rem 1.15rem;
   background-color: #143222;
-  border-bottom: 1.5px solid rgba(255, 255, 255, 0.25);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .search-input-wrapper {
@@ -75,7 +75,7 @@
   background: none;
   border: none;
   color: #ffffff;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-family: inherit;
   outline: none;
 }
@@ -104,15 +104,80 @@
   background-color: rgba(255, 255, 255, 0.15);
 }
 
+/* Scope Filter Tabs */
+.search-scope-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1.15rem;
+  background-color: #0d2217;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  overflow-x: auto;
+}
+
+.scope-tab-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 0.25rem 0.65rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.scope-tab-btn:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.scope-tab-btn.active {
+  background-color: #059669;
+  border-color: #10b981;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.pdf-scanning-indicator {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  color: #a7f3d0;
+  font-family: monospace;
+}
+
+.scanning-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #10b981;
+  animation: pulseDot 1s infinite alternate;
+}
+
+@keyframes pulseDot {
+  from {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.3);
+  }
+}
+
 /* Results List */
 .quick-search-results-list {
   flex: 1;
   overflow-y: auto;
-  padding: 0.5rem;
+  padding: 0.5rem 0.8rem;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  max-height: 52vh;
+  max-height: 54vh;
 }
 
 .search-empty-state {
@@ -134,7 +199,7 @@
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  padding: 0.65rem 0.85rem;
+  padding: 0.55rem 0.85rem;
   border-radius: 6px;
   background-color: rgba(22, 62, 38, 0.4);
   border: 1px solid transparent;
@@ -149,10 +214,22 @@
   border-color: rgba(255, 255, 255, 0.4);
 }
 
+.search-result-item.content-result {
+  background-color: rgba(14, 46, 28, 0.6);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.search-result-item.content-result:hover,
+.search-result-item.content-result.selected {
+  background-color: rgba(20, 60, 36, 0.85);
+  border-color: #10b981;
+}
+
 .result-icon-col {
   color: #e2f0d9;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .result-info-col {
@@ -171,7 +248,7 @@
 }
 
 .result-title {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 600;
   color: #ffffff;
   white-space: nowrap;
@@ -188,6 +265,7 @@
   background-color: rgba(255, 255, 255, 0.15);
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
 }
 
 .result-type-badge.badge-pdf {
@@ -209,6 +287,12 @@
   background-color: rgba(6, 95, 70, 0.3);
 }
 
+.result-type-badge.badge-content-match {
+  border-color: #10b981;
+  color: #ffffff;
+  background-color: #059669;
+}
+
 .result-snippet-row {
   display: flex;
   align-items: center;
@@ -222,6 +306,19 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.result-content-snippet {
+  font-size: 0.78rem;
+  color: #d1fae5;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  border-left: 2px solid #10b981;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* Footer Shortcuts */
@@ -292,6 +389,35 @@ html[data-theme="light"] .quick-search-close-btn:hover {
   color: #143222;
 }
 
+html[data-theme="light"] .search-scope-tabs {
+  background-color: #e4ddd0;
+  border-bottom-color: #143222;
+}
+
+html[data-theme="light"] .scope-tab-btn {
+  background-color: #fbf9f4;
+  border-color: #143222;
+  color: #143222;
+}
+
+html[data-theme="light"] .scope-tab-btn:hover {
+  background-color: #d8cfc0;
+}
+
+html[data-theme="light"] .scope-tab-btn.active {
+  background-color: #143222;
+  border-color: #0b1d14;
+  color: #ffffff;
+}
+
+html[data-theme="light"] .pdf-scanning-indicator {
+  color: #143222;
+}
+
+html[data-theme="light"] .scanning-dot {
+  background-color: #143222;
+}
+
 html[data-theme="light"] .search-result-item {
   background-color: #eee9df;
   border-color: #143222;
@@ -301,6 +427,16 @@ html[data-theme="light"] .search-result-item:hover,
 html[data-theme="light"] .search-result-item.selected {
   background-color: #e4ddd0;
   border-color: #143222;
+}
+
+html[data-theme="light"] .search-result-item.content-result {
+  background-color: #f3efe6;
+  border-color: #143222;
+}
+
+html[data-theme="light"] .search-result-item.content-result:hover,
+html[data-theme="light"] .search-result-item.content-result.selected {
+  background-color: #e4ddd0;
 }
 
 html[data-theme="light"] .result-icon-col {
@@ -313,6 +449,18 @@ html[data-theme="light"] .result-title {
 
 html[data-theme="light"] .result-snippet-row {
   color: #244230;
+}
+
+html[data-theme="light"] .result-content-snippet {
+  color: #143222;
+  background-color: #ffffff;
+  border-left-color: #143222;
+}
+
+html[data-theme="light"] .result-type-badge.badge-content-match {
+  background-color: #143222;
+  border-color: #0b1d14;
+  color: #ffffff;
 }
 
 html[data-theme="light"] .search-empty-state {

@@ -430,6 +430,39 @@ export const SidebarToggleIcon: React.FC<IconProps> = ({ className = "", size = 
   </svg>
 );
 
+export const ChevronUpIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`inline-icon ${className}`}
+  >
+    <polyline points="18 15 12 9 6 15" />
+  </svg>
+);
+
+export const ChevronDownIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`inline-icon ${className}`}
+  >
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);
+
+
 
 
 

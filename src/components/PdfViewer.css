@@ -572,4 +572,256 @@ html[data-theme="light"] .pdf-error {
   color: #143222;
 }
 
+/* In-PDF Search Bar */
+.pdf-search-bar {
+  position: absolute;
+  top: 60px;
+  right: 1.5rem;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #0d2217;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  padding: 0.4rem 0.65rem;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  animation: fadeInDownSearch 0.15s ease-out;
+}
+
+@keyframes fadeInDownSearch {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.search-input-field-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.25rem 0.5rem;
+  border-radius: 5px;
+}
+
+.search-field-icon {
+  color: rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
+}
+
+.pdf-search-input {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-family: inherit;
+  outline: none;
+  width: 200px;
+}
+
+.pdf-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.search-clear-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.search-clear-btn:hover {
+  color: #ffffff;
+}
+
+.search-counter-badge {
+  font-size: 0.72rem;
+  font-family: monospace;
+  color: #e2f0d9;
+  background-color: rgba(255, 255, 255, 0.12);
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+}
+
+.search-nav-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.search-nav-btn {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.search-nav-btn:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.25);
+  border-color: #ffffff;
+}
+
+.search-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.search-close-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.search-close-btn:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Active Match Pill Banner */
+.pdf-active-match-pill {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(13, 34, 23, 0.92);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  padding: 0.45rem 0.9rem;
+  border-radius: 30px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  max-width: 80%;
+  animation: filterToastSlideIn 0.2s ease-out;
+}
+
+.match-pill-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #059669;
+  background-color: #e2f0d9;
+  padding: 0.15rem 0.5rem;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.match-pill-text {
+  font-size: 0.8rem;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Search Highlights on Pages */
+.continuous-page-item {
+  position: relative;
+  transition: box-shadow 0.2s ease;
+}
+
+.continuous-page-item.active-match-page {
+  box-shadow: 0 0 0 3px #10b981, 0 8px 24px rgba(16, 185, 129, 0.35);
+  border-radius: 4px;
+}
+
+.canvas-container.active-match-page {
+  box-shadow: 0 0 0 3px #10b981, 0 8px 24px rgba(16, 185, 129, 0.35);
+  border-radius: 4px;
+}
+
+/* Light Theme Overrides for PDF Search */
+html[data-theme="light"] .pdf-search-bar {
+  background-color: #fbf9f4;
+  border-color: #143222;
+  box-shadow: 0 8px 24px rgba(20, 50, 34, 0.2);
+}
+
+html[data-theme="light"] .search-input-field-wrapper {
+  background-color: #ffffff;
+  border-color: #143222;
+}
+
+html[data-theme="light"] .search-field-icon {
+  color: #143222;
+}
+
+html[data-theme="light"] .pdf-search-input {
+  color: #143222;
+}
+
+html[data-theme="light"] .pdf-search-input::placeholder {
+  color: rgba(20, 50, 34, 0.5);
+}
+
+html[data-theme="light"] .search-clear-btn {
+  color: #143222;
+}
+
+html[data-theme="light"] .search-counter-badge {
+  color: #143222;
+  background-color: #e4ddd0;
+  border-color: #143222;
+}
+
+html[data-theme="light"] .search-nav-btn {
+  background-color: #e4ddd0;
+  border-color: #143222;
+  color: #143222;
+}
+
+html[data-theme="light"] .search-nav-btn:hover:not(:disabled) {
+  background-color: #143222;
+  color: #ffffff;
+}
+
+html[data-theme="light"] .search-close-btn {
+  color: #143222;
+}
+
+html[data-theme="light"] .search-close-btn:hover {
+  background-color: #e4ddd0;
+}
+
+html[data-theme="light"] .pdf-active-match-pill {
+  background-color: rgba(251, 249, 244, 0.95);
+  border-color: #143222;
+  box-shadow: 0 6px 20px rgba(20, 50, 34, 0.2);
+}
+
+html[data-theme="light"] .match-pill-badge {
+  background-color: #143222;
+  color: #ffffff;
+}
+
+html[data-theme="light"] .match-pill-text {
+  color: #143222;
+}
+
+
 

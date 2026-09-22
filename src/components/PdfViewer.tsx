@@ -1,9 +1,25 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import { invoke } from "@tauri-apps/api/core";
 import { VaultNode } from "../types/vault";
 import { FileTree } from "./FileTree";
-import { FolderIcon, CloseIcon, RefreshIcon, ScrollIcon, ChevronLeftIcon, ChevronRightIcon } from "./Icons";
+import {
+  FolderIcon,
+  CloseIcon,
+  RefreshIcon,
+  ScrollIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  SearchIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+} from "./Icons";
+import {
+  extractLoadedPdfDocText,
+  searchInDocPages,
+  PdfPageText,
+  PdfSearchMatch,
+} from "../utils/pdfSearch";
 import "./PdfViewer.css";
 
 // Set worker source to CDN / bundled worker URL
@@ -13,6 +29,8 @@ interface PdfViewerProps {
   vaultRoot: string;
   node: VaultNode;
   allNodes: VaultNode[];
+  initialPage?: number;
+  initialSearchQuery?: string;
   onSelectNode: (node: VaultNode) => void;
   onAddFile: (folderRelPath?: string) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
@@ -53,6 +71,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   vaultRoot,
   node,
   allNodes,
+  initialPage,
+  initialSearchQuery,
   onSelectNode,
   onAddFile,
   onRemoveItem,
@@ -62,7 +82,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(true);
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [currentPage, setCurrentPage] = useState<number>(initialPage || 1);
   const [zoom, setZoom] = useState<number>(1.0);
   const [isContinuousScroll, setIsContinuousScroll] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<DocumentViewMode>(() => {
@@ -74,6 +94,14 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [filterToast, setFilterToast] = useState<string | null>(null);
 
+  // In-PDF Text Search state
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(!!initialSearchQuery);
+  const [searchQuery, setSearchQuery] = useState<string>(initialSearchQuery || "");
+  const [docPageTexts, setDocPageTexts] = useState<PdfPageText[]>([]);
+  const [isExtractingText, setIsExtractingText] = useState<boolean>(false);
+  const [currentMatchIdx, setCurrentMatchIdx] = useState<number>(0);
+
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const singleCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const renderTaskRef = useRef<any>(null);
   const toastTimerRef = useRef<any>(null);
@@ -112,7 +140,11 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     let isMounted = true;
     setLoading(true);
     setError(null);
-    setCurrentPage(1);
+    if (initialPage) {
+      setCurrentPage(initialPage);
+    } else {
+      setCurrentPage(1);
+    }
 
     async function loadPdf() {
       try {
@@ -143,16 +175,31 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           setPdfDoc(doc);
           setNumPages(doc.numPages);
 
-          const savedPage = localStorage.getItem(storageKey);
-          let initialPage = 1;
-          if (savedPage) {
-            const parsed = parseInt(savedPage, 10);
-            if (!isNaN(parsed) && parsed > 0) {
-              initialPage = Math.min(parsed, doc.numPages);
+          if (!initialPage) {
+            const savedPage = localStorage.getItem(storageKey);
+            let targetPage = 1;
+            if (savedPage) {
+              const parsed = parseInt(savedPage, 10);
+              if (!isNaN(parsed) && parsed > 0) {
+                targetPage = Math.min(parsed, doc.numPages);
+              }
             }
+            setCurrentPage(targetPage);
           }
-          setCurrentPage(initialPage);
           setLoading(false);
+
+          // Asynchronously extract text for instant search
+          setIsExtractingText(true);
+          extractLoadedPdfDocText(doc, `${vaultRoot}:${node.relative_path}`)
+            .then((extracted) => {
+              if (isMounted) {
+                setDocPageTexts(extracted);
+                setIsExtractingText(false);
+              }
+            })
+            .catch(() => {
+              if (isMounted) setIsExtractingText(false);
+            });
         }
       } catch (err: any) {
         if (isMounted) {
@@ -172,6 +219,61 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       isMounted = false;
     };
   }, [vaultRoot, node.relative_path]);
+
+  // Compute search matches
+  const searchMatches = useMemo<PdfSearchMatch[]>(() => {
+    if (!searchQuery.trim() || docPageTexts.length === 0) return [];
+    return searchInDocPages(docPageTexts, searchQuery);
+  }, [searchQuery, docPageTexts]);
+
+  // Jump to match when index changes
+  const jumpToMatch = useCallback((idx: number) => {
+    if (searchMatches.length === 0 || idx < 0 || idx >= searchMatches.length) return;
+    const match = searchMatches[idx];
+    setCurrentMatchIdx(idx);
+
+    if (!isContinuousScroll) {
+      setCurrentPage(match.pageNum);
+    } else {
+      const pageEl = document.getElementById(`pdf-page-${match.pageNum}`);
+      pageEl?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [searchMatches, isContinuousScroll]);
+
+  // Reset match index when query changes
+  useEffect(() => {
+    if (searchMatches.length > 0) {
+      // Find closest match to current page if possible
+      let bestIdx = 0;
+      const pageMatchIdx = searchMatches.findIndex((m) => m.pageNum >= currentPage);
+      if (pageMatchIdx !== -1) bestIdx = pageMatchIdx;
+      jumpToMatch(bestIdx);
+    } else {
+      setCurrentMatchIdx(0);
+    }
+  }, [searchMatches]);
+
+  function handleNextMatch() {
+    if (searchMatches.length === 0) return;
+    const nextIdx = (currentMatchIdx + 1) % searchMatches.length;
+    jumpToMatch(nextIdx);
+  }
+
+  function handlePrevMatch() {
+    if (searchMatches.length === 0) return;
+    const prevIdx = (currentMatchIdx - 1 + searchMatches.length) % searchMatches.length;
+    jumpToMatch(prevIdx);
+  }
+
+  function handleToggleSearch() {
+    setIsSearchOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setTimeout(() => searchInputRef.current?.focus(), 50);
+      }
+      return next;
+    });
+  }
 
   // Single page mode canvas renderer effect
   useEffect(() => {
@@ -243,8 +345,28 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     setZoom((prev) => Math.max(prev - 0.2, 0.5));
   }
 
+  // Global keyboard shortcuts within viewer
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      // Ctrl+F / Cmd+F: open search
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        setIsSearchOpen(true);
+        setTimeout(() => {
+          searchInputRef.current?.focus();
+          searchInputRef.current?.select();
+        }, 50);
+        return;
+      }
+
+      // If search input is focused, don't hijack arrow keys
+      if (document.activeElement === searchInputRef.current) {
+        if (e.key === "Escape") {
+          setIsSearchOpen(false);
+        }
+        return;
+      }
+
       if (e.key === "ArrowLeft") {
         handlePrevPage();
       } else if (e.key === "ArrowRight") {
@@ -256,7 +378,11 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       } else if (e.key.toLowerCase() === "d") {
         cycleViewMode();
       } else if (e.key === "Escape") {
-        onClose();
+        if (isSearchOpen) {
+          setIsSearchOpen(false);
+        } else {
+          onClose();
+        }
       }
     }
 
@@ -264,7 +390,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [currentPage, numPages, zoom]);
+  }, [currentPage, numPages, zoom, isSearchOpen]);
+
+  const activeMatch = searchMatches[currentMatchIdx];
 
   return (
     <div className={`pdf-viewer-overlay ${isDrawerOpen ? "drawer-open" : "drawer-closed"}`}>
@@ -362,6 +490,15 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           </div>
 
           <div className="toolbar-right">
+            {/* Find in Document Button */}
+            <button
+              onClick={handleToggleSearch}
+              className={`toolbar-btn search-doc-btn ${isSearchOpen ? "active" : ""}`}
+              title="Find in document (Ctrl+F)"
+            >
+              <SearchIcon size={14} /> <span>Find</span>
+            </button>
+
             <div className="filter-dropdown-group" title="Select Dark Mode Reading Filter (Shortcut: Press 'D' to cycle)">
               <label htmlFor="view-mode-select" className="filter-group-label">Filter:</label>
               <div className="custom-select-wrapper">
@@ -404,6 +541,85 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           </div>
         </header>
 
+        {/* Floating In-PDF Search Bar */}
+        {isSearchOpen && (
+          <div className="pdf-search-bar" role="search">
+            <div className="search-input-field-wrapper">
+              <SearchIcon size={14} className="search-field-icon" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                className="pdf-search-input"
+                placeholder="Find in document... (Enter / Shift+Enter)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (e.shiftKey) {
+                      handlePrevMatch();
+                    } else {
+                      handleNextMatch();
+                    }
+                  }
+                }}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className="search-clear-btn"
+                  onClick={() => setSearchQuery("")}
+                  title="Clear query"
+                >
+                  <CloseIcon size={12} />
+                </button>
+              )}
+            </div>
+
+            <div className="search-counter-badge">
+              {isExtractingText ? (
+                "Indexing..."
+              ) : searchMatches.length > 0 ? (
+                `${currentMatchIdx + 1} of ${searchMatches.length}`
+              ) : searchQuery.trim() ? (
+                "0 matches"
+              ) : (
+                "Ready"
+              )}
+            </div>
+
+            <div className="search-nav-btn-group">
+              <button
+                type="button"
+                className="search-nav-btn"
+                disabled={searchMatches.length === 0}
+                onClick={handlePrevMatch}
+                title="Previous match (Shift+Enter)"
+              >
+                <ChevronUpIcon size={13} />
+              </button>
+              <button
+                type="button"
+                className="search-nav-btn"
+                disabled={searchMatches.length === 0}
+                onClick={handleNextMatch}
+                title="Next match (Enter)"
+              >
+                <ChevronDownIcon size={13} />
+              </button>
+            </div>
+
+            <button
+              type="button"
+              className="search-close-btn"
+              onClick={() => setIsSearchOpen(false)}
+              title="Close search (Esc)"
+            >
+              <CloseIcon size={14} />
+            </button>
+          </div>
+        )}
+
         <main className="pdf-viewer-body">
           {filterToast && (
             <div className="filter-toast-tooltip" role="status" aria-live="polite">
@@ -411,6 +627,15 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               <span className="toast-shortcut-badge">Press 'D' to cycle</span>
             </div>
           )}
+
+          {/* Active Search Match Snippet Pill */}
+          {isSearchOpen && activeMatch && (
+            <div className="pdf-active-match-pill" role="status" aria-live="polite">
+              <span className="match-pill-badge">Match on Page {activeMatch.pageNum}</span>
+              <span className="match-pill-text">{activeMatch.snippet}</span>
+            </div>
+          )}
+
           {loading && <div className="pdf-loading">{loadingMessage}</div>}
 
           {error && (
@@ -423,18 +648,35 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           {!loading && !error && pdfDoc && (
             isContinuousScroll ? (
               <div className="continuous-scroll-list">
-                {Array.from({ length: numPages }).map((_, idx) => (
-                  <PdfPageCanvas
-                    key={idx + 1}
-                    pdfDoc={pdfDoc}
-                    pageNum={idx + 1}
-                    zoom={zoom}
-                    viewMode={viewMode}
-                  />
-                ))}
+                {Array.from({ length: numPages }).map((_, idx) => {
+                  const pageNumber = idx + 1;
+                  const isCurrentMatchPage = activeMatch?.pageNum === pageNumber;
+                  const hasMatches = searchMatches.some((m) => m.pageNum === pageNumber);
+
+                  return (
+                    <div
+                      id={`pdf-page-${pageNumber}`}
+                      key={pageNumber}
+                      className={`continuous-page-item ${hasMatches ? "has-matches" : ""} ${
+                        isCurrentMatchPage ? "active-match-page" : ""
+                      }`}
+                    >
+                      <PdfPageCanvas
+                        pdfDoc={pdfDoc}
+                        pageNum={pageNumber}
+                        zoom={zoom}
+                        viewMode={viewMode}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             ) : (
-              <div className={`canvas-container mode-${viewMode}`}>
+              <div
+                className={`canvas-container mode-${viewMode} ${
+                  activeMatch?.pageNum === currentPage ? "active-match-page" : ""
+                }`}
+              >
                 <canvas ref={singleCanvasRef} />
               </div>
             )

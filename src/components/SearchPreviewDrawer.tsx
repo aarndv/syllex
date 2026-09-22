@@ -78,8 +78,25 @@ export const SearchPreviewDrawer: React.FC<SearchPreviewDrawerProps> = ({
                 <span className="meta-label">Location:</span>
                 <span className="meta-value path">{parentPath}</span>
               </div>
+              {item.matchType === "content" && item.targetPage && (
+                <div className="meta-row">
+                  <span className="meta-label">Matched:</span>
+                  <span className="meta-value">Page {item.targetPage}</span>
+                </div>
+              )}
             </div>
           </div>
+
+          {item.matchType === "content" && item.snippet && (
+            <div className="meta-section">
+              <h4 className="meta-section-title">MATCHED TEXT IN DOCUMENT</h4>
+              <div className="preview-content-box">
+                <p className="preview-text" style={{ fontStyle: "italic", color: "#6ee7b7" }}>
+                  "{item.snippet}"
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="meta-section">
             <h4 className="meta-section-title">DOCUMENT PREVIEW & OUTLINE</h4>
@@ -129,7 +146,7 @@ export const SearchPreviewDrawer: React.FC<SearchPreviewDrawerProps> = ({
 
         <div className="preview-drawer-footer">
           <button className="primary-btn drawer-action-btn" onClick={() => onOpenItem(item)}>
-            <FileIcon size={16} /> Open Document
+            <FileIcon size={16} /> Open Document {item.targetPage ? `(Page ${item.targetPage})` : ""}
           </button>
           <button className="secondary-btn drawer-action-btn" onClick={() => onLocateOnBookshelf(item)}>
             <ShelfIcon size={16} /> Locate on Bookshelf

@@ -268,13 +268,23 @@ function App() {
   }
 
 
-  function handleSelectFileNode(node: VaultNode) {
+  const [initialPdfState, setInitialPdfState] = useState<{
+    page?: number;
+    query?: string;
+  } | null>(null);
+
+  function handleSelectFileNode(
+    node: VaultNode,
+    targetPage?: number,
+    initialSearchQuery?: string
+  ) {
     const isFile = typeof node.node_type === "object" && "File" in node.node_type;
     if (!isFile) return;
 
     const fileType = (node.node_type as { File: string }).File;
-    if (fileType === "Pdf") {
+    if (fileType === "Pdf" || fileType === "Ppt" || fileType === "Pptx") {
       setActiveNode(node);
+      setInitialPdfState({ page: targetPage, query: initialSearchQuery });
     } else {
       setError(`Viewing ${fileType} files is coming in later milestones.`);
     }
@@ -338,11 +348,16 @@ function App() {
           vaultRoot={vaultPath}
           node={activeNode}
           allNodes={scanResult.root_nodes}
-          onSelectNode={handleSelectFileNode}
+          initialPage={initialPdfState?.page}
+          initialSearchQuery={initialPdfState?.query}
+          onSelectNode={(n) => handleSelectFileNode(n)}
           onAddFile={handleAddModule}
           onRemoveItem={handleRemoveItem}
           onRefreshVault={() => scanVault(vaultPath)}
-          onClose={() => setActiveNode(null)}
+          onClose={() => {
+            setActiveNode(null);
+            setInitialPdfState(null);
+          }}
         />
       )}
 
@@ -350,9 +365,14 @@ function App() {
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         rootNodes={scanResult?.root_nodes || []}
+        vaultRoot={vaultPath || ""}
         onSelectResult={(item) => {
           setIsSearchOpen(false);
-          setSelectedSearchItem(item);
+          if (item.matchType === "content" && item.targetPage) {
+            handleSelectFileNode(item.node, item.targetPage, item.searchQuery);
+          } else {
+            setSelectedSearchItem(item);
+          }
         }}
       />
 
@@ -362,7 +382,7 @@ function App() {
         onOpenItem={(item) => {
           setSelectedSearchItem(null);
           if (item.node.node_type !== "Folder") {
-            handleSelectFileNode(item.node);
+            handleSelectFileNode(item.node, item.targetPage, item.searchQuery);
           }
         }}
         onLocateOnBookshelf={() => {
