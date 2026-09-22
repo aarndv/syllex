@@ -754,6 +754,7 @@ const PdfPageCanvas: React.FC<PdfPageCanvasProps> = React.memo(
 
     useEffect(() => {
       let isCancelled = false;
+      let activePage: any = null;
 
       async function renderPage() {
         // Cancel any previous in-flight render task on this canvas and await its completion
@@ -771,6 +772,7 @@ const PdfPageCanvas: React.FC<PdfPageCanvasProps> = React.memo(
 
         try {
           const page = await pdfDoc.getPage(pageNum);
+          activePage = page;
           if (isCancelled) return;
 
           const canvas = canvasRef.current;
@@ -822,6 +824,9 @@ const PdfPageCanvas: React.FC<PdfPageCanvasProps> = React.memo(
         isCancelled = true;
         if (renderTaskRef.current) {
           renderTaskRef.current.cancel();
+        }
+        if (activePage) {
+          activePage.cleanup();
         }
       };
     }, [pdfDoc, pageNum, zoom]);
