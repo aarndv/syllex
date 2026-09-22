@@ -154,11 +154,21 @@ pub fn convert_ppt_to_pdf(
     fs::create_dir_all(&temp_out_dir)
         .map_err(|e| format!("Failed to create temporary output dir: {}", e))?;
 
-    // 5. Execute LibreOffice conversion safely via argument array
+    // 5. Execute LibreOffice conversion safely via argument array with isolated profile and Impress PDF export filter
+    let profile_dir = temp_out_dir.join("profile");
+    let _ = fs::create_dir_all(&profile_dir);
+    let user_install_arg = format!(
+        "-env:UserInstallation=file://{}",
+        profile_dir.to_string_lossy().replace('\\', "/")
+    );
+
     let output = Command::new(&lo_bin)
         .arg("--headless")
+        .arg("--norestore")
+        .arg("--nofirststartwizard")
+        .arg(&user_install_arg)
         .arg("--convert-to")
-        .arg("pdf")
+        .arg("pdf:impress_pdf_Export")
         .arg("--outdir")
         .arg(&temp_out_dir)
         .arg(&canon_target)

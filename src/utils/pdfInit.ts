@@ -6,11 +6,20 @@ if (typeof window !== "undefined" && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
 }
 
 export function getPdfDocumentParams(data: Uint8Array) {
+  const origin =
+    typeof window !== "undefined" && window.location?.origin && window.location.origin !== "null"
+      ? window.location.origin
+      : "";
+
   return {
     data,
-    cMapUrl: "./cmaps/",
+    cMapUrl: origin ? `${origin}/cmaps/` : "./cmaps/",
     cMapPacked: true,
-    standardFontDataUrl: "./standard_fonts/",
+    standardFontDataUrl: origin ? `${origin}/standard_fonts/` : "./standard_fonts/",
+    wasmUrl: origin ? `${origin}/wasm/` : "./wasm/",
+    iccUrl: origin ? `${origin}/iccs/` : "./iccs/",
+    isEvalSupported: false,
+    useSystemFonts: true,
   };
 }
 
