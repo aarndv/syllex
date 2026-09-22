@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import * as pdfjsLib from "pdfjs-dist";
+import { pdfjsLib } from "../utils/pdfInit";
 import { invoke } from "@tauri-apps/api/core";
 import { VaultNode } from "../types/vault";
 import { FileTree } from "./FileTree";
@@ -21,9 +21,6 @@ import {
   PdfSearchMatch,
 } from "../utils/pdfSearch";
 import "./PdfViewer.css";
-
-// Set worker source to CDN / bundled worker URL
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 interface PdfViewerProps {
   vaultRoot: string;
@@ -102,8 +99,6 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const [currentMatchIdx, setCurrentMatchIdx] = useState<number>(0);
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
-  const singleCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const renderTaskRef = useRef<any>(null);
   const toastTimerRef = useRef<any>(null);
 
   const storageKey = `syllex_progress_${node.relative_path}`;
@@ -168,7 +163,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         }
 
         const uint8Array = new Uint8Array(fileBytes);
-        const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
+        const loadingTask = pdfjsLib.getDocument({ data: uint8Array, cMapPacked: true });
         const doc = await loadingTask.promise;
 
         if (isMounted) {
@@ -274,56 +269,6 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       return next;
     });
   }
-
-  // Single page mode canvas renderer effect
-  useEffect(() => {
-    if (isContinuousScroll || !pdfDoc || currentPage < 1 || currentPage > numPages) return;
-
-    let isCancelled = false;
-
-    async function renderSinglePage() {
-      try {
-        const page = await pdfDoc!.getPage(currentPage);
-        if (isCancelled) return;
-
-        const viewport = page.getViewport({ scale: zoom });
-        const canvas = singleCanvasRef.current;
-        if (!canvas) return;
-
-        const context = canvas.getContext("2d");
-        if (!context) return;
-
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        if (renderTaskRef.current) {
-          renderTaskRef.current.cancel();
-        }
-
-        const renderContext = {
-          canvasContext: context,
-          viewport,
-          canvas: canvas,
-        };
-
-        const renderTask = page.render(renderContext);
-        renderTaskRef.current = renderTask;
-        await renderTask.promise;
-
-        localStorage.setItem(storageKey, currentPage.toString());
-      } catch (err: any) {
-        if (err.name !== "RenderingCancelledException") {
-          console.error("Page render error:", err);
-        }
-      }
-    }
-
-    renderSinglePage();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [pdfDoc, currentPage, zoom, numPages, isContinuousScroll]);
 
   function handlePrevPage() {
     if (currentPage > 1) {
@@ -672,13 +617,17 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                 })}
               </div>
             ) : (
-              <div
-                className={`canvas-container mode-${viewMode} ${
-                  activeMatch?.pageNum === currentPage ? "active-match-page" : ""
-                }`}
-              >
-                <canvas ref={singleCanvasRef} />
-              </div>
+              <PdfPageCanvas
+                key={`single-page-${currentPage}`}
+                pdfDoc={pdfDoc}
+                pageNum={currentPage}
+                zoom={zoom}
+                viewMode={viewMode}
+                className={activeMatch?.pageNum === currentPage ? "active-match-page" : ""}
+                onRenderSuccess={() => {
+                  localStorage.setItem(storageKey, currentPage.toString());
+                }}
+              />
             )
           )}
         </main>
@@ -687,63 +636,98 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   );
 };
 
-const PdfPageCanvas: React.FC<{
+interface PdfPageCanvasProps {
   pdfDoc: pdfjsLib.PDFDocumentProxy;
   pageNum: number;
   zoom: number;
   viewMode: DocumentViewMode;
-}> = React.memo(({ pdfDoc, pageNum, zoom, viewMode }) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const renderTaskRef = useRef<any>(null);
+  onRenderSuccess?: () => void;
+  className?: string;
+}
 
-  useEffect(() => {
-    let isCancelled = false;
+const PdfPageCanvas: React.FC<PdfPageCanvasProps> = React.memo(
+  ({ pdfDoc, pageNum, zoom, viewMode, onRenderSuccess, className = "" }) => {
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const renderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
 
-    async function renderPage() {
-      try {
-        const page = await pdfDoc.getPage(pageNum);
+    useEffect(() => {
+      let isCancelled = false;
+
+      async function renderPage() {
+        // Cancel any previous in-flight render task on this canvas and await its completion
+        if (renderTaskRef.current) {
+          try {
+            renderTaskRef.current.cancel();
+            await renderTaskRef.current.promise;
+          } catch {
+            // RenderingCancelledException is expected
+          }
+          renderTaskRef.current = null;
+        }
+
         if (isCancelled) return;
 
-        const viewport = page.getViewport({ scale: zoom });
-        const canvas = canvasRef.current;
-        if (!canvas) return;
+        try {
+          const page = await pdfDoc.getPage(pageNum);
+          if (isCancelled) return;
 
-        const context = canvas.getContext("2d");
-        if (!context) return;
+          const canvas = canvasRef.current;
+          if (!canvas) return;
 
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+          const context = canvas.getContext("2d");
+          if (!context) return;
 
+          // Compute viewport with devicePixelRatio for sharp rendering on high-DPI screens
+          const pixelRatio = window.devicePixelRatio || 1;
+          const viewport = page.getViewport({ scale: zoom * pixelRatio });
+
+          // Set canvas internal pixel resolution
+          canvas.width = Math.floor(viewport.width);
+          canvas.height = Math.floor(viewport.height);
+
+          // Set canvas CSS display dimensions
+          canvas.style.width = `${Math.floor(viewport.width / pixelRatio)}px`;
+          canvas.style.height = `${Math.floor(viewport.height / pixelRatio)}px`;
+
+          // Clean context transforms and reset canvas state
+          context.setTransform(1, 0, 0, 1, 0, 0);
+          context.clearRect(0, 0, canvas.width, canvas.height);
+
+          const renderContext = {
+            canvasContext: context,
+            viewport,
+            canvas,
+          };
+
+          const renderTask = page.render(renderContext);
+          renderTaskRef.current = renderTask;
+          await renderTask.promise;
+
+          if (!isCancelled) {
+            renderTaskRef.current = null;
+            onRenderSuccess?.();
+          }
+        } catch (err: any) {
+          if (err?.name !== "RenderingCancelledException") {
+            console.error(`Page ${pageNum} render error:`, err);
+          }
+        }
+      }
+
+      renderPage();
+
+      return () => {
+        isCancelled = true;
         if (renderTaskRef.current) {
           renderTaskRef.current.cancel();
         }
+      };
+    }, [pdfDoc, pageNum, zoom]);
 
-        const renderContext = {
-          canvasContext: context,
-          viewport,
-          canvas,
-        };
-
-        const renderTask = page.render(renderContext);
-        renderTaskRef.current = renderTask;
-        await renderTask.promise;
-      } catch (err: any) {
-        if (err.name !== "RenderingCancelledException") {
-          console.error(`Page ${pageNum} render error:`, err);
-        }
-      }
-    }
-
-    renderPage();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [pdfDoc, pageNum, zoom]);
-
-  return (
-    <div className={`canvas-container mode-${viewMode}`}>
-      <canvas ref={canvasRef} />
-    </div>
-  );
-});
+    return (
+      <div className={`canvas-container mode-${viewMode} ${className}`.trim()}>
+        <canvas ref={canvasRef} />
+      </div>
+    );
+  }
+);

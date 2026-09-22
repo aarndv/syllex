@@ -352,6 +352,7 @@
 }
 
 .canvas-container canvas {
+  display: block;
   transition: filter 0.2s ease;
 }
 
