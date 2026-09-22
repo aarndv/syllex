@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { PlusIcon, CloseIcon, ResetIcon, MinusIcon, PencilIcon, CounterIcon } from "./Icons";
+import { PlusIcon, CloseIcon, ResetIcon, MinusIcon, CounterIcon } from "./Icons";
 import "./SidebarCountersWidget.css";
 
 export interface CounterItem {
@@ -96,7 +96,7 @@ export const SidebarCountersWidget: React.FC = () => {
     <div className="sidebar-counters-card">
       <header className="counters-header">
         <div className="counters-title-row">
-          <CounterIcon size={14} />
+          <CounterIcon size={13} />
           <span className="counters-title">Counters</span>
         </div>
         <div className="counters-header-actions">
@@ -109,12 +109,12 @@ export const SidebarCountersWidget: React.FC = () => {
             onClick={() => setIsAdding((prev) => !prev)}
             title={isAdding ? "Cancel adding" : "Add new counter"}
           >
-            {isAdding ? <CloseIcon size={12} /> : <PlusIcon size={12} />}
+            {isAdding ? <CloseIcon size={11} /> : <PlusIcon size={11} />}
           </button>
         </div>
       </header>
 
-      {/* Inline Add Counter Form */}
+      {/* Compact Add Counter Form */}
       {isAdding && (
         <form
           className="counter-input-row"
@@ -126,36 +126,27 @@ export const SidebarCountersWidget: React.FC = () => {
           <input
             type="text"
             className="counter-input"
-            placeholder="Counter name (e.g. Pages Read)..."
+            placeholder="Counter name..."
             value={newName}
             autoFocus
             onChange={(e) => setNewName(e.target.value)}
           />
           <button type="submit" className="counter-add-btn" title="Create Counter">
-            <PlusIcon size={14} />
+            <PlusIcon size={12} />
           </button>
         </form>
       )}
 
-      {/* Counters List */}
+      {/* Compact Counters List */}
       <div className="counters-items-list">
         {counters.length === 0 ? (
-          <div className="counters-empty-view">
-            <p className="counters-empty-text">No counters yet.</p>
-            <button
-              type="button"
-              className="counters-empty-add-btn"
-              onClick={() => setIsAdding(true)}
-            >
-              <PlusIcon size={12} /> Add First Counter
-            </button>
-          </div>
+          <p className="counters-empty-text">No counters yet. Click + to add one.</p>
         ) : (
           counters.map((counter) => {
             const isEditing = editingId === counter.id;
             return (
               <div key={counter.id} className="counter-item">
-                <div className="counter-top-row">
+                <div className="counter-left">
                   {isEditing ? (
                     <input
                       type="text"
@@ -170,38 +161,18 @@ export const SidebarCountersWidget: React.FC = () => {
                       }}
                     />
                   ) : (
-                    <div
-                      className="counter-name-container"
+                    <span
+                      className="counter-name"
                       onClick={() => handleStartEdit(counter)}
                       title="Click to rename counter"
                     >
-                      <span className="counter-name">{counter.name}</span>
-                      <PencilIcon size={11} className="counter-rename-hint" />
-                    </div>
+                      {counter.name}
+                    </span>
                   )}
-
-                  <div className="counter-item-tools">
-                    <button
-                      type="button"
-                      onClick={() => handleReset(counter.id)}
-                      className="counter-action-btn"
-                      title="Reset counter to 0"
-                    >
-                      <ResetIcon size={12} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(counter.id)}
-                      className="counter-action-btn delete"
-                      title="Delete counter"
-                    >
-                      <CloseIcon size={12} />
-                    </button>
-                  </div>
                 </div>
 
-                {/* Counter Stepper Controls */}
-                <div className="counter-controls-row">
+                {/* Stepper Controls in Single Row */}
+                <div className="counter-controls">
                   <button
                     type="button"
                     className="counter-stepper-btn decrement"
@@ -209,17 +180,16 @@ export const SidebarCountersWidget: React.FC = () => {
                     onClick={() => handleDecrement(counter.id)}
                     title="Subtract 1"
                   >
-                    <MinusIcon size={14} />
+                    <MinusIcon size={11} />
                   </button>
 
                   <button
                     type="button"
-                    className="counter-tick-btn"
+                    className="counter-count-btn"
                     onClick={() => handleIncrement(counter.id)}
                     title="Click to count up (+1)"
                   >
-                    <span className="counter-count-number">{counter.count}</span>
-                    <span className="counter-amp-label">TAP +1</span>
+                    {counter.count}
                   </button>
 
                   <button
@@ -228,7 +198,25 @@ export const SidebarCountersWidget: React.FC = () => {
                     onClick={() => handleIncrement(counter.id)}
                     title="Add 1 (+1)"
                   >
-                    <PlusIcon size={14} />
+                    <PlusIcon size={11} />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleReset(counter.id)}
+                    className="counter-tool-btn"
+                    title="Reset to 0"
+                  >
+                    <ResetIcon size={11} />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(counter.id)}
+                    className="counter-tool-btn delete"
+                    title="Delete counter"
+                  >
+                    <CloseIcon size={11} />
                   </button>
                 </div>
               </div>
