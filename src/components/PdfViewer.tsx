@@ -654,7 +654,7 @@ const PdfContinuousPageItem: React.FC<PdfContinuousPageItemProps> = React.memo(
     scrollContainerRef,
   }) => {
     const itemRef = useRef<HTMLDivElement | null>(null);
-    const [isVisible, setIsVisible] = useState<boolean>(false);
+    const [shouldRender, setShouldRender] = useState<boolean>(false);
     const [pageSize, setPageSize] = useState<{ width: number; height: number } | null>(null);
 
     // Query unscaled page dimensions once for placeholder sizing
@@ -674,7 +674,9 @@ const PdfContinuousPageItem: React.FC<PdfContinuousPageItemProps> = React.memo(
       };
     }, [pdfDoc, pageNumber]);
 
-    // Viewport intersection observer to lazy-render canvas only when near/in view
+    // Viewport intersection observer:
+    // Once a page enters or nears the visible scrolling window (800px margin), mark shouldRender = true.
+    // Once rendered, keep it rendered so scrolling back and forth is instantaneous and never triggers cancellation races!
     useEffect(() => {
       const el = itemRef.current;
       if (!el) return;
@@ -682,7 +684,9 @@ const PdfContinuousPageItem: React.FC<PdfContinuousPageItemProps> = React.memo(
       const observer = new IntersectionObserver(
         (entries) => {
           for (const entry of entries) {
-            setIsVisible(entry.isIntersecting);
+            if (entry.isIntersecting) {
+              setShouldRender(true);
+            }
           }
         },
         {
@@ -714,7 +718,7 @@ const PdfContinuousPageItem: React.FC<PdfContinuousPageItemProps> = React.memo(
           minHeight: `${estimatedHeight}px`,
         }}
       >
-        {isVisible ? (
+        {shouldRender ? (
           <PdfPageCanvas
             key={`page-${pageNumber}-${zoom}`}
             pdfDoc={pdfDoc}
@@ -754,7 +758,6 @@ const PdfPageCanvas: React.FC<PdfPageCanvasProps> = React.memo(
 
     useEffect(() => {
       let isCancelled = false;
-      let activePage: any = null;
 
       async function renderPage() {
         // Cancel any previous in-flight render task on this canvas and await its completion
@@ -772,7 +775,6 @@ const PdfPageCanvas: React.FC<PdfPageCanvasProps> = React.memo(
 
         try {
           const page = await pdfDoc.getPage(pageNum);
-          activePage = page;
           if (isCancelled) return;
 
           const canvas = canvasRef.current;
@@ -824,9 +826,6 @@ const PdfPageCanvas: React.FC<PdfPageCanvasProps> = React.memo(
         isCancelled = true;
         if (renderTaskRef.current) {
           renderTaskRef.current.cancel();
-        }
-        if (activePage) {
-          activePage.cleanup();
         }
       };
     }, [pdfDoc, pageNum, zoom]);
