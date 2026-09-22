@@ -1,0 +1,504 @@
+/* Sidebar Counters Widget Card */
+.sidebar-counters-card {
+  background-color: rgba(22, 62, 38, 0.6);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+  padding: 0.85rem;
+  margin: 0.75rem 0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  font-family: inherit;
+}
+
+.counters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.counters-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #ffffff;
+}
+
+.counters-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #ffffff;
+}
+
+.counters-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.counters-badge {
+  font-size: 0.68rem;
+  font-family: monospace;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #e2f0d9;
+  padding: 0.1rem 0.45rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.counters-add-toggle-btn {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.counters-add-toggle-btn:hover,
+.counters-add-toggle-btn.active {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-color: #ffffff;
+}
+
+/* Input Form */
+.counter-input-row {
+  display: flex;
+  gap: 0.4rem;
+  animation: fadeInDown 0.15s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.counter-input {
+  flex: 1;
+  background-color: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.counter-input:focus {
+  border-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.counter-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.counter-add-btn {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 0.35rem 0.55rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.counter-add-btn:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-color: #ffffff;
+}
+
+/* Counters Items List */
+.counters-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 0.15rem;
+}
+
+.counters-empty-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0;
+}
+
+.counters-empty-text {
+  font-size: 0.75rem;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+.counters-empty-add-btn {
+  background-color: rgba(255, 255, 255, 0.12);
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  color: #e2f0d9;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.3rem 0.65rem;
+  border-radius: 5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+}
+
+.counters-empty-add-btn:hover {
+  background-color: rgba(255, 255, 255, 0.22);
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+/* Counter Item */
+.counter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.55rem 0.65rem;
+  background-color: rgba(14, 40, 24, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.counter-item:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.38);
+}
+
+.counter-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.counter-name-container {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0.1rem 0.25rem;
+  margin-left: -0.25rem;
+  transition: background-color 0.15s ease;
+}
+
+.counter-name-container:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.counter-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.counter-rename-hint {
+  opacity: 0;
+  color: rgba(255, 255, 255, 0.6);
+  transition: opacity 0.15s ease;
+}
+
+.counter-name-container:hover .counter-rename-hint {
+  opacity: 0.8;
+}
+
+.counter-edit-input {
+  flex: 1;
+  background-color: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  color: #ffffff;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  font-weight: 600;
+  outline: none;
+}
+
+.counter-edit-input:focus {
+  border-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.25);
+}
+
+.counter-item-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.counter-action-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  padding: 0.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  transition: all 0.15s ease;
+}
+
+.counter-action-btn:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.counter-action-btn.delete:hover {
+  color: #fca5a5;
+  background-color: rgba(239, 68, 68, 0.25);
+}
+
+/* Stepper & Tick Action */
+.counter-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.counter-stepper-btn {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.counter-stepper-btn:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.25);
+  border-color: #ffffff;
+}
+
+.counter-stepper-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.counter-stepper-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Big Tap / Tick Counter Button */
+.counter-tick-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(5, 150, 105, 0.85), rgba(16, 185, 129, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.counter-tick-btn:hover {
+  background: linear-gradient(135deg, rgba(5, 150, 105, 1), rgba(16, 185, 129, 1));
+  box-shadow: 0 3px 8px rgba(16, 185, 129, 0.3);
+  border-color: #ffffff;
+}
+
+.counter-tick-btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.counter-count-number {
+  font-size: 1.1rem;
+  font-weight: 800;
+  font-family: monospace;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.counter-amp-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* Light Theme Botanical Parchment Blueprint Overrides */
+html[data-theme="light"] .sidebar-counters-card {
+  background-color: #eee9df;
+  border-color: #143222;
+  box-shadow: 0 4px 14px rgba(20, 50, 34, 0.08);
+}
+
+html[data-theme="light"] .counters-header {
+  border-bottom-color: #143222;
+}
+
+html[data-theme="light"] .counters-title-row,
+html[data-theme="light"] .counters-title {
+  color: #143222;
+}
+
+html[data-theme="light"] .counters-badge {
+  background-color: #e4ddd0;
+  color: #143222;
+  border-color: #143222;
+}
+
+html[data-theme="light"] .counters-add-toggle-btn {
+  background-color: #143222;
+  color: #ffffff;
+  border-color: #0b1d14;
+}
+
+html[data-theme="light"] .counters-add-toggle-btn:hover,
+html[data-theme="light"] .counters-add-toggle-btn.active {
+  background-color: #1e4530;
+}
+
+html[data-theme="light"] .counter-input {
+  background-color: #fbf9f4;
+  border-color: #143222;
+  color: #143222;
+}
+
+html[data-theme="light"] .counter-input::placeholder {
+  color: rgba(20, 50, 34, 0.5);
+}
+
+html[data-theme="light"] .counter-input:focus {
+  background-color: #ffffff;
+  border-color: #143222;
+}
+
+html[data-theme="light"] .counter-add-btn {
+  background-color: #143222;
+  color: #ffffff;
+  border-color: #0b1d14;
+}
+
+html[data-theme="light"] .counter-add-btn:hover {
+  background-color: #1e4530;
+}
+
+html[data-theme="light"] .counters-empty-text {
+  color: rgba(20, 50, 34, 0.6);
+}
+
+html[data-theme="light"] .counters-empty-add-btn {
+  background-color: #e4ddd0;
+  border-color: #143222;
+  color: #143222;
+}
+
+html[data-theme="light"] .counters-empty-add-btn:hover {
+  background-color: #143222;
+  color: #ffffff;
+}
+
+html[data-theme="light"] .counter-item {
+  background-color: #fbf9f4;
+  border-color: #143222;
+}
+
+html[data-theme="light"] .counter-item:hover {
+  background-color: #e4ddd0;
+}
+
+html[data-theme="light"] .counter-name {
+  color: #143222;
+}
+
+html[data-theme="light"] .counter-rename-hint {
+  color: #143222;
+}
+
+html[data-theme="light"] .counter-edit-input {
+  background-color: #ffffff;
+  border-color: #143222;
+  color: #143222;
+}
+
+html[data-theme="light"] .counter-action-btn {
+  color: rgba(20, 50, 34, 0.5);
+}
+
+html[data-theme="light"] .counter-action-btn:hover {
+  color: #143222;
+  background-color: rgba(20, 50, 34, 0.1);
+}
+
+html[data-theme="light"] .counter-action-btn.delete:hover {
+  color: #dc2626;
+  background-color: #fee2e2;
+}
+
+html[data-theme="light"] .counter-stepper-btn {
+  background-color: #e4ddd0;
+  border-color: #143222;
+  color: #143222;
+}
+
+html[data-theme="light"] .counter-stepper-btn:hover:not(:disabled) {
+  background-color: #143222;
+  color: #ffffff;
+}
+
+html[data-theme="light"] .counter-tick-btn {
+  background: linear-gradient(135deg, #143222, #1b452f);
+  border-color: #0b1d14;
+  color: #ffffff;
+}
+
+html[data-theme="light"] .counter-tick-btn:hover {
+  background: linear-gradient(135deg, #1b452f, #225a3d);
+}
+
+html[data-theme="light"] .counter-amp-label {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}

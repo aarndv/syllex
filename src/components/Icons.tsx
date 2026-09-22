@@ -360,6 +360,77 @@ export const ChevronRightIcon: React.FC<IconProps> = ({ className = "", size = 1
   </svg>
 );
 
+export const MinusIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`inline-icon ${className}`}
+  >
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+
+export const ResetIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`inline-icon ${className}`}
+  >
+    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+    <path d="M3 3v5h5" />
+  </svg>
+);
+
+export const CounterIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`inline-icon ${className}`}
+  >
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <line x1="7" y1="8" x2="7" y2="16" />
+    <line x1="12" y1="8" x2="12" y2="16" />
+    <line x1="17" y1="8" x2="17" y2="16" />
+    <line x1="4.5" y1="15" x2="19.5" y2="9" />
+  </svg>
+);
+
+export const SidebarToggleIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`inline-icon ${className}`}
+  >
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+    <line x1="9" y1="3" x2="9" y2="21" />
+  </svg>
+);
+
+
 
 
 
