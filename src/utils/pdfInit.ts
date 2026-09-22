@@ -5,4 +5,13 @@ if (typeof window !== "undefined" && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
   pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 }
 
+export function getPdfDocumentParams(data: Uint8Array) {
+  return {
+    data,
+    cMapUrl: "./cmaps/",
+    cMapPacked: true,
+    standardFontDataUrl: "./standard_fonts/",
+  };
+}
+
 export { pdfjsLib };

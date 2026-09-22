@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import { pdfjsLib } from "../utils/pdfInit";
+import { pdfjsLib, getPdfDocumentParams } from "../utils/pdfInit";
 import { invoke } from "@tauri-apps/api/core";
 import { VaultNode } from "../types/vault";
 import { FileTree } from "./FileTree";
@@ -163,7 +163,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         }
 
         const uint8Array = new Uint8Array(fileBytes);
-        const loadingTask = pdfjsLib.getDocument({ data: uint8Array, cMapPacked: true });
+        const loadingTask = pdfjsLib.getDocument(getPdfDocumentParams(uint8Array));
         const doc = await loadingTask.promise;
 
         if (isMounted) {

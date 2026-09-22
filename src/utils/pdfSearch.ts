@@ -1,4 +1,4 @@
-import { pdfjsLib } from "./pdfInit";
+import { pdfjsLib, getPdfDocumentParams } from "./pdfInit";
 import { invoke } from "@tauri-apps/api/core";
 import { VaultNode } from "../types/vault";
 
@@ -54,7 +54,7 @@ export async function extractPdfText(
   }
 
   const uint8Array = new Uint8Array(fileBytes);
-  const loadingTask = pdfjsLib.getDocument({ data: uint8Array, cMapPacked: true });
+  const loadingTask = pdfjsLib.getDocument(getPdfDocumentParams(uint8Array));
   const doc = await loadingTask.promise;
 
   const pages: PdfPageText[] = [];
