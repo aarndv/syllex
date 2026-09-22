@@ -100,6 +100,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const toastTimerRef = useRef<any>(null);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
 
   const storageKey = `syllex_progress_${node.relative_path}`;
 
@@ -565,7 +566,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           </div>
         )}
 
-        <main className="pdf-viewer-body">
+        <main ref={bodyRef} className="pdf-viewer-body">
           {filterToast && (
             <div className="filter-toast-tooltip" role="status" aria-live="polite">
               <span className="toast-filter-name">Reading Filter: <strong>{filterToast}</strong></span>
@@ -599,20 +600,16 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                   const hasMatches = searchMatches.some((m) => m.pageNum === pageNumber);
 
                   return (
-                    <div
-                      id={`pdf-page-${pageNumber}`}
-                      key={pageNumber}
-                      className={`continuous-page-item ${hasMatches ? "has-matches" : ""} ${
-                        isCurrentMatchPage ? "active-match-page" : ""
-                      }`}
-                    >
-                      <PdfPageCanvas
-                        pdfDoc={pdfDoc}
-                        pageNum={pageNumber}
-                        zoom={zoom}
-                        viewMode={viewMode}
-                      />
-                    </div>
+                    <PdfContinuousPageItem
+                      key={`continuous-page-${pageNumber}`}
+                      pdfDoc={pdfDoc}
+                      pageNumber={pageNumber}
+                      zoom={zoom}
+                      viewMode={viewMode}
+                      isCurrentMatchPage={isCurrentMatchPage}
+                      hasMatches={hasMatches}
+                      scrollContainerRef={bodyRef}
+                    />
                   );
                 })}
               </div>
@@ -635,6 +632,111 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     </div>
   );
 };
+
+interface PdfContinuousPageItemProps {
+  pdfDoc: pdfjsLib.PDFDocumentProxy;
+  pageNumber: number;
+  zoom: number;
+  viewMode: DocumentViewMode;
+  isCurrentMatchPage: boolean;
+  hasMatches: boolean;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+}
+
+const PdfContinuousPageItem: React.FC<PdfContinuousPageItemProps> = React.memo(
+  ({
+    pdfDoc,
+    pageNumber,
+    zoom,
+    viewMode,
+    isCurrentMatchPage,
+    hasMatches,
+    scrollContainerRef,
+  }) => {
+    const itemRef = useRef<HTMLDivElement | null>(null);
+    const [isVisible, setIsVisible] = useState<boolean>(false);
+    const [pageSize, setPageSize] = useState<{ width: number; height: number } | null>(null);
+
+    // Query unscaled page dimensions once for placeholder sizing
+    useEffect(() => {
+      let isMounted = true;
+      pdfDoc
+        .getPage(pageNumber)
+        .then((page) => {
+          if (isMounted) {
+            const vp = page.getViewport({ scale: 1.0 });
+            setPageSize({ width: vp.width, height: vp.height });
+          }
+        })
+        .catch(() => {});
+      return () => {
+        isMounted = false;
+      };
+    }, [pdfDoc, pageNumber]);
+
+    // Viewport intersection observer to lazy-render canvas only when near/in view
+    useEffect(() => {
+      const el = itemRef.current;
+      if (!el) return;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            setIsVisible(entry.isIntersecting);
+          }
+        },
+        {
+          root: scrollContainerRef.current,
+          rootMargin: "800px 0px 800px 0px", // Pre-render pages within 800px of scrolling window
+          threshold: 0,
+        }
+      );
+
+      observer.observe(el);
+
+      return () => {
+        observer.disconnect();
+      };
+    }, [scrollContainerRef]);
+
+    const estimatedWidth = pageSize ? Math.floor(pageSize.width * zoom) : Math.floor(800 * zoom);
+    const estimatedHeight = pageSize ? Math.floor(pageSize.height * zoom) : Math.floor(1130 * zoom);
+
+    return (
+      <div
+        id={`pdf-page-${pageNumber}`}
+        ref={itemRef}
+        className={`continuous-page-item ${hasMatches ? "has-matches" : ""} ${
+          isCurrentMatchPage ? "active-match-page" : ""
+        }`}
+        style={{
+          minWidth: `${estimatedWidth}px`,
+          minHeight: `${estimatedHeight}px`,
+        }}
+      >
+        {isVisible ? (
+          <PdfPageCanvas
+            key={`page-${pageNumber}-${zoom}`}
+            pdfDoc={pdfDoc}
+            pageNum={pageNumber}
+            zoom={zoom}
+            viewMode={viewMode}
+          />
+        ) : (
+          <div
+            className={`canvas-container mode-${viewMode} continuous-page-placeholder`}
+            style={{
+              width: `${estimatedWidth}px`,
+              height: `${estimatedHeight}px`,
+            }}
+          >
+            <span className="placeholder-page-label">Page {pageNumber}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+);
 
 interface PdfPageCanvasProps {
   pdfDoc: pdfjsLib.PDFDocumentProxy;
