@@ -654,7 +654,8 @@ const PdfContinuousPageItem: React.FC<PdfContinuousPageItemProps> = React.memo(
     scrollContainerRef,
   }) => {
     const itemRef = useRef<HTMLDivElement | null>(null);
-    const [shouldRender, setShouldRender] = useState<boolean>(false);
+    const [isVisible, setIsVisible] = useState<boolean>(false);
+    const [isRendered, setIsRendered] = useState<boolean>(false);
     const [pageSize, setPageSize] = useState<{ width: number; height: number } | null>(null);
 
     // Query unscaled page dimensions once for placeholder sizing
@@ -674,9 +675,7 @@ const PdfContinuousPageItem: React.FC<PdfContinuousPageItemProps> = React.memo(
       };
     }, [pdfDoc, pageNumber]);
 
-    // Viewport intersection observer:
-    // Once a page enters or nears the visible scrolling window (800px margin), mark shouldRender = true.
-    // Once rendered, keep it rendered so scrolling back and forth is instantaneous and never triggers cancellation races!
+    // Viewport intersection observer to track visibility
     useEffect(() => {
       const el = itemRef.current;
       if (!el) return;
@@ -684,9 +683,7 @@ const PdfContinuousPageItem: React.FC<PdfContinuousPageItemProps> = React.memo(
       const observer = new IntersectionObserver(
         (entries) => {
           for (const entry of entries) {
-            if (entry.isIntersecting) {
-              setShouldRender(true);
-            }
+            setIsVisible(entry.isIntersecting);
           }
         },
         {
@@ -703,8 +700,16 @@ const PdfContinuousPageItem: React.FC<PdfContinuousPageItemProps> = React.memo(
       };
     }, [scrollContainerRef]);
 
+    // Reset isRendered when zoom changes so visible pages re-render at the new resolution
+    useEffect(() => {
+      setIsRendered(false);
+    }, [zoom]);
+
     const estimatedWidth = pageSize ? Math.floor(pageSize.width * zoom) : Math.floor(800 * zoom);
     const estimatedHeight = pageSize ? Math.floor(pageSize.height * zoom) : Math.floor(1130 * zoom);
+
+    // Render when near viewport, and once completed retain canvas in memory for 60fps scrolling
+    const shouldMount = isVisible || isRendered;
 
     return (
       <div
@@ -718,13 +723,14 @@ const PdfContinuousPageItem: React.FC<PdfContinuousPageItemProps> = React.memo(
           minHeight: `${estimatedHeight}px`,
         }}
       >
-        {shouldRender ? (
+        {shouldMount ? (
           <PdfPageCanvas
             key={`page-${pageNumber}-${zoom}`}
             pdfDoc={pdfDoc}
             pageNum={pageNumber}
             zoom={zoom}
             viewMode={viewMode}
+            onRenderSuccess={() => setIsRendered(true)}
           />
         ) : (
           <div
@@ -753,14 +759,14 @@ interface PdfPageCanvasProps {
 
 const PdfPageCanvas: React.FC<PdfPageCanvasProps> = React.memo(
   ({ pdfDoc, pageNum, zoom, viewMode, onRenderSuccess, className = "" }) => {
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const containerRef = useRef<HTMLDivElement | null>(null);
     const renderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
 
     useEffect(() => {
       let isCancelled = false;
 
       async function renderPage() {
-        // Cancel any previous in-flight render task on this canvas and await its completion
+        // Cancel any previous in-flight render task and await its completion
         if (renderTaskRef.current) {
           try {
             renderTaskRef.current.cancel();
@@ -777,41 +783,39 @@ const PdfPageCanvas: React.FC<PdfPageCanvasProps> = React.memo(
           const page = await pdfDoc.getPage(pageNum);
           if (isCancelled) return;
 
-          const canvas = canvasRef.current;
-          if (!canvas) return;
-
-          const context = canvas.getContext("2d");
-          if (!context) return;
-
-          // Compute viewport with devicePixelRatio for sharp rendering on high-DPI screens
+          // Off-screen double buffer canvas: draw completely off-DOM first
           const pixelRatio = window.devicePixelRatio || 1;
           const viewport = page.getViewport({ scale: zoom * pixelRatio });
 
-          // Set canvas internal pixel resolution
-          canvas.width = Math.floor(viewport.width);
-          canvas.height = Math.floor(viewport.height);
+          const offscreenCanvas = document.createElement("canvas");
+          offscreenCanvas.width = Math.floor(viewport.width);
+          offscreenCanvas.height = Math.floor(viewport.height);
+          offscreenCanvas.style.width = `${Math.floor(viewport.width / pixelRatio)}px`;
+          offscreenCanvas.style.height = `${Math.floor(viewport.height / pixelRatio)}px`;
+          offscreenCanvas.style.display = "block";
 
-          // Set canvas CSS display dimensions
-          canvas.style.width = `${Math.floor(viewport.width / pixelRatio)}px`;
-          canvas.style.height = `${Math.floor(viewport.height / pixelRatio)}px`;
-
-          // Clean context transforms and reset canvas state
-          context.setTransform(1, 0, 0, 1, 0, 0);
-          context.clearRect(0, 0, canvas.width, canvas.height);
+          const context = offscreenCanvas.getContext("2d");
+          if (!context) return;
 
           const renderContext = {
             canvasContext: context,
             viewport,
-            canvas,
+            canvas: offscreenCanvas,
           };
 
           const renderTask = page.render(renderContext);
           renderTaskRef.current = renderTask;
+
+          // Await 100% full render completion
           await renderTask.promise;
 
-          if (!isCancelled) {
+          // Only swap into the DOM once 100% finished without cancellation
+          if (!isCancelled && containerRef.current) {
             renderTaskRef.current = null;
+            containerRef.current.replaceChildren(offscreenCanvas);
             onRenderSuccess?.();
+          } else {
+            offscreenCanvas.width = offscreenCanvas.height = 0;
           }
         } catch (err: any) {
           if (err?.name !== "RenderingCancelledException") {
@@ -831,9 +835,10 @@ const PdfPageCanvas: React.FC<PdfPageCanvasProps> = React.memo(
     }, [pdfDoc, pageNum, zoom]);
 
     return (
-      <div className={`canvas-container mode-${viewMode} ${className}`.trim()}>
-        <canvas ref={canvasRef} />
-      </div>
+      <div
+        ref={containerRef}
+        className={`canvas-container mode-${viewMode} ${className}`.trim()}
+      />
     );
   }
 );

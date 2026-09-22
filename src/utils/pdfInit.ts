@@ -19,8 +19,7 @@ export function getPdfDocumentParams(data: Uint8Array) {
     wasmUrl: origin ? `${origin}/wasm/` : "./wasm/",
     iccUrl: origin ? `${origin}/iccs/` : "./iccs/",
     isEvalSupported: false,
-    disableFontFace: true,
-    useSystemFonts: false,
+    useSystemFonts: true,
   };
 }
 
