@@ -133,3 +133,27 @@ Record decisions that are expensive to reverse or affect multiple parts of the a
 **Reason:** Enables students to add new modules and keep personal markdown notes alongside course materials without breaking the rule that existing files are never overwritten or modified silently.
 
 **Consequences:** The scanner must recognize `.md` files, and a native file copy command must validate target paths to ensure copied files stay within the selected vault.
+
+## D-013 — Evidence-driven technology changes
+
+**Status:** Accepted
+
+**Decision:** Treat the documented technology stack as a preferred baseline rather than an immutable constraint. A major component or dependency may be replaced when observed behavior shows that the current approach cannot reliably satisfy product requirements. The replacement must be recorded here with its evidence, alternatives, platform impact, security impact, and migration consequences.
+
+**Reason:** Repeatedly patching an unsuitable implementation can increase complexity without improving reliability. The project should be able to adopt a better-supported local technology when necessary while keeping product and security invariants stable.
+
+**Alternatives:** Permanently lock the original stack, or allow unrecorded ad hoc changes. A permanent lock prevents necessary corrections; unrecorded changes make maintenance and review unsafe.
+
+**Consequences:** Technology changes no longer require separate case-by-case permission when they are necessary and documented. Local-first operation, source immutability, Fedora and Windows support, filesystem boundaries, and the prohibition on unapproved network features remain mandatory.
+
+## D-014 — Use PDF.js maintained viewer components
+
+**Status:** Accepted
+
+**Decision:** Replace Syllex's custom React canvas scheduler with PDF.js's maintained `PDFViewer` and `PDFSinglePageViewer` components. React continues to own the surrounding toolbar and application state; PDF.js owns page DOM, rendering priority, cancellation, canvas reuse, and the bounded page-view buffer.
+
+**Reason:** Multiple iterations of custom `page.render()` lifecycle, viewport observation, buffering, and font timing logic did not resolve incomplete or displaced pages. PDF.js already provides a production viewer layer specifically for those responsibilities.
+
+**Alternatives:** Continue patching the custom canvas renderer; embed the webview's browser PDF plugin; or replace PDF.js with a native MuPDF/Poppler image-rendering pipeline. Browser PDF plugins are inconsistent between WebKitGTK and WebView2. A native engine remains a viable next step but adds native dependencies, packaging work, and a larger security-review surface.
+
+**Consequences:** Syllex removes its custom page renderer and uses the upstream rendering queue in both single-page and continuous modes. Existing navigation, zoom, search navigation, progress persistence, and reversible canvas filters remain React-controlled. If the same source PDFs still fail in this maintained viewer, evaluate a native rendering engine under D-013 rather than adding another custom PDF.js scheduler.

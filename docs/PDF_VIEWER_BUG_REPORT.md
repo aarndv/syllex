@@ -2,7 +2,7 @@
 
 ## Status
 
-The application-side fixes are implemented and covered by the available build and Rust test suite as of 2026-09-25. Visual validation with the originally reported "Kotlin vs Java" presentation is still required because that private fixture is not stored in this repository.
+The custom React canvas renderer was retired on 2026-09-25 after multiple lifecycle and font-loading changes failed to resolve the reported files. Syllex now delegates page rendering and virtualization to PDF.js's maintained viewer components. Visual validation with the originally reported "Kotlin vs Java" presentation is still required because that private fixture is not stored in this repository.
 
 The reported symptom was displaced, overlapping, or cross-column text in presentation slides and complex PDFs, especially after fast navigation, zoom changes, or continuous scrolling.
 
@@ -10,17 +10,18 @@ The reported symptom was displaced, overlapping, or cross-column text in present
 
 | Area | Finding | Resolution |
 | --- | --- | --- |
-| Canvas lifecycle | A render could outlive the React effect that started it. Reusing a visible canvas exposed partial or interleaved drawing. | Every render uses a new off-DOM canvas. The canvas enters the DOM only after `RenderTask.promise` succeeds. Superseded tasks are cancelled, and page transitions use separate keyed components. |
-| Continuous scrolling | Lazy rendering was added, but completed canvases remained mounted forever. Cancelling immediately when a page left the viewport also caused fast scrolling to repeatedly restart the same work. | Pages start inside an 800 px viewport margin. Once started, a render may finish even if the page scrolls away; its canvas is then released when it is outside the margin. This bounds retained canvases without cancellation thrashing. Exact page dimensions are requested only when a page approaches the viewport. |
+| Canvas lifecycle | A render could outlive the React effect that started it. Reusing a visible canvas exposed partial or interleaved drawing. | Removed the custom `page.render()` effects. PDF.js `PDFViewer`/`PDFSinglePageViewer` now own the render queue, cancellation, page views, and canvas lifecycle. |
+| Continuous scrolling | Custom intersection observers alternated between retaining too many canvases and cancelling active work during fast scrolling. | PDF.js's visibility-aware rendering queue and bounded `PDFPageViewBuffer` now prioritize and retain pages using the upstream viewer implementation. |
 | Document changes | PDF loading tasks and worker resources remained alive after closing or switching documents. | The owning loading task is destroyed during effect cleanup, and stale document/search state is cleared before the next load. |
-| Page resources and font metrics | A render could begin while PDF.js was still parsing page operators or the browser was loading PDF.js-generated font faces. The path-only font renderer also left some complex pages incomplete. | Before drawing, Syllex awaits the complete page operator list and `document.fonts.ready`. PDF.js-generated and embedded font faces are enabled, while arbitrary host-font substitution remains disabled with `useSystemFonts: false`. Bundled standard fonts, CMaps, ICC profiles, WebAssembly assets, and the worker remain fully offline. |
+| Page resources and font metrics | Manual operator-list and font timing changes did not resolve all complex pages. | The maintained viewer coordinates page resources and generated font faces. Arbitrary host-font substitution remains disabled with `useSystemFonts: false`; bundled standard fonts, CMaps, ICC profiles, WebAssembly assets, and the worker remain fully offline. |
 | Presentation conversion | Corrected LibreOffice settings did not affect an already cached PDF, so a bad pre-fix conversion could be reused indefinitely. | Cache filenames now include conversion format version `2`. Existing unversioned previews are ignored and regenerated without touching the source presentation. |
 | Concurrent conversion | Preview and search requests for the same uncached presentation could share and remove the same temporary directory. | Every conversion uses a unique output directory and LibreOffice profile. The generated file is validated as a PDF and atomically published to the cache. |
 | Cross-platform profile paths | Hand-built `file://` strings were unreliable for Windows drive letters, spaces, and non-ASCII path segments. | Tauri's URL implementation now produces the LibreOffice profile file URL. Subprocess arguments remain separate and never pass through a shell. |
 
 ## Implementation locations
 
-- [`src/components/PdfViewer.tsx`](../src/components/PdfViewer.tsx) owns render cancellation, off-DOM canvas publication, bounded continuous-scroll virtualization, and document teardown.
+- [`src/components/PdfViewer.tsx`](../src/components/PdfViewer.tsx) owns the toolbar, loading, search navigation, progress, and viewer state.
+- [`src/components/PdfJsViewer.tsx`](../src/components/PdfJsViewer.tsx) is a thin React adapter around PDF.js's maintained single-page and continuous viewers.
 - [`src/utils/pdfInit.ts`](../src/utils/pdfInit.ts) owns the bundled worker/resource URLs and deterministic PDF.js font settings.
 - [`src-tauri/src/ppt_converter.rs`](../src-tauri/src/ppt_converter.rs) owns source-path validation, versioned cache entries, isolated LibreOffice execution, and output validation.
 
@@ -35,7 +36,7 @@ Installing metric-compatible fonts can improve future LibreOffice conversions on
 ## Manual regression procedure
 
 1. Open the affected PDF or presentation in single-page mode. Change pages and zoom repeatedly while a render is in progress; no partial previous page should become visible.
-2. Switch to continuous mode in a long document and scroll rapidly in both directions. A started page should continue rendering after it leaves the viewport; nearby pages may show a rendering status or placeholder, but completed page content must not remain partial.
+2. Switch to continuous mode in a long document and scroll rapidly in both directions. PDF.js may prioritize visible pages and discard distant canvases, but a completed visible page must not remain partial.
 3. Observe process memory while traversing a long document. It may fluctuate with page size and zoom, but it must not grow solely because every previously visited canvas remains mounted.
 4. For a presentation, open the generated cache PDF in Okular, Evince, or a browser. If it is correct there but wrong in Syllex, record the OS, webview, page number, zoom, and whether the problem occurs in single or continuous mode.
 5. Repeat the smoke test on Fedora/WebKitGTK and Windows 11/WebView2. LibreOffice conversion itself must also be checked on both platforms because installed fonts differ.

@@ -20,6 +20,7 @@ import {
   PdfPageText,
   PdfSearchMatch,
 } from "../utils/pdfSearch";
+import { PdfJsViewer } from "./PdfJsViewer";
 import "./PdfViewer.css";
 
 interface PdfViewerProps {
@@ -100,7 +101,6 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const toastTimerRef = useRef<any>(null);
-  const bodyRef = useRef<HTMLDivElement | null>(null);
 
   const storageKey = `syllex_progress_${node.relative_path}`;
 
@@ -238,13 +238,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     const match = searchMatches[idx];
     setCurrentMatchIdx(idx);
 
-    if (!isContinuousScroll) {
-      setCurrentPage(match.pageNum);
-    } else {
-      const pageEl = document.getElementById(`pdf-page-${match.pageNum}`);
-      pageEl?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }, [searchMatches, isContinuousScroll]);
+    setCurrentPage(match.pageNum);
+  }, [searchMatches]);
 
   // Reset match index when query changes
   useEffect(() => {
@@ -576,7 +571,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           </div>
         )}
 
-        <main ref={bodyRef} className="pdf-viewer-body">
+        <main
+          className={`pdf-viewer-body ${!loading && !error && pdfDoc ? "has-document" : ""}`}
+        >
           {filterToast && (
             <div className="filter-toast-tooltip" role="status" aria-live="polite">
               <span className="toast-filter-name">Reading Filter: <strong>{filterToast}</strong></span>
@@ -602,302 +599,20 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           )}
 
           {!loading && !error && pdfDoc && (
-            isContinuousScroll ? (
-              <div className="continuous-scroll-list">
-                {Array.from({ length: numPages }).map((_, idx) => {
-                  const pageNumber = idx + 1;
-                  const isCurrentMatchPage = activeMatch?.pageNum === pageNumber;
-                  const hasMatches = searchMatches.some((m) => m.pageNum === pageNumber);
-
-                  return (
-                    <PdfContinuousPageItem
-                      key={`continuous-page-${pageNumber}`}
-                      pdfDoc={pdfDoc}
-                      pageNumber={pageNumber}
-                      zoom={zoom}
-                      viewMode={viewMode}
-                      isCurrentMatchPage={isCurrentMatchPage}
-                      hasMatches={hasMatches}
-                      scrollContainerRef={bodyRef}
-                    />
-                  );
-                })}
-              </div>
-            ) : (
-              <PdfPageCanvas
-                key={`single-page-${currentPage}`}
-                pdfDoc={pdfDoc}
-                pageNum={currentPage}
-                zoom={zoom}
-                viewMode={viewMode}
-                className={activeMatch?.pageNum === currentPage ? "active-match-page" : ""}
-                onRenderSuccess={() => {
-                  localStorage.setItem(storageKey, currentPage.toString());
-                }}
-              />
-            )
+            <PdfJsViewer
+              pdfDoc={pdfDoc}
+              currentPage={currentPage}
+              zoom={zoom}
+              continuous={isContinuousScroll}
+              viewMode={viewMode}
+              onPageChange={(pageNumber) => {
+                setCurrentPage(pageNumber);
+                localStorage.setItem(storageKey, pageNumber.toString());
+              }}
+            />
           )}
         </main>
       </div>
     </div>
   );
 };
-
-interface PdfContinuousPageItemProps {
-  pdfDoc: pdfjsLib.PDFDocumentProxy;
-  pageNumber: number;
-  zoom: number;
-  viewMode: DocumentViewMode;
-  isCurrentMatchPage: boolean;
-  hasMatches: boolean;
-  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
-}
-
-const PdfContinuousPageItem: React.FC<PdfContinuousPageItemProps> = React.memo(
-  ({
-    pdfDoc,
-    pageNumber,
-    zoom,
-    viewMode,
-    isCurrentMatchPage,
-    hasMatches,
-    scrollContainerRef,
-  }) => {
-    const itemRef = useRef<HTMLDivElement | null>(null);
-    const [isNearViewport, setIsNearViewport] = useState<boolean>(false);
-    const [isRenderActive, setIsRenderActive] = useState<boolean>(false);
-    const [pageSize, setPageSize] = useState<{ width: number; height: number } | null>(null);
-
-    // Query exact dimensions only for nearby pages. Asking PDF.js for every
-    // page at mount time defeats virtualization on long documents.
-    useEffect(() => {
-      if (!isNearViewport || pageSize) return;
-
-      let isMounted = true;
-      pdfDoc
-        .getPage(pageNumber)
-        .then((page) => {
-          if (isMounted) {
-            const vp = page.getViewport({ scale: 1.0 });
-            setPageSize({ width: vp.width, height: vp.height });
-          }
-        })
-        .catch(() => {});
-      return () => {
-        isMounted = false;
-      };
-    }, [isNearViewport, pageSize, pdfDoc, pageNumber]);
-
-    // Viewport intersection observer to track visibility
-    useEffect(() => {
-      const el = itemRef.current;
-      if (!el) return;
-
-      const observer = new IntersectionObserver(
-        (entries) => {
-          for (const entry of entries) {
-            setIsNearViewport(entry.isIntersecting);
-          }
-        },
-        {
-          root: scrollContainerRef.current,
-          rootMargin: "800px 0px 800px 0px", // Pre-render pages within 800px of scrolling window
-          threshold: 0,
-        }
-      );
-
-      observer.observe(el);
-
-      return () => {
-        observer.disconnect();
-      };
-    }, [scrollContainerRef]);
-
-    const estimatedWidth = pageSize ? Math.floor(pageSize.width * zoom) : Math.floor(800 * zoom);
-    const estimatedHeight = pageSize ? Math.floor(pageSize.height * zoom) : Math.floor(1130 * zoom);
-    const shouldMountCanvas = isNearViewport || isRenderActive;
-
-    return (
-      <div
-        id={`pdf-page-${pageNumber}`}
-        ref={itemRef}
-        className={`continuous-page-item ${hasMatches ? "has-matches" : ""} ${
-          isCurrentMatchPage ? "active-match-page" : ""
-        }`}
-        style={{
-          minWidth: `${estimatedWidth}px`,
-          minHeight: `${estimatedHeight}px`,
-        }}
-      >
-        {shouldMountCanvas ? (
-          <PdfPageCanvas
-            key={`page-${pageNumber}-${zoom}`}
-            pdfDoc={pdfDoc}
-            pageNum={pageNumber}
-            zoom={zoom}
-            viewMode={viewMode}
-            onRenderStart={() => setIsRenderActive(true)}
-            onRenderSettled={() => setIsRenderActive(false)}
-          />
-        ) : (
-          <div
-            className={`canvas-container mode-${viewMode} continuous-page-placeholder`}
-            style={{
-              width: `${estimatedWidth}px`,
-              height: `${estimatedHeight}px`,
-            }}
-          >
-            <span className="placeholder-page-label">Page {pageNumber}</span>
-          </div>
-        )}
-      </div>
-    );
-  }
-);
-
-interface PdfPageCanvasProps {
-  pdfDoc: pdfjsLib.PDFDocumentProxy;
-  pageNum: number;
-  zoom: number;
-  viewMode: DocumentViewMode;
-  onRenderStart?: () => void;
-  onRenderSettled?: () => void;
-  onRenderSuccess?: () => void;
-  className?: string;
-}
-
-const PdfPageCanvas: React.FC<PdfPageCanvasProps> = React.memo(
-  ({
-    pdfDoc,
-    pageNum,
-    zoom,
-    viewMode,
-    onRenderStart,
-    onRenderSettled,
-    onRenderSuccess,
-    className = "",
-  }) => {
-    const containerRef = useRef<HTMLDivElement | null>(null);
-    const renderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
-    const [renderAttempt, setRenderAttempt] = useState<number>(0);
-    const [renderStatus, setRenderStatus] = useState<"loading" | "ready" | "error">("loading");
-    const [displaySize, setDisplaySize] = useState<{ width: number; height: number } | null>(null);
-
-    useEffect(() => {
-      let isCancelled = false;
-
-      async function renderPage() {
-        setRenderStatus("loading");
-        onRenderStart?.();
-
-        // Cancel any previous in-flight render task and await its completion
-        if (renderTaskRef.current) {
-          try {
-            renderTaskRef.current.cancel();
-            await renderTaskRef.current.promise;
-          } catch {
-            // RenderingCancelledException is expected
-          }
-          renderTaskRef.current = null;
-        }
-
-        if (isCancelled) return;
-
-        try {
-          const page = await pdfDoc.getPage(pageNum);
-          if (isCancelled) return;
-
-          const displayViewport = page.getViewport({ scale: zoom });
-          setDisplaySize({
-            width: Math.floor(displayViewport.width),
-            height: Math.floor(displayViewport.height),
-          });
-
-          // Finish parsing the complete display operator list before drawing.
-          // This starts font/image loading even if the page scrolls away, and
-          // prevents publishing a canvas while browser fonts are still pending.
-          await page.getOperatorList();
-          if (isCancelled) return;
-
-          await document.fonts.ready;
-          if (isCancelled) return;
-
-          // Off-screen double buffer canvas: draw completely off-DOM first
-          const pixelRatio = window.devicePixelRatio || 1;
-          const viewport = page.getViewport({ scale: zoom * pixelRatio });
-
-          const offscreenCanvas = document.createElement("canvas");
-          offscreenCanvas.width = Math.floor(viewport.width);
-          offscreenCanvas.height = Math.floor(viewport.height);
-          offscreenCanvas.style.width = `${Math.floor(viewport.width / pixelRatio)}px`;
-          offscreenCanvas.style.height = `${Math.floor(viewport.height / pixelRatio)}px`;
-          offscreenCanvas.style.display = "block";
-
-          const context = offscreenCanvas.getContext("2d");
-          if (!context) {
-            setRenderStatus("error");
-            onRenderSettled?.();
-            return;
-          }
-
-          const renderContext = {
-            canvasContext: context,
-            viewport,
-            canvas: offscreenCanvas,
-          };
-
-          const renderTask = page.render(renderContext);
-          renderTaskRef.current = renderTask;
-
-          // Await 100% full render completion
-          await renderTask.promise;
-
-          // Only swap into the DOM once 100% finished without cancellation
-          if (!isCancelled && containerRef.current) {
-            renderTaskRef.current = null;
-            containerRef.current.replaceChildren(offscreenCanvas);
-            setRenderStatus("ready");
-            onRenderSuccess?.();
-            onRenderSettled?.();
-          } else {
-            offscreenCanvas.width = offscreenCanvas.height = 0;
-          }
-        } catch (err: any) {
-          if (err?.name !== "RenderingCancelledException") {
-            console.error(`Page ${pageNum} render error:`, err);
-            if (!isCancelled && renderAttempt === 0) {
-              setRenderAttempt(1);
-            } else if (!isCancelled) {
-              setRenderStatus("error");
-              onRenderSettled?.();
-            }
-          }
-        }
-      }
-
-      renderPage();
-
-      return () => {
-        isCancelled = true;
-        if (renderTaskRef.current) {
-          renderTaskRef.current.cancel();
-        }
-      };
-    }, [pdfDoc, pageNum, zoom, renderAttempt]);
-
-    return (
-      <div
-        className={`canvas-container mode-${viewMode} ${className}`.trim()}
-        style={displaySize ? { width: displaySize.width, height: displaySize.height } : undefined}
-        aria-busy={renderStatus === "loading"}
-      >
-        <div ref={containerRef} className="pdf-canvas-host" />
-        {renderStatus !== "ready" && (
-          <span className={`pdf-page-render-status ${renderStatus}`} role="status">
-            {renderStatus === "error" ? `Page ${pageNum} could not render` : `Rendering page ${pageNum}`}
-          </span>
-        )}
-      </div>
-    );
-  }
-);

@@ -7,7 +7,7 @@ These instructions apply to the entire repository. A more deeply nested `AGENTS.
 1. Read `README.md` and all relevant files under `docs/`.
 2. Inspect the existing repository and working tree.
 3. Restate the requested scope and identify affected boundaries.
-4. Ask before making a decision that changes product scope, storage ownership, privacy, supported platforms, or the selected technology stack.
+4. Ask before making a decision that changes product scope, storage ownership, privacy, or supported platforms. The technology stack may change when necessary to resolve a demonstrated limitation, but the change must be justified in `docs/DECISIONS.md` before implementation.
 
 Do not treat unresolved items as permission to invent requirements.
 
@@ -26,7 +26,7 @@ Do not treat unresolved items as permission to invent requirements.
 - Never use emojis for UI icons, buttons, labels, badges, or tree elements. Use clean SVG icons, CSS glyphs, or explicit typography labels.
 - The Syllex name is established, but visual branding and theme are intentionally undecided. Do not invent a visual system.
 
-## Approved baseline stack
+## Baseline stack
 
 - Tauri 2
 - React with TypeScript
@@ -36,7 +36,7 @@ Do not treat unresolved items as permission to invent requirements.
 - PDF.js for PDF rendering
 - LibreOffice headless conversion for optional PPT/PPTX previews
 
-Adding or replacing a major dependency requires an entry in `docs/DECISIONS.md` explaining the need, alternatives, and consequences.
+This is a preferred baseline, not an immutable constraint. A dependency or component may be added or replaced when the existing choice cannot reliably meet requirements. Every major change requires an entry in `docs/DECISIONS.md` explaining the evidence, need, alternatives, cross-platform impact, security impact, and consequences.
 
 ## Architecture boundaries
 

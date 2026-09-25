@@ -50,7 +50,7 @@ Run on Fedora KDE and Windows 11 for:
 - Installer behavior
 - Rapid PDF page changes and zoom changes while rendering
 - Fast bidirectional scrolling through a long PDF in continuous mode
-- Confirm that a started continuous-page render finishes after leaving the viewport and is released afterward
+- Confirm PDF.js's viewer buffer releases distant page views without leaving partial canvases
 - Complex tables, non-embedded standard fonts, and CMap-encoded text
 - The generated PDF from a representative PPT/PPTX in both Syllex and an external viewer
 
