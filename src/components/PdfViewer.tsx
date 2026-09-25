@@ -134,8 +134,14 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
 
   useEffect(() => {
     let isMounted = true;
+    let loadingTask: pdfjsLib.PDFDocumentLoadingTask | null = null;
+
     setLoading(true);
     setError(null);
+    setPdfDoc(null);
+    setNumPages(0);
+    setDocPageTexts([]);
+    setIsExtractingText(false);
     if (initialPage) {
       setCurrentPage(initialPage);
     } else {
@@ -164,7 +170,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         }
 
         const uint8Array = new Uint8Array(fileBytes);
-        const loadingTask = pdfjsLib.getDocument(getPdfDocumentParams(uint8Array));
+        loadingTask = pdfjsLib.getDocument(getPdfDocumentParams(uint8Array));
         const doc = await loadingTask.promise;
 
         if (isMounted) {
@@ -213,6 +219,10 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
 
     return () => {
       isMounted = false;
+
+      if (loadingTask) {
+        void loadingTask.destroy();
+      }
     };
   }, [vaultRoot, node.relative_path]);
 
@@ -654,12 +664,14 @@ const PdfContinuousPageItem: React.FC<PdfContinuousPageItemProps> = React.memo(
     scrollContainerRef,
   }) => {
     const itemRef = useRef<HTMLDivElement | null>(null);
-    const [isVisible, setIsVisible] = useState<boolean>(false);
-    const [isRendered, setIsRendered] = useState<boolean>(false);
+    const [isNearViewport, setIsNearViewport] = useState<boolean>(false);
     const [pageSize, setPageSize] = useState<{ width: number; height: number } | null>(null);
 
-    // Query unscaled page dimensions once for placeholder sizing
+    // Query exact dimensions only for nearby pages. Asking PDF.js for every
+    // page at mount time defeats virtualization on long documents.
     useEffect(() => {
+      if (!isNearViewport || pageSize) return;
+
       let isMounted = true;
       pdfDoc
         .getPage(pageNumber)
@@ -673,7 +685,7 @@ const PdfContinuousPageItem: React.FC<PdfContinuousPageItemProps> = React.memo(
       return () => {
         isMounted = false;
       };
-    }, [pdfDoc, pageNumber]);
+    }, [isNearViewport, pageSize, pdfDoc, pageNumber]);
 
     // Viewport intersection observer to track visibility
     useEffect(() => {
@@ -683,7 +695,7 @@ const PdfContinuousPageItem: React.FC<PdfContinuousPageItemProps> = React.memo(
       const observer = new IntersectionObserver(
         (entries) => {
           for (const entry of entries) {
-            setIsVisible(entry.isIntersecting);
+            setIsNearViewport(entry.isIntersecting);
           }
         },
         {
@@ -700,16 +712,8 @@ const PdfContinuousPageItem: React.FC<PdfContinuousPageItemProps> = React.memo(
       };
     }, [scrollContainerRef]);
 
-    // Reset isRendered when zoom changes so visible pages re-render at the new resolution
-    useEffect(() => {
-      setIsRendered(false);
-    }, [zoom]);
-
     const estimatedWidth = pageSize ? Math.floor(pageSize.width * zoom) : Math.floor(800 * zoom);
     const estimatedHeight = pageSize ? Math.floor(pageSize.height * zoom) : Math.floor(1130 * zoom);
-
-    // Render when near viewport, and once completed retain canvas in memory for 60fps scrolling
-    const shouldMount = isVisible || isRendered;
 
     return (
       <div
@@ -723,14 +727,13 @@ const PdfContinuousPageItem: React.FC<PdfContinuousPageItemProps> = React.memo(
           minHeight: `${estimatedHeight}px`,
         }}
       >
-        {shouldMount ? (
+        {isNearViewport ? (
           <PdfPageCanvas
             key={`page-${pageNumber}-${zoom}`}
             pdfDoc={pdfDoc}
             pageNum={pageNumber}
             zoom={zoom}
             viewMode={viewMode}
-            onRenderSuccess={() => setIsRendered(true)}
           />
         ) : (
           <div

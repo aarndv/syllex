@@ -19,7 +19,11 @@ export function getPdfDocumentParams(data: Uint8Array) {
     wasmUrl: origin ? `${origin}/wasm/` : "./wasm/",
     iccUrl: origin ? `${origin}/iccs/` : "./iccs/",
     isEvalSupported: false,
-    useSystemFonts: true,
+    // Keep glyph metrics deterministic across WebKitGTK and WebView2. PDF.js's
+    // built-in path renderer does not race the browser's asynchronous font
+    // registration and does not depend on fonts installed on the host OS.
+    disableFontFace: true,
+    useSystemFonts: false,
   };
 }
 

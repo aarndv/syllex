@@ -12,6 +12,8 @@ Cover pure frontend logic such as:
 - Import preview summaries
 - Error mapping
 
+No frontend unit-test runner is currently configured. Until one is added, `npm run build` provides TypeScript and production-bundle verification but does not replace behavioral viewer tests.
+
 ### Rust unit and integration tests
 
 Cover native behavior such as:
@@ -46,6 +48,10 @@ Run on Fedora KDE and Windows 11 for:
 - System file opening
 - LibreOffice detection and conversion
 - Installer behavior
+- Rapid PDF page changes and zoom changes while rendering
+- Fast bidirectional scrolling through a long PDF in continuous mode
+- Complex tables, non-embedded standard fonts, and CMap-encoded text
+- The generated PDF from a representative PPT/PPTX in both Syllex and an external viewer
 
 ## Required fixtures
 
@@ -83,3 +89,5 @@ Measure rather than promise fixed targets before representative hardware and doc
 - Time to first PDF page
 - Memory while scrolling a long PDF
 - Cached and uncached presentation-open time
+
+For continuous PDF scrolling, memory should be bounded by pages near the viewport rather than the total number of pages already visited. Test at multiple zoom levels and display scale factors on Fedora/WebKitGTK and Windows 11/WebView2.

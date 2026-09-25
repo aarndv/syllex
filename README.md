@@ -27,7 +27,7 @@ The application is intended to run on Fedora Linux and Windows 11. Original cour
 
 ## Current status
 
-Pre-implementation planning. This repository currently establishes product scope, architecture, safety rules, and the AI-assisted development workflow. The first implementation task is to scaffold the Tauri application without adding product features.
+Active MVP implementation. The Tauri application includes vault selection and scanning, PDF viewing and search, reversible document filters, and cached PowerPoint preview conversion through LibreOffice. Flashcards and release hardening remain future roadmap work. See [docs/ROADMAP.md](docs/ROADMAP.md) for milestone status and [docs/PDF_VIEWER_BUG_REPORT.md](docs/PDF_VIEWER_BUG_REPORT.md) for the PDF rendering regression record.
 
 ## Documentation map
 

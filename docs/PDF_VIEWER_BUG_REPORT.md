@@ -1,66 +1,49 @@
-# PDF Viewer Bug Report & Investigation Handoff
+# PDF Viewer Rendering Bug Resolution
 
-## Summary of Issue
+## Status
 
-- **Symptoms**: In the PDF viewer (specifically noticeable on presentation slides and multi-column tables, such as the "Kotlin vs Java" slide), text elements, column items, or bullet points appear displaced, scattered, overlapping, or placed in adjacent columns.
-- **Affected Scenarios**:
-  - Continuous scroll mode during fast scrolling or page mount/unmount cycles.
-  - Multi-column tables and presentations converted from `.ppt` / `.pptx` via LibreOffice.
-  - Document pages with non-embedded standard fonts or complex CMap encodings.
+The application-side fixes are implemented and covered by the available build and Rust test suite as of 2026-09-25. Visual validation with the originally reported "Kotlin vs Java" presentation is still required because that private fixture is not stored in this repository.
 
----
+The reported symptom was displaced, overlapping, or cross-column text in presentation slides and complex PDFs, especially after fast navigation, zoom changes, or continuous scrolling.
 
-## Technical Investigations & Root Cause Analysis
+## Findings and resolutions
 
-### 1. Canvas Lifecycle & Concurrency in React
-- **Problem**: When changing pages or zooming, the previous `page.render()` task continued executing asynchronously on the same canvas 2D context while `pdfDoc.getPage()` was resolving for the new page. Calling `renderTask.cancel()` does not halt synchronous canvas operations immediately. Un-awaited cancellation caused interleaved 2D transformation matrices (`ctx.save()`, `ctx.transform()`, `ctx.scale()`, `ctx.clip()`), distorting coordinate spaces and causing text/images to bleed across pages or appear rotated/displaced.
-- **Problem**: In continuous scroll mode, mounting all pages simultaneously (e.g. 50–200 pages) caused severe VRAM/RAM spikes (2–5 GB) and flooded the worker thread, causing desktop freezes/crashes.
-- **Problem**: When fast-scrolling, in-progress render passes were interrupted midway, leaving visible canvases in a "semi-loaded" state with partial text. Furthermore, calling `page.cleanup()` on unmount while the worker was active cleared shared font dictionaries (`commonObjs`), corrupting subsequent glyph evaluations.
+| Area | Finding | Resolution |
+| --- | --- | --- |
+| Canvas lifecycle | A render could outlive the React effect that started it. Reusing a visible canvas exposed partial or interleaved drawing. | Every render uses a new off-DOM canvas. The canvas enters the DOM only after `RenderTask.promise` succeeds. Superseded tasks are cancelled, and page transitions use separate keyed components. |
+| Continuous scrolling | Lazy rendering was added, but completed canvases remained mounted forever. Memory therefore still grew with every visited page. | Only pages inside an 800 px viewport margin own canvases. Pages outside that window return to fixed-size placeholders, bounding canvas memory by the viewport rather than document length. Exact page dimensions are requested only when a page approaches the viewport. |
+| Document changes | PDF loading tasks and worker resources remained alive after closing or switching documents. | The owning loading task is destroyed during effect cleanup, and stale document/search state is cleared before the next load. |
+| Font metrics | Browser font registration and host font fallback can differ between WebKitGTK and WebView2 and can briefly use fallback metrics. | PDF.js uses its built-in path-based glyph renderer with `disableFontFace: true` and `useSystemFonts: false`. Bundled standard fonts, CMaps, ICC profiles, WebAssembly assets, and the worker remain fully offline. |
+| Presentation conversion | Corrected LibreOffice settings did not affect an already cached PDF, so a bad pre-fix conversion could be reused indefinitely. | Cache filenames now include conversion format version `2`. Existing unversioned previews are ignored and regenerated without touching the source presentation. |
+| Concurrent conversion | Preview and search requests for the same uncached presentation could share and remove the same temporary directory. | Every conversion uses a unique output directory and LibreOffice profile. The generated file is validated as a PDF and atomically published to the cache. |
+| Cross-platform profile paths | Hand-built `file://` strings were unreliable for Windows drive letters, spaces, and non-ASCII path segments. | Tauri's URL implementation now produces the LibreOffice profile file URL. Subprocess arguments remain separate and never pass through a shell. |
 
-### 2. PDF.js Font Engine & Worker Resolution
-- **Problem**: `pdfjsLib.GlobalWorkerOptions.workerSrc` was originally pointing to an external CDN (`cdnjs.cloudflare.com`), causing the worker to fail offline and fallback to synchronous fake-worker execution on the main UI thread.
-- **Problem**: Relative paths for font definitions (`./standard_fonts/`, `./cmaps/`) were resolving relative to the worker script's subfolder (`/assets/standard_fonts/...`), returning 404s and forcing fallback to estimated font bounding boxes.
-- **Problem**: By default (`disableFontFace: false`), PDF.js registers fonts asynchronously via DOM `@font-face` / `document.fonts.add()`. If `ctx.fillText()` draws before the browser's native font table finishes parsing, canvas fallback fonts with mismatched character widths are used, resulting in unpredictable horizontal offsets.
+## Implementation locations
 
-### 3. LibreOffice Presentation Conversion Pipeline
-- **Problem**: PowerPoint `.pptx` slides with tables, shape animations (e.g., items set to "appear on click"), or Microsoft-specific fonts (`Calibri`, `Aptos`, `Segoe UI`) can experience layout distortions when converted headlessly by LibreOffice on Linux if metric-compatible fonts or presentation-specific export filters are not used.
+- [`src/components/PdfViewer.tsx`](../src/components/PdfViewer.tsx) owns render cancellation, off-DOM canvas publication, bounded continuous-scroll virtualization, and document teardown.
+- [`src/utils/pdfInit.ts`](../src/utils/pdfInit.ts) owns the bundled worker/resource URLs and deterministic PDF.js font settings.
+- [`src-tauri/src/ppt_converter.rs`](../src-tauri/src/ppt_converter.rs) owns source-path validation, versioned cache entries, isolated LibreOffice execution, and output validation.
 
----
+All generated previews remain in the application cache. These changes do not write to, rename, move, or delete a course module.
 
-## What Has Been Attempted & Implemented
+## Presentation conversion limitations
 
-### Frontend & Rendering Pipeline
-1. **Centralized Offline PDF Initialization ([`src/utils/pdfInit.ts`](file:///home/aaron/home/personal/repo/syllex/src/utils/pdfInit.ts))**:
-   - Bundled `pdf.worker.min.mjs`, `standard_fonts/`, `cmaps/`, `iccs/`, and `wasm/` locally in [`public/`](file:///home/aaron/home/personal/repo/syllex/public).
-   - Configured absolute origin URLs (`origin + "/standard_fonts/"`, `origin + "/cmaps/"`) so the Web Worker resolves font metrics reliably without 404 fallbacks.
-2. **Keyed Canvas DOM Isolation ([`src/components/PdfViewer.tsx`](file:///home/aaron/home/personal/repo/syllex/src/components/PdfViewer.tsx))**:
-   - Single Page mode uses keyed canvas components (`key={`single-page-${currentPage}`}`) to guarantee physical DOM separation across page transitions.
-   - Render tasks are explicitly cancelled and awaited (`await renderTask.promise.catch(...)`) prior to starting any new render pass.
-   - Context transforms are explicitly reset (`context.setTransform(1, 0, 0, 1, 0, 0); context.clearRect(...)`).
-   - Integrated `window.devicePixelRatio` for HiDPI sharpness on Linux and Windows.
-3. **Continuous Scroll Virtualization & Atomic Double-Buffering ([`src/components/PdfViewer.tsx`](file:///home/aaron/home/personal/repo/syllex/src/components/PdfViewer.tsx))**:
-   - Implemented `IntersectionObserver` lazy rendering with an `800px` viewport margin buffer to eliminate memory spikes and app lockups.
-   - Implemented **off-DOM atomic double buffering**: `page.render()` draws completely to an off-screen canvas buffer (`document.createElement('canvas')`). Only upon 100% full completion without cancellation is the canvas swapped into the DOM (`container.replaceChildren(offscreenCanvas)`), completely preventing visible semi-loaded states.
-   - Completed pages are retained in memory for instant 60 FPS scrolling without re-render churn.
-   - Removed mid-render `activePage.cleanup()` calls on unmount to prevent destroying worker font tables.
+If the generated PDF is already distorted in an external viewer, the defect is upstream of PDF.js. Common causes are fonts unavailable to LibreOffice and PowerPoint layouts that depend on animations, transitions, or Microsoft-specific rendering behavior. Syllex does not modify the presentation to compensate, because source modules are immutable and animation reproduction is outside the MVP.
 
-### Backend Pipeline
-1. **LibreOffice Impress Export Filter ([`src-tauri/src/ppt_converter.rs`](file:///home/aaron/home/personal/repo/syllex/src-tauri/src/ppt_converter.rs))**:
-   - Updated LibreOffice conversion command to use explicit `pdf:impress_pdf_Export`.
-   - Added isolated temporary profile directories (`-env:UserInstallation=file://...`), `--norestore`, and `--nofirststartwizard` to avoid GUI collisions and recovery locks.
+Installing metric-compatible fonts can improve future LibreOffice conversions on Fedora. Because installed-font changes are external to Syllex and cannot be fingerprinted reliably, remove the affected disposable cached preview before retesting after a font installation. Do not alter the original presentation.
 
----
+## Manual regression procedure
 
-## Remaining Investigation & Handoff Checklist for Next Developer
+1. Open the affected PDF or presentation in single-page mode. Change pages and zoom repeatedly while a render is in progress; no partial previous page should become visible.
+2. Switch to continuous mode in a long document and scroll rapidly in both directions. Nearby pages may briefly show placeholders, but completed page content must not remain partial.
+3. Observe process memory while traversing a long document. It may fluctuate with page size and zoom, but it must not grow solely because every previously visited canvas remains mounted.
+4. For a presentation, open the generated cache PDF in Okular, Evince, or a browser. If it is correct there but wrong in Syllex, record the OS, webview, page number, zoom, and whether the problem occurs in single or continuous mode.
+5. Repeat the smoke test on Fedora/WebKitGTK and Windows 11/WebView2. LibreOffice conversion itself must also be checked on both platforms because installed fonts differ.
 
-If text displacement is still present on specific slides (such as the "Kotlin vs Java" slide):
+Linux previews are under the platform cache directory, typically `~/.cache/com.syllex.app/ppt_pdf_cache/`. Windows previews are under the application cache directory resolved by Tauri; the exact base path can vary with Windows and WebView packaging.
 
-1. **Verify if the Distortion is in the Generated PDF File Itself**:
-   - Check the converted PDF file stored in the app cache directory (`~/.cache/com.syllex.app/ppt_pdf_cache/<hash>.pdf` on Linux or `%LOCALAPPDATA%\com.syllex.app\ppt_pdf_cache\` on Windows).
-   - Open that exact PDF in an external native viewer (e.g. Evince, Okular, or Chrome).
-   - **If the text is already displaced in Evince/Okular**: The issue originates in LibreOffice's PPTX-to-PDF conversion stage, not PDF.js.
-     - *Cause A: Missing Microsoft Fonts on Linux*: Install `google-crosextra-carlito-fonts` (Calibri metric compatible) and `liberation-fonts` on the OS.
-     - *Cause B: PPTX Slide Animations*: If the slide had "Appear on click" animations on items 2–6, LibreOffice exports all animated states into one static frame. Inspect whether the original `.pptx` uses overlapping animated text boxes.
-   - **If the text is clean in Evince/Okular but displaced in Syllex**: The issue is isolated to PDF.js canvas font glyph rendering.
-     - Test PDF.js SVG backend (`page.getOperatorList()` + `SVGGraphics`) vs 2D Canvas backend.
-     - Test font rendering flags (`disableFontFace: true` vs `disableFontFace: false` with custom font loader).
+## Automated coverage and remaining validation
+
+Rust tests verify cache-version naming, PDF signature rejection, URL-safe isolated profiles, preservation of paths containing spaces, and selection of `pdf:impress_pdf_Export`. The TypeScript production build verifies the PDF.js options and viewer code against the installed library types.
+
+There is not yet a configured frontend test runner or a redistributable complex-PDF/PPTX fixture, so canvas memory behavior and the original slide remain manual checks. Add only synthetic or legally redistributable fixtures if automated visual regression coverage is introduced.
