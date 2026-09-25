@@ -665,6 +665,7 @@ const PdfContinuousPageItem: React.FC<PdfContinuousPageItemProps> = React.memo(
   }) => {
     const itemRef = useRef<HTMLDivElement | null>(null);
     const [isNearViewport, setIsNearViewport] = useState<boolean>(false);
+    const [isRenderActive, setIsRenderActive] = useState<boolean>(false);
     const [pageSize, setPageSize] = useState<{ width: number; height: number } | null>(null);
 
     // Query exact dimensions only for nearby pages. Asking PDF.js for every
@@ -714,6 +715,7 @@ const PdfContinuousPageItem: React.FC<PdfContinuousPageItemProps> = React.memo(
 
     const estimatedWidth = pageSize ? Math.floor(pageSize.width * zoom) : Math.floor(800 * zoom);
     const estimatedHeight = pageSize ? Math.floor(pageSize.height * zoom) : Math.floor(1130 * zoom);
+    const shouldMountCanvas = isNearViewport || isRenderActive;
 
     return (
       <div
@@ -727,13 +729,15 @@ const PdfContinuousPageItem: React.FC<PdfContinuousPageItemProps> = React.memo(
           minHeight: `${estimatedHeight}px`,
         }}
       >
-        {isNearViewport ? (
+        {shouldMountCanvas ? (
           <PdfPageCanvas
             key={`page-${pageNumber}-${zoom}`}
             pdfDoc={pdfDoc}
             pageNum={pageNumber}
             zoom={zoom}
             viewMode={viewMode}
+            onRenderStart={() => setIsRenderActive(true)}
+            onRenderSettled={() => setIsRenderActive(false)}
           />
         ) : (
           <div
@@ -756,19 +760,36 @@ interface PdfPageCanvasProps {
   pageNum: number;
   zoom: number;
   viewMode: DocumentViewMode;
+  onRenderStart?: () => void;
+  onRenderSettled?: () => void;
   onRenderSuccess?: () => void;
   className?: string;
 }
 
 const PdfPageCanvas: React.FC<PdfPageCanvasProps> = React.memo(
-  ({ pdfDoc, pageNum, zoom, viewMode, onRenderSuccess, className = "" }) => {
+  ({
+    pdfDoc,
+    pageNum,
+    zoom,
+    viewMode,
+    onRenderStart,
+    onRenderSettled,
+    onRenderSuccess,
+    className = "",
+  }) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const renderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
+    const [renderAttempt, setRenderAttempt] = useState<number>(0);
+    const [renderStatus, setRenderStatus] = useState<"loading" | "ready" | "error">("loading");
+    const [displaySize, setDisplaySize] = useState<{ width: number; height: number } | null>(null);
 
     useEffect(() => {
       let isCancelled = false;
 
       async function renderPage() {
+        setRenderStatus("loading");
+        onRenderStart?.();
+
         // Cancel any previous in-flight render task and await its completion
         if (renderTaskRef.current) {
           try {
@@ -786,6 +807,21 @@ const PdfPageCanvas: React.FC<PdfPageCanvasProps> = React.memo(
           const page = await pdfDoc.getPage(pageNum);
           if (isCancelled) return;
 
+          const displayViewport = page.getViewport({ scale: zoom });
+          setDisplaySize({
+            width: Math.floor(displayViewport.width),
+            height: Math.floor(displayViewport.height),
+          });
+
+          // Finish parsing the complete display operator list before drawing.
+          // This starts font/image loading even if the page scrolls away, and
+          // prevents publishing a canvas while browser fonts are still pending.
+          await page.getOperatorList();
+          if (isCancelled) return;
+
+          await document.fonts.ready;
+          if (isCancelled) return;
+
           // Off-screen double buffer canvas: draw completely off-DOM first
           const pixelRatio = window.devicePixelRatio || 1;
           const viewport = page.getViewport({ scale: zoom * pixelRatio });
@@ -798,7 +834,11 @@ const PdfPageCanvas: React.FC<PdfPageCanvasProps> = React.memo(
           offscreenCanvas.style.display = "block";
 
           const context = offscreenCanvas.getContext("2d");
-          if (!context) return;
+          if (!context) {
+            setRenderStatus("error");
+            onRenderSettled?.();
+            return;
+          }
 
           const renderContext = {
             canvasContext: context,
@@ -816,13 +856,21 @@ const PdfPageCanvas: React.FC<PdfPageCanvasProps> = React.memo(
           if (!isCancelled && containerRef.current) {
             renderTaskRef.current = null;
             containerRef.current.replaceChildren(offscreenCanvas);
+            setRenderStatus("ready");
             onRenderSuccess?.();
+            onRenderSettled?.();
           } else {
             offscreenCanvas.width = offscreenCanvas.height = 0;
           }
         } catch (err: any) {
           if (err?.name !== "RenderingCancelledException") {
             console.error(`Page ${pageNum} render error:`, err);
+            if (!isCancelled && renderAttempt === 0) {
+              setRenderAttempt(1);
+            } else if (!isCancelled) {
+              setRenderStatus("error");
+              onRenderSettled?.();
+            }
           }
         }
       }
@@ -835,13 +883,21 @@ const PdfPageCanvas: React.FC<PdfPageCanvasProps> = React.memo(
           renderTaskRef.current.cancel();
         }
       };
-    }, [pdfDoc, pageNum, zoom]);
+    }, [pdfDoc, pageNum, zoom, renderAttempt]);
 
     return (
       <div
-        ref={containerRef}
         className={`canvas-container mode-${viewMode} ${className}`.trim()}
-      />
+        style={displaySize ? { width: displaySize.width, height: displaySize.height } : undefined}
+        aria-busy={renderStatus === "loading"}
+      >
+        <div ref={containerRef} className="pdf-canvas-host" />
+        {renderStatus !== "ready" && (
+          <span className={`pdf-page-render-status ${renderStatus}`} role="status">
+            {renderStatus === "error" ? `Page ${pageNum} could not render` : `Rendering page ${pageNum}`}
+          </span>
+        )}
+      </div>
     );
   }
 );
