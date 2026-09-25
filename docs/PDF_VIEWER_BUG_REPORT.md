@@ -1,22 +1,37 @@
-# PDF Viewer Rendering Bug Resolution
+# Archived PDF Viewer Bug Record
 
-## Status
+## Lifecycle status
 
-The custom React canvas renderer was retired on 2026-09-25 after multiple lifecycle and font-loading changes failed to resolve the reported files. Syllex now delegates page rendering and virtualization to PDF.js's maintained viewer components. Visual validation with the originally reported "Kotlin vs Java" presentation is still required because that private fixture is not stored in this repository.
+- **Overall record:** Superseded; this is not an active bug backlog.
+- **Historical implementation:** Custom React components calling `PDFPageProxy.render()` directly, through commit `9666aaf`.
+- **Replacement:** PDF.js `PDFViewer` and `PDFSinglePageViewer`, introduced in commit `a2dfd93` and recorded by [D-014](DECISIONS.md#d-014--use-pdfjs-maintained-viewer-components).
+- **Original symptom under the replacement:** Pending manual validation because the private "Kotlin vs Java" fixture is not stored in this repository.
+
+The custom React canvas renderer was retired on 2026-09-25 after multiple lifecycle and font-loading changes failed to resolve the reported files. Syllex now delegates page rendering and virtualization to PDF.js's maintained viewer components.
+
+Do not continue the custom-renderer investigation described here or recreate its canvas scheduler. If the same symptom occurs on commit `a2dfd93` or later, record it as a new upstream-viewer bug with fresh reproduction evidence and link back to this archived record.
+
+Status meanings used below:
+
+- **Superseded:** The affected implementation was removed; the old bug is no longer actionable.
+- **Resolved:** The fix remains present and relevant in the current implementation.
+- **Pending validation:** The architecture changed, but the original private fixture has not been retested.
+- **External limitation:** The behavior originates outside Syllex and cannot be fixed safely by changing source modules.
 
 The reported symptom was displaced, overlapping, or cross-column text in presentation slides and complex PDFs, especially after fast navigation, zoom changes, or continuous scrolling.
 
-## Findings and resolutions
+## Historical findings and disposition
 
-| Area | Finding | Resolution |
-| --- | --- | --- |
-| Canvas lifecycle | A render could outlive the React effect that started it. Reusing a visible canvas exposed partial or interleaved drawing. | Removed the custom `page.render()` effects. PDF.js `PDFViewer`/`PDFSinglePageViewer` now own the render queue, cancellation, page views, and canvas lifecycle. |
-| Continuous scrolling | Custom intersection observers alternated between retaining too many canvases and cancelling active work during fast scrolling. | PDF.js's visibility-aware rendering queue and bounded `PDFPageViewBuffer` now prioritize and retain pages using the upstream viewer implementation. |
-| Document changes | PDF loading tasks and worker resources remained alive after closing or switching documents. | The owning loading task is destroyed during effect cleanup, and stale document/search state is cleared before the next load. |
-| Page resources and font metrics | Manual operator-list and font timing changes did not resolve all complex pages. | The maintained viewer coordinates page resources and generated font faces. Arbitrary host-font substitution remains disabled with `useSystemFonts: false`; bundled standard fonts, CMaps, ICC profiles, WebAssembly assets, and the worker remain fully offline. |
-| Presentation conversion | Corrected LibreOffice settings did not affect an already cached PDF, so a bad pre-fix conversion could be reused indefinitely. | Cache filenames now include conversion format version `2`. Existing unversioned previews are ignored and regenerated without touching the source presentation. |
-| Concurrent conversion | Preview and search requests for the same uncached presentation could share and remove the same temporary directory. | Every conversion uses a unique output directory and LibreOffice profile. The generated file is validated as a PDF and atomically published to the cache. |
-| Cross-platform profile paths | Hand-built `file://` strings were unreliable for Windows drive letters, spaces, and non-ASCII path segments. | Tauri's URL implementation now produces the LibreOffice profile file URL. Subprocess arguments remain separate and never pass through a shell. |
+| Area | Status | Finding | Current disposition |
+| --- | --- | --- | --- |
+| Custom canvas lifecycle | **Superseded** | A render could outlive the React effect that started it. Reusing a visible canvas exposed partial or interleaved drawing. | The custom `page.render()` effects were removed. PDF.js's maintained viewers own the render queue, cancellation, page views, and canvas lifecycle. |
+| Custom continuous scrolling | **Superseded** | Intersection observers alternated between retaining too many canvases and cancelling active work during fast scrolling. | The custom observer and canvas-retention code was removed. PDF.js's visibility-aware rendering queue and bounded `PDFPageViewBuffer` now own this behavior. |
+| Document teardown | **Resolved** | PDF loading tasks and worker resources remained alive after closing or switching documents. | The owning loading task is destroyed during effect cleanup, and stale document/search state is cleared before the next load. |
+| Manual page-resource and font timing | **Superseded; original symptom pending validation** | Manual operator-list waits, font timing, and path-only glyph rendering did not resolve all complex pages. | Those workarounds were removed. The maintained viewer coordinates page resources and generated font faces. Host-font substitution remains disabled; bundled resources remain offline. |
+| Presentation cache invalidation | **Resolved** | Corrected LibreOffice settings did not affect an already cached PDF, so a bad pre-fix conversion could be reused indefinitely. | Cache filenames include conversion format version `2`. Existing unversioned previews are ignored and regenerated without touching the source presentation. |
+| Concurrent presentation conversion | **Resolved** | Preview and search requests for the same uncached presentation could share and remove the same temporary directory. | Every conversion uses a unique output directory and LibreOffice profile. The generated file is validated and atomically published to cache. |
+| Cross-platform LibreOffice profile paths | **Resolved** | Hand-built `file://` strings were unreliable for Windows drive letters, spaces, and non-ASCII path segments. | Tauri's URL implementation produces the profile URL. Arguments remain separate and never pass through a shell. |
+| Missing fonts, animations, or LibreOffice layout differences in the generated PDF | **External limitation** | A converted PDF can already contain distorted layout before PDF.js opens it. | Compare the cached PDF in an external viewer. Do not modify the original presentation; address the LibreOffice/font environment or document authoring instead. |
 
 ## Implementation locations
 
@@ -33,7 +48,7 @@ If the generated PDF is already distorted in an external viewer, the defect is u
 
 Installing metric-compatible fonts can improve future LibreOffice conversions on Fedora. Because installed-font changes are external to Syllex and cannot be fingerprinted reliably, remove the affected disposable cached preview before retesting after a font installation. Do not alter the original presentation.
 
-## Manual regression procedure
+## Post-replacement validation procedure
 
 1. Open the affected PDF or presentation in single-page mode. Change pages and zoom repeatedly while a render is in progress; no partial previous page should become visible.
 2. Switch to continuous mode in a long document and scroll rapidly in both directions. PDF.js may prioritize visible pages and discard distant canvases, but a completed visible page must not remain partial.
@@ -47,4 +62,4 @@ Linux previews are under the platform cache directory, typically `~/.cache/com.s
 
 Rust tests verify cache-version naming, PDF signature rejection, URL-safe isolated profiles, preservation of paths containing spaces, and selection of `pdf:impress_pdf_Export`. The TypeScript production build verifies the PDF.js options and viewer code against the installed library types.
 
-There is not yet a configured frontend test runner or a redistributable complex-PDF/PPTX fixture, so canvas memory behavior and the original slide remain manual checks. Add only synthetic or legally redistributable fixtures if automated visual regression coverage is introduced.
+There is not yet a configured frontend test runner or a redistributable complex-PDF/PPTX fixture, so viewer memory behavior and the original slide remain manual checks. This pending validation does not reactivate the superseded custom-renderer bugs. Add only synthetic or legally redistributable fixtures if automated visual regression coverage is introduced.
