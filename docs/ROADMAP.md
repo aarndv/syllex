@@ -58,11 +58,33 @@ Acceptance criteria:
 - [ ] Require confirmation before saving
 - [ ] Provide a basic review flow
 
-## M7 — Release hardening
+## M7 — Vault portability and archive management
+
+- [ ] Export portable `.syllex` study bundle containing SQLite metadata (decks, cards, review history, bookmarks, reading progress)
+- [ ] Export standalone `.syllex.zip` full vault archive containing both course documents and study bundle
+- [ ] Provide guided import flow (link existing course folder for study-only bundle, or choose extraction folder for full archive)
+- [ ] Pre-import visual diff and conflict resolution preview (merge, overwrite, retain existing)
+- [ ] Test roundtrip export and import across Linux and Windows without SQLite corruption
+
+## M8 — Release hardening and packaging
 
 - [ ] File watching and index refresh
-- [ ] Cache management
-- [ ] Fedora RPM or AppImage packaging
-- [ ] Windows installer packaging
-- [ ] Manual platform test checklist
-- [ ] Backup/export plan for user-created study data
+- [ ] Cache management and presentation conversion cleanup
+- [ ] Fedora RPM and AppImage packaging
+- [ ] Windows 11 installer packaging
+- [ ] Manual cross-platform test checklist
+- [ ] Release validation against non-destructive invariants
+
+## M9 — Markdown notes and side-by-side reading
+
+- [ ] Render `.md` self-notes directly inside the library
+- [ ] Side-by-side split pane for simultaneous document reading and companion note-taking
+- [ ] Page-level bookmarks and note anchors linking to specific PDF/module pages
+- [ ] Safe local note editing with atomic writes
+
+## M10 — In-document and vault search
+
+- [ ] Local full-text indexing across PDF text layers, Markdown notes, and flashcard content
+- [ ] Fast fuzzy search across course catalog and modules
+- [ ] Visual hit navigation with direct jumping to matched page coordinates
+

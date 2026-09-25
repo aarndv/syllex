@@ -42,6 +42,22 @@ front,back,tags,deck
 - Report errors with row numbers.
 - Do not partially import before the user confirms the preview.
 
-## Future portable export
+## Portable export formats
+ 
+### 1. Study Bundle (`.syllex` / JSON package)
+ 
+An explicit versioned JSON file carrying user-generated study metadata relative to the vault root:
+- Decks, cards, tags, and ease/interval scheduling stats
+- Review history logs
+- Reading bookmarks and page positions
+- Module reading state
+ 
+Do not use a synchronized live SQLite file as an interchange format.
+ 
+### 2. Full Vault Archive (`.syllex.zip`)
+ 
+A standard zip archive containing:
+- The complete folder hierarchy of course documents (`.pdf`, `.ppt`, `.pptx`, `.md`)
+- A root `manifest.syllex` study bundle containing all associated study metadata and progress
+- Cross-platform path normalizations to guarantee clean extraction across Linux and Windows
 
-An explicit versioned JSON format may later carry decks, progress, and bookmarks between devices. Do not use a synchronized live SQLite file as an interchange format.
