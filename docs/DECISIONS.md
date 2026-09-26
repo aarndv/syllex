@@ -157,3 +157,16 @@ Record decisions that are expensive to reverse or affect multiple parts of the a
 **Alternatives:** Continue patching the custom canvas renderer; embed the webview's browser PDF plugin; or replace PDF.js with a native MuPDF/Poppler image-rendering pipeline. Browser PDF plugins are inconsistent between WebKitGTK and WebView2. A native engine remains a viable next step but adds native dependencies, packaging work, and a larger security-review surface.
 
 **Consequences:** Syllex removes its custom page renderer and uses the upstream rendering queue in both single-page and continuous modes. Existing navigation, zoom, search navigation, progress persistence, and reversible canvas filters remain React-controlled. If the same source PDFs still fail in this maintained viewer, evaluate a native rendering engine under D-013 rather than adding another custom PDF.js scheduler.
+
+## D-015 — In-vault file and module renaming
+
+**Status:** Accepted
+
+**Decision:** Allow users to rename course module files and directories directly within the application vault through a safe, validated native rename operation.
+
+**Reason:** Students organizing course materials need to correct typographical errors, standardize module numbering (e.g. `Lecture 01 - Intro.pdf`), and organize folders without leaving the application.
+
+**Alternatives:** Keep source files read-only and implement visual alias metadata only in SQLite/localStorage. While an alias keeps files untouched on disk, external file managers and other tools would not reflect the user's intended names, leading to confusion and broken expectations.
+
+**Consequences:** Rust provides a dedicated `rename_item` command that strictly checks vault boundary constraints, prevents directory traversal (`..`, slashes), enforces extension preservation/validation for supported document types, prevents collisions with existing files, and returns the updated relative path. Frontend state migrates cached progress and theme keys smoothly.
+

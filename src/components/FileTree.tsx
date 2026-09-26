@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { VaultNode, VaultNodeType } from "../types/vault";
-import { PlusIcon, CloseIcon } from "./Icons";
+import { PlusIcon, CloseIcon, PencilIcon } from "./Icons";
 
 interface FileTreeProps {
   nodes: VaultNode[];
@@ -8,6 +8,7 @@ interface FileTreeProps {
   onSelectFile: (node: VaultNode) => void;
   onAddFile: (targetFolderRelPath?: string) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
+  onRenameItem: (relPath: string, isFolder: boolean, currentName: string) => void;
 }
 
 export const FileTree: React.FC<FileTreeProps> = React.memo(({
@@ -16,6 +17,7 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
   onSelectFile,
   onAddFile,
   onRemoveItem,
+  onRenameItem,
 }) => {
   return (
     <div className="file-tree-container">
@@ -32,6 +34,7 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
               onSelectFile={onSelectFile}
               onAddFile={onAddFile}
               onRemoveItem={onRemoveItem}
+              onRenameItem={onRenameItem}
             />
           ))}
         </ul>
@@ -47,7 +50,8 @@ const FileTreeNode: React.FC<{
   onSelectFile: (node: VaultNode) => void;
   onAddFile: (targetFolderRelPath?: string) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
-}> = React.memo(({ node, depth, activePath, onSelectFile, onAddFile, onRemoveItem }) => {
+  onRenameItem: (relPath: string, isFolder: boolean, currentName: string) => void;
+}> = React.memo(({ node, depth, activePath, onSelectFile, onAddFile, onRemoveItem, onRenameItem }) => {
   // Check if active path is inside this folder tree to auto-expand only active lineage
   const containsActive = useMemo(() => {
     if (!activePath) return false;
@@ -82,6 +86,16 @@ const FileTreeNode: React.FC<{
           <span className="tree-label folder-label">{node.name}</span>
 
           <div className="tree-item-actions">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRenameItem(node.relative_path, true, node.name);
+              }}
+              className="tree-mini-btn"
+              title="Rename folder"
+            >
+              <PencilIcon size={12} />
+            </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -121,6 +135,7 @@ const FileTreeNode: React.FC<{
                   onSelectFile={onSelectFile}
                   onAddFile={onAddFile}
                   onRemoveItem={onRemoveItem}
+                  onRenameItem={onRenameItem}
                 />
               ))
             )}
@@ -145,16 +160,28 @@ const FileTreeNode: React.FC<{
         </span>
         <span className="tree-label file-label">{node.name}</span>
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemoveItem(node.relative_path, false);
-          }}
-          className="tree-mini-btn delete"
-          title="Delete file"
-        >
-          <CloseIcon size={12} />
-        </button>
+        <div className="tree-item-actions">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onRenameItem(node.relative_path, false, node.name);
+            }}
+            className="tree-mini-btn"
+            title="Rename module"
+          >
+            <PencilIcon size={12} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemoveItem(node.relative_path, false);
+            }}
+            className="tree-mini-btn delete"
+            title="Delete file"
+          >
+            <CloseIcon size={12} />
+          </button>
+        </div>
       </div>
     </li>
   );

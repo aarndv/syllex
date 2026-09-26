@@ -14,6 +14,7 @@ import { SidebarCountersWidget } from "./components/SidebarCountersWidget";
 import { QuickSearchModal, SearchResultItem } from "./components/QuickSearchModal";
 import { SearchPreviewDrawer } from "./components/SearchPreviewDrawer";
 import { ConfirmDeleteModal, UndoToast } from "./components/ConfirmDeleteModal";
+import { RenameModal } from "./components/RenameModal";
 import {
   PlusIcon,
   FolderIcon,
@@ -56,6 +57,11 @@ function App() {
     relativePath: string;
     isFolder: boolean;
     name: string;
+  } | null>(null);
+  const [pendingRename, setPendingRename] = useState<{
+    relativePath: string;
+    isFolder: boolean;
+    currentName: string;
   } | null>(null);
   const [undoStash, setUndoStash] = useState<{
     relativePath: string;
@@ -267,6 +273,91 @@ function App() {
       .catch((err: any) => setError(typeof err === "string" ? err : err.message || "Failed to remove item"));
   }
 
+  function handleRenameItem(relativePath: string, isFolder: boolean, currentName: string) {
+    if (!vaultPath) return;
+    setPendingRename({ relativePath, isFolder, currentName });
+  }
+
+  async function handleConfirmRename(newName: string) {
+    if (!pendingRename || !vaultPath) return;
+    const { relativePath, isFolder } = pendingRename;
+    const currentVault = vaultPath;
+
+    const newRelPath = await invoke<string>("rename_item", {
+      vaultRoot: currentVault,
+      relativePath,
+      newName,
+    });
+
+    if (isFolder) {
+      // Migrate folder custom colors
+      try {
+        const colorsRaw = localStorage.getItem("syllex_folder_custom_colors");
+        if (colorsRaw) {
+          const colors = JSON.parse(colorsRaw);
+          const updatedColors: Record<string, string> = {};
+          for (const [k, v] of Object.entries(colors)) {
+            if (k === relativePath) {
+              updatedColors[newRelPath] = v as string;
+            } else if (k.startsWith(relativePath + "/")) {
+              const suffix = k.substring(relativePath.length);
+              updatedColors[newRelPath + suffix] = v as string;
+            } else {
+              updatedColors[k] = v as string;
+            }
+          }
+          localStorage.setItem("syllex_folder_custom_colors", JSON.stringify(updatedColors));
+        }
+      } catch {}
+
+      // Migrate reading progress keys
+      try {
+        const keysToMigrate: { oldKey: string; newKey: string; val: string }[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(`syllex_progress_${relativePath}/`)) {
+            const suffix = key.substring(`syllex_progress_${relativePath}/`.length);
+            const val = localStorage.getItem(key);
+            if (val) {
+              keysToMigrate.push({
+                oldKey: key,
+                newKey: `syllex_progress_${newRelPath}/${suffix}`,
+                val,
+              });
+            }
+          }
+        }
+        for (const item of keysToMigrate) {
+          localStorage.removeItem(item.oldKey);
+          localStorage.setItem(item.newKey, item.val);
+        }
+      } catch {}
+
+      // If activeNode was inside this folder, update its relative_path
+      if (activeNode && activeNode.relative_path.startsWith(relativePath + "/")) {
+        const suffix = activeNode.relative_path.substring(relativePath.length);
+        setActiveNode((prev) => (prev ? { ...prev, relative_path: newRelPath + suffix } : null));
+      }
+    } else {
+      // Migrate reading progress for this file
+      const oldProgKey = `syllex_progress_${relativePath}`;
+      const newProgKey = `syllex_progress_${newRelPath}`;
+      const savedProg = localStorage.getItem(oldProgKey);
+      if (savedProg) {
+        localStorage.removeItem(oldProgKey);
+        localStorage.setItem(newProgKey, savedProg);
+      }
+
+      // If activeNode is this file, update activeNode name and relative_path
+      if (activeNode && activeNode.relative_path === relativePath) {
+        setActiveNode((prev) => (prev ? { ...prev, name: newName, relative_path: newRelPath } : null));
+      }
+    }
+
+    setPendingRename(null);
+    await scanVault(currentVault);
+  }
+
 
   const [initialPdfState, setInitialPdfState] = useState<{
     page?: number;
@@ -353,6 +444,7 @@ function App() {
           onSelectNode={(n) => handleSelectFileNode(n)}
           onAddFile={handleAddModule}
           onRemoveItem={handleRemoveItem}
+          onRenameItem={handleRenameItem}
           onRefreshVault={() => scanVault(vaultPath)}
           onClose={() => {
             setActiveNode(null);
@@ -397,6 +489,14 @@ function App() {
         isFolder={pendingDelete?.isFolder || false}
         onConfirm={handleConfirmDelete}
         onCancel={() => setPendingDelete(null)}
+      />
+
+      <RenameModal
+        isOpen={!!pendingRename}
+        isFolder={pendingRename?.isFolder || false}
+        currentName={pendingRename?.currentName || ""}
+        onConfirm={handleConfirmRename}
+        onCancel={() => setPendingRename(null)}
       />
 
       {undoStash && (
@@ -612,6 +712,7 @@ function App() {
                   onSelectFile={handleSelectFileNode}
                   onAddFile={handleAddModule}
                   onRemoveItem={handleRemoveItem}
+                  onRenameItem={handleRenameItem}
                 />
               ) : (
                 <div className="tree-explorer-card">
@@ -622,6 +723,7 @@ function App() {
                       onSelectFile={handleSelectFileNode}
                       onAddFile={handleAddModule}
                       onRemoveItem={handleRemoveItem}
+                      onRenameItem={handleRenameItem}
                     />
                   </div>
                 </div>

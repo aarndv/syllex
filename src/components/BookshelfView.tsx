@@ -37,6 +37,7 @@ interface BookshelfViewProps {
   onSelectFile: (node: VaultNode) => void;
   onAddFile: (targetFolderRelPath?: string) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
+  onRenameItem: (relPath: string, isFolder: boolean, currentName: string) => void;
 }
 
 export const BookshelfView: React.FC<BookshelfViewProps> = ({
@@ -44,6 +45,7 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
   onSelectFile,
   onAddFile,
   onRemoveItem,
+  onRenameItem,
 }) => {
   const [folderColors, setFolderColors] = useState<Record<string, string>>(() => {
     const saved = localStorage.getItem(FOLDER_COLORS_STORAGE_KEY);
@@ -78,6 +80,7 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
           onSelectFile={onSelectFile}
           onAddFile={onAddFile}
           onRemoveItem={onRemoveItem}
+          onRenameItem={onRenameItem}
         />
       )}
 
@@ -90,6 +93,7 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
           onSelectFile={onSelectFile}
           onAddFile={onAddFile}
           onRemoveItem={onRemoveItem}
+          onRenameItem={onRenameItem}
         />
       ))}
 
@@ -113,6 +117,7 @@ interface FolderShelfProps {
   onSelectFile: (node: VaultNode) => void;
   onAddFile: (targetFolderRelPath?: string) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
+  onRenameItem: (relPath: string, isFolder: boolean, currentName: string) => void;
 }
 
 const FolderShelf: React.FC<FolderShelfProps> = ({
@@ -122,6 +127,7 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
   onSelectFile,
   onAddFile,
   onRemoveItem,
+  onRenameItem,
 }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const [isColorPickerOpen, setIsColorPickerOpen] = useState<boolean>(false);
@@ -203,6 +209,13 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
           </div>
 
           <button
+            onClick={() => onRenameItem(folder.relative_path, true, folder.name)}
+            className="shelf-mini-btn"
+            title="Rename folder"
+          >
+            <PencilIcon size={13} /> Rename
+          </button>
+          <button
             onClick={() => onAddFile(folder.relative_path)}
             className="shelf-mini-btn"
             title="Add module to shelf"
@@ -231,6 +244,7 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
                   colorVariant={idx % 4}
                   onSelectFile={onSelectFile}
                   onRemoveItem={onRemoveItem}
+                  onRenameItem={onRenameItem}
                 />
               ))}
             </div>
@@ -265,6 +279,7 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
               onSelectFile={onSelectFile}
               onAddFile={onAddFile}
               onRemoveItem={onRemoveItem}
+              onRenameItem={onRenameItem}
             />
           ))}
         </div>
@@ -280,6 +295,7 @@ interface ShelfSectionProps {
   onSelectFile: (node: VaultNode) => void;
   onAddFile: (targetFolderRelPath?: string) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
+  onRenameItem: (relPath: string, isFolder: boolean, currentName: string) => void;
 }
 
 const ShelfSection: React.FC<ShelfSectionProps> = ({
@@ -289,6 +305,7 @@ const ShelfSection: React.FC<ShelfSectionProps> = ({
   onSelectFile,
   onAddFile,
   onRemoveItem,
+  onRenameItem,
 }) => {
   return (
     <div className="shelf-wrapper">
@@ -328,6 +345,7 @@ const ShelfSection: React.FC<ShelfSectionProps> = ({
               colorVariant={idx % 4}
               onSelectFile={onSelectFile}
               onRemoveItem={onRemoveItem}
+              onRenameItem={onRenameItem}
             />
           ))}
         </div>
@@ -356,6 +374,7 @@ interface BookSpineItemProps {
   colorVariant: number;
   onSelectFile: (node: VaultNode) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
+  onRenameItem: (relPath: string, isFolder: boolean, currentName: string) => void;
 }
 
 const BookSpineItem: React.FC<BookSpineItemProps> = ({
@@ -364,6 +383,7 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
   colorVariant,
   onSelectFile,
   onRemoveItem,
+  onRenameItem,
 }) => {
   const ext = getFileExt(node.node_type);
   const savedPage = localStorage.getItem(`syllex_progress_${node.relative_path}`);
@@ -382,16 +402,28 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
           <span className="badge-dot" />
           {ext}
         </span>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemoveItem(node.relative_path, false);
-          }}
-          className="book-delete-btn"
-          title="Remove from shelf"
-        >
-          <CloseIcon size={12} />
-        </button>
+        <div className="book-spine-actions">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onRenameItem(node.relative_path, false, node.name);
+            }}
+            className="book-rename-btn"
+            title="Rename module"
+          >
+            <PencilIcon size={11} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemoveItem(node.relative_path, false);
+            }}
+            className="book-delete-btn"
+            title="Remove from shelf"
+          >
+            <CloseIcon size={12} />
+          </button>
+        </div>
       </div>
 
       <div className="book-spine-content">

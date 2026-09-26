@@ -1,0 +1,215 @@
+/* Rename Modal Styling - Warm Academic Library Theme */
+.rename-modal-container {
+  max-width: 480px;
+  width: 90%;
+  animation: renameModalScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes renameModalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.rename-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.95rem 1.25rem;
+  background-color: var(--color-surface-sunken, #143222);
+  border-bottom: 1.5px solid var(--color-border-subtle, rgba(255, 255, 255, 0.2));
+}
+
+.modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.modal-icon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.25), rgba(217, 119, 6, 0.08));
+  border: 1px solid rgba(217, 119, 6, 0.4);
+  color: var(--color-accent-gold, #d97706);
+}
+
+.modal-title-text h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--color-text-bright, #ffffff);
+}
+
+.modal-subtitle {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  opacity: 0.7;
+  color: var(--color-text-muted, #c4d7cb);
+  display: block;
+}
+
+.rename-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.rename-modal-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.rename-target-info {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.15));
+  border-radius: 6px;
+  padding: 0.55rem 0.85rem;
+}
+
+.rename-type-emblem {
+  color: var(--color-accent-green, #10b981);
+  display: flex;
+  align-items: center;
+}
+
+.rename-current-label {
+  font-size: 0.82rem;
+  color: var(--color-text-muted, #c4d7cb);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rename-current-name {
+  color: var(--color-text-bright, #ffffff);
+  font-weight: 600;
+}
+
+.form-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.form-field-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-bright, #ffffff);
+  font-family: inherit;
+}
+
+.rename-input-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.rename-input {
+  flex: 1;
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1.5px solid var(--color-border-subtle, rgba(255, 255, 255, 0.3));
+  border-radius: 6px;
+  color: var(--color-text-bright, #ffffff);
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.rename-input:focus {
+  outline: none;
+  border-color: var(--color-accent-gold, #d97706);
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2);
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.rename-ext-badge {
+  position: absolute;
+  right: 0.6rem;
+  background-color: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: var(--color-text-muted, #c4d7cb);
+  font-family: monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  pointer-events: none;
+  text-transform: uppercase;
+}
+
+.rename-error-banner {
+  background-color: rgba(220, 38, 38, 0.2);
+  border: 1px solid rgba(220, 38, 38, 0.5);
+  color: #fca5a5;
+  padding: 0.55rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.rename-modal-footer {
+  padding: 0.85rem 1.25rem;
+  background-color: var(--color-surface-sunken, #08170f);
+  border-top: 1.5px solid var(--color-border-subtle, rgba(255, 255, 255, 0.2));
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+/* Light Mode Variations */
+html[data-theme="light"] .rename-modal-header {
+  background-color: #eee9df;
+  border-bottom-color: #143222;
+}
+
+html[data-theme="light"] .rename-target-info {
+  background-color: #f4ede0;
+  border-color: rgba(20, 50, 34, 0.2);
+}
+
+html[data-theme="light"] .rename-current-label {
+  color: #244230;
+}
+
+html[data-theme="light"] .rename-current-name {
+  color: #0d2217;
+}
+
+html[data-theme="light"] .form-field-label {
+  color: #0d2217;
+}
+
+html[data-theme="light"] .rename-input {
+  background-color: #ffffff;
+  border-color: #143222;
+  color: #0d2217;
+}
+
+html[data-theme="light"] .rename-ext-badge {
+  background-color: #eee9df;
+  border-color: #143222;
+  color: #143222;
+}
+
+html[data-theme="light"] .rename-modal-footer {
+  background-color: #eee9df;
+  border-top-color: #143222;
+}

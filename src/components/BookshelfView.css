@@ -441,23 +441,36 @@
   background-color: rgba(6, 95, 70, 0.3);
 }
 
+.book-spine-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 5;
+}
+
+.book-spine-card:hover .book-spine-actions {
+  opacity: 1;
+}
+
+.book-rename-btn,
 .book-delete-btn {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.5);
   cursor: pointer;
-  padding: 0.1rem;
+  padding: 0.15rem;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 3px;
   transition: all 0.2s ease;
-  opacity: 0;
-  z-index: 5;
 }
 
-.book-spine-card:hover .book-delete-btn {
-  opacity: 1;
+.book-rename-btn:hover {
+  color: #fef08a;
+  background-color: rgba(217, 119, 6, 0.35);
 }
 
 .book-delete-btn:hover {

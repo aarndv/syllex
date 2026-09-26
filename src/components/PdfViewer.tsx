@@ -32,6 +32,7 @@ interface PdfViewerProps {
   onSelectNode: (node: VaultNode) => void;
   onAddFile: (folderRelPath?: string) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
+  onRenameItem?: (relPath: string, isFolder: boolean, currentName: string) => void;
   onRefreshVault?: () => void;
   onClose: () => void;
 }
@@ -74,6 +75,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   onSelectNode,
   onAddFile,
   onRemoveItem,
+  onRenameItem,
   onRefreshVault,
   onClose,
 }) => {
@@ -378,6 +380,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             onSelectFile={onSelectNode}
             onAddFile={onAddFile}
             onRemoveItem={onRemoveItem}
+            onRenameItem={onRenameItem || (() => {})}
           />
         </div>
       </aside>

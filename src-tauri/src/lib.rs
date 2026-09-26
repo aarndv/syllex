@@ -31,6 +31,15 @@ fn remove_item(vault_root: String, relative_path: String) -> Result<(), String> 
 }
 
 #[tauri::command]
+fn rename_item(
+    vault_root: String,
+    relative_path: String,
+    new_name: String,
+) -> Result<String, String> {
+    vault::rename_item(vault_root, &relative_path, &new_name)
+}
+
+#[tauri::command]
 fn create_vault(parent_dir: String, vault_name: String) -> Result<String, String> {
     vault::create_vault(parent_dir, &vault_name)
 }
@@ -65,6 +74,7 @@ pub fn run() {
             read_module_bytes,
             create_folder,
             remove_item,
+            rename_item,
             create_vault,
             list_subvaults,
             check_libreoffice_installed,

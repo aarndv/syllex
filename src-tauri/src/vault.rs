@@ -285,6 +285,110 @@ pub fn remove_item<P: AsRef<Path>>(vault_root: P, relative_path: &str) -> Result
     }
 }
 
+/// Renames a folder or module file inside the vault.
+/// Returns the new relative path from the vault root (using forward slashes).
+pub fn rename_item<P: AsRef<Path>>(
+    vault_root: P,
+    relative_path: &str,
+    new_name: &str,
+) -> Result<String, String> {
+    let vault_canon = vault_root
+        .as_ref()
+        .canonicalize()
+        .map_err(|e| format!("Invalid vault path: {}", e))?;
+
+    let target = vault_canon.join(relative_path);
+    let target_canon = target
+        .canonicalize()
+        .map_err(|e| format!("Target item not found: {}", e))?;
+
+    if !target_canon.starts_with(&vault_canon) || target_canon == vault_canon {
+        return Err("Cannot rename items outside or equal to vault root".to_string());
+    }
+
+    let trimmed_name = new_name.trim();
+    if trimmed_name.is_empty() {
+        return Err("New name cannot be empty".to_string());
+    }
+
+    // Reject path separators, traversal, or invalid filename characters
+    let invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|'];
+    if trimmed_name.contains("..")
+        || trimmed_name
+            .chars()
+            .any(|c| invalid_chars.contains(&c) || c.is_control())
+    {
+        return Err("Name contains invalid characters".to_string());
+    }
+
+    let parent_canon = match target_canon.parent() {
+        Some(p) => p
+            .canonicalize()
+            .map_err(|e| format!("Parent directory error: {}", e))?,
+        None => return Err("Target item has no parent directory".to_string()),
+    };
+
+    if !parent_canon.starts_with(&vault_canon) {
+        return Err("Parent directory escapes vault root".to_string());
+    }
+
+    let final_name = if target_canon.is_file() {
+        let existing_ext = target_canon
+            .extension()
+            .and_then(|s| s.to_str())
+            .map(|s| s.to_lowercase());
+
+        match existing_ext {
+            Some(ext) => {
+                let suffix = format!(".{}", ext);
+                if trimmed_name.to_lowercase().ends_with(&suffix) {
+                    trimmed_name.to_string()
+                } else if trimmed_name.contains('.') {
+                    let user_ext = trimmed_name.rsplit('.').next().unwrap_or("").to_lowercase();
+                    if ["pdf", "ppt", "pptx", "md"].contains(&user_ext.as_str()) {
+                        trimmed_name.to_string()
+                    } else {
+                        format!("{}.{}", trimmed_name, ext)
+                    }
+                } else {
+                    format!("{}.{}", trimmed_name, ext)
+                }
+            }
+            None => trimmed_name.to_string(),
+        }
+    } else {
+        trimmed_name.to_string()
+    };
+
+    let new_dest = parent_canon.join(&final_name);
+
+    if new_dest.exists() {
+        let dest_canon = new_dest.canonicalize().unwrap_or_else(|_| new_dest.clone());
+        if dest_canon != target_canon {
+            return Err("An item with this name already exists in this folder".to_string());
+        }
+    }
+
+    std::fs::rename(&target_canon, &new_dest)
+        .map_err(|e| format!("Failed to rename item: {}", e))?;
+
+    let new_canon = new_dest
+        .canonicalize()
+        .map_err(|e| format!("Failed to resolve renamed path: {}", e))?;
+
+    if !new_canon.starts_with(&vault_canon) {
+        return Err("Renamed item escapes vault boundary".to_string());
+    }
+
+    let rel_path = new_canon
+        .strip_prefix(&vault_canon)
+        .map_err(|e| format!("Failed to compute relative path: {}", e))?
+        .to_string_lossy()
+        .replace('\\', "/");
+
+    Ok(rel_path)
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct VaultSummary {
     pub name: String,
@@ -453,5 +557,50 @@ mod tests {
         assert_eq!(subvaults.len(), 2);
         assert_eq!(subvaults[0].name, "Biology 101");
         assert_eq!(subvaults[1].name, "Course 2026");
+    }
+
+    #[test]
+    fn test_rename_item_file_and_folder() {
+        let dir = tempdir().unwrap();
+        let root_path = dir.path();
+
+        let course_dir = root_path.join("CS101");
+        fs::create_dir(&course_dir).unwrap();
+
+        let pdf_path = course_dir.join("lecture1.pdf");
+        {
+            let mut pdf_file = File::create(&pdf_path).unwrap();
+            pdf_file.write_all(b"%PDF-1.4 dummy content").unwrap();
+        }
+
+        // 1. Rename file without extension in input -> keeps .pdf
+        let new_rel = rename_item(root_path, "CS101/lecture1.pdf", "Lecture 01 - Intro").unwrap();
+        assert_eq!(new_rel, "CS101/Lecture 01 - Intro.pdf");
+        assert!(!pdf_path.exists());
+        assert!(course_dir.join("Lecture 01 - Intro.pdf").exists());
+
+        // 2. Rename file with explicit extension
+        let new_rel_2 =
+            rename_item(root_path, "CS101/Lecture 01 - Intro.pdf", "lec1_final.pdf").unwrap();
+        assert_eq!(new_rel_2, "CS101/lec1_final.pdf");
+        assert!(course_dir.join("lec1_final.pdf").exists());
+
+        // 3. Rename folder
+        let new_folder_rel = rename_item(root_path, "CS101", "Computer Science 101").unwrap();
+        assert_eq!(new_folder_rel, "Computer Science 101");
+        assert!(!course_dir.exists());
+        let new_course_dir = root_path.join("Computer Science 101");
+        assert!(new_course_dir.exists());
+        assert!(new_course_dir.join("lec1_final.pdf").exists());
+
+        // 4. Test error cases: invalid chars, path traversal, collision
+        assert!(rename_item(root_path, "Computer Science 101", "../escape").is_err());
+        assert!(rename_item(root_path, "Computer Science 101", "invalid/slash").is_err());
+        assert!(rename_item(root_path, "Computer Science 101", "  ").is_err());
+
+        // Create collision target
+        let other_dir = root_path.join("OtherCourse");
+        fs::create_dir(&other_dir).unwrap();
+        assert!(rename_item(root_path, "Computer Science 101", "OtherCourse").is_err());
     }
 }
