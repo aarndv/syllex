@@ -83,7 +83,7 @@ const FileTreeNode: React.FC<{
         >
           <span className="tree-chevron">{isOpen ? "▾" : "▸"}</span>
           <span className="tree-type-pill dir">DIR</span>
-          <span className="tree-label folder-label">{node.name}</span>
+          <span className="tree-label folder-label" title={node.name}>{node.name}</span>
 
           <div className="tree-item-actions">
             <button
@@ -158,7 +158,7 @@ const FileTreeNode: React.FC<{
         <span className={`tree-type-pill ${badgeStr.toLowerCase()}`}>
           {badgeStr}
         </span>
-        <span className="tree-label file-label">{node.name}</span>
+        <span className="tree-label file-label" title={node.name}>{node.name}</span>
 
         <div className="tree-item-actions">
           <button

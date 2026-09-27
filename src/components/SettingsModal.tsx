@@ -17,7 +17,7 @@ export interface AppSettings {
 
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: "system",
-  fontStyle: "serif",
+  fontStyle: "sans",
   fontSize: "medium",
   timeZone: "system",
   defaultReadingFilter: "original",

@@ -541,6 +541,7 @@ html[data-theme="light"] .search-shortcut-badge {
 .tree-label {
   flex: 1;
   font-size: 0.95rem;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: #262626;
   white-space: nowrap;
   overflow: hidden;
@@ -550,6 +551,12 @@ html[data-theme="light"] .search-shortcut-badge {
 .tree-label.folder-label {
   font-weight: 600;
   color: #1b3627;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.tree-label.file-label {
+  font-weight: 400;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 .tree-item-actions {
@@ -746,7 +753,28 @@ html[data-theme="light"] .search-shortcut-badge {
 /* Font Style Settings */
 html[data-font-style="serif"],
 html[data-font-style="serif"] body {
-  font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+  font-family: "Charter", "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
+}
+
+/* Ensure folder names, tree explorer items, and navigation chrome always stay crisp and legible in clean UI typography */
+html[data-font-style="serif"] .tree-label,
+html[data-font-style="serif"] .tree-label.folder-label,
+html[data-font-style="serif"] .tree-label.file-label,
+html[data-font-style="serif"] .shelf-title,
+html[data-font-style="serif"] .shelf-title-sub,
+html[data-font-style="serif"] .sidebar-title,
+html[data-font-style="serif"] .app-header h1,
+html[data-font-style="serif"] .toggle-mode-btn,
+html[data-font-style="serif"] .primary-btn,
+html[data-font-style="serif"] .secondary-btn,
+html[data-font-style="serif"] .icon-btn,
+html[data-font-style="serif"] .search-trigger-btn,
+html[data-font-style="serif"] .tree-type-pill,
+html[data-font-style="serif"] .book-type-badge,
+html[data-font-style="serif"] .shelf-mini-btn,
+html[data-font-style="serif"] .drawer-header h3,
+html[data-font-style="serif"] .doc-title {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 html[data-font-style="sans"],

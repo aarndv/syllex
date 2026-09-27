@@ -140,15 +140,15 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
   const subfolders = folder.children.filter((c) => c.node_type === "Folder");
 
   const headerStyle = currentColorObj
-    ? { background: `linear-gradient(135deg, ${currentColorObj.primary} 0%, ${currentColorObj.secondary} 70%, rgba(13, 34, 23, 0.95) 100%)` }
+    ? { backgroundColor: currentColorObj.secondary }
     : undefined;
 
   const wrapperStyle = currentColorObj
-    ? { background: `linear-gradient(180deg, ${currentColorObj.bg} 0%, rgba(13, 37, 23, 0.65) 100%)` }
+    ? { backgroundColor: currentColorObj.bg }
     : undefined;
 
   const barStyle = currentColorObj
-    ? { background: `linear-gradient(180deg, ${currentColorObj.secondary} 0%, rgba(10, 28, 18, 0.95) 100%)` }
+    ? { backgroundColor: currentColorObj.secondary }
     : undefined;
 
   return (
@@ -195,7 +195,7 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
                     <button
                       key={color.id}
                       className={`color-dot-btn ${currentColorId === color.id ? "selected" : ""}`}
-                      style={{ background: `linear-gradient(135deg, ${color.primary}, ${color.secondary})` }}
+                      style={{ backgroundColor: color.primary }}
                       title={color.name}
                       onClick={() => {
                         onSetFolderColor(folder.relative_path, color.id);

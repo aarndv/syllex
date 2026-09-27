@@ -66,6 +66,11 @@ export const VIEW_MODE_LABELS: Record<DocumentViewMode, string> = {
   "ocean-dark": "Ocean Dark Blue",
 };
 
+const DEFAULT_DRAWER_WIDTH = 320;
+const MIN_DRAWER_WIDTH = 220;
+const MAX_DRAWER_WIDTH = 750;
+const DRAWER_WIDTH_STORAGE_KEY = "syllex_pdf_drawer_width";
+
 export const PdfViewer: React.FC<PdfViewerProps> = ({
   vaultRoot,
   node,
@@ -80,6 +85,17 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   onClose,
 }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(true);
+  const [drawerWidth, setDrawerWidth] = useState<number>(() => {
+    const saved = localStorage.getItem(DRAWER_WIDTH_STORAGE_KEY);
+    if (saved) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && parsed >= MIN_DRAWER_WIDTH && parsed <= MAX_DRAWER_WIDTH) {
+        return parsed;
+      }
+    }
+    return DEFAULT_DRAWER_WIDTH;
+  });
+  const [isResizing, setIsResizing] = useState<boolean>(false);
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(initialPage || 1);
@@ -345,11 +361,49 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     };
   }, [currentPage, numPages, zoom, isSearchOpen]);
 
+  const handleMouseDownResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    const startX = e.clientX;
+    const startWidth = drawerWidth;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const calculatedWidth = Math.max(
+        MIN_DRAWER_WIDTH,
+        Math.min(startWidth + deltaX, Math.min(MAX_DRAWER_WIDTH, window.innerWidth - 300))
+      );
+      setDrawerWidth(calculatedWidth);
+    };
+
+    const handleMouseUp = (upEvent: MouseEvent) => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      setIsResizing(false);
+      const deltaX = upEvent.clientX - startX;
+      const finalWidth = Math.max(
+        MIN_DRAWER_WIDTH,
+        Math.min(startWidth + deltaX, Math.min(MAX_DRAWER_WIDTH, window.innerWidth - 300))
+      );
+      localStorage.setItem(DRAWER_WIDTH_STORAGE_KEY, String(finalWidth));
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  }, [drawerWidth]);
+
   const activeMatch = searchMatches[currentMatchIdx];
 
   return (
     <div className={`pdf-viewer-overlay ${isDrawerOpen ? "drawer-open" : "drawer-closed"}`}>
-      <aside className="pdf-drawer">
+      <aside
+        className={`pdf-drawer ${isResizing ? "is-resizing" : ""}`}
+        style={{
+          width: `${drawerWidth}px`,
+          marginLeft: isDrawerOpen ? "0px" : `-${drawerWidth}px`,
+          transition: isResizing ? "none" : undefined,
+        }}
+      >
         <div className="drawer-header">
           <h3>
             <FolderIcon size={16} /> Vault Explorer
@@ -383,6 +437,16 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             onRenameItem={onRenameItem || (() => {})}
           />
         </div>
+        {isDrawerOpen && (
+          <div
+            className="pdf-drawer-resizer"
+            onMouseDown={handleMouseDownResize}
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize sidebar"
+            title="Drag to resize sidebar"
+          />
+        )}
       </aside>
 
       <div className="pdf-main-area">

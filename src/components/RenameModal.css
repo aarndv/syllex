@@ -38,7 +38,7 @@
   width: 32px;
   height: 32px;
   border-radius: 6px;
-  background: linear-gradient(135deg, rgba(217, 119, 6, 0.25), rgba(217, 119, 6, 0.08));
+  background-color: rgba(217, 119, 6, 0.15);
   border: 1px solid rgba(217, 119, 6, 0.4);
   color: var(--color-accent-gold, #d97706);
 }

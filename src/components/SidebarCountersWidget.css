@@ -247,7 +247,7 @@
 
 /* Compact Count Button (Clickable to +1) */
 .counter-count-btn {
-  background: linear-gradient(135deg, rgba(5, 150, 105, 0.9), rgba(16, 185, 129, 0.95));
+  background-color: #059669;
   border: 1px solid rgba(255, 255, 255, 0.35);
   color: #ffffff;
   min-width: 28px;
@@ -267,7 +267,7 @@
 }
 
 .counter-count-btn:hover {
-  background: linear-gradient(135deg, #059669, #10b981);
+  background-color: #10b981;
   border-color: #ffffff;
   transform: scale(1.04);
 }
@@ -398,13 +398,13 @@ html[data-theme="light"] .counter-stepper-btn:hover:not(:disabled) {
 }
 
 html[data-theme="light"] .counter-count-btn {
-  background: linear-gradient(135deg, #143222, #1b452f);
+  background-color: #143222;
   border-color: #0b1d14;
   color: #ffffff;
 }
 
 html[data-theme="light"] .counter-count-btn:hover {
-  background: linear-gradient(135deg, #1b452f, #225a3d);
+  background-color: #1e4530;
 }
 
 html[data-theme="light"] .counter-tool-btn {
