@@ -274,7 +274,30 @@
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 1.25rem;
-  padding-bottom: 0.75rem;
+  padding: 0.5rem 0.5rem 0.75rem 0.25rem;
+  max-height: 418px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) rgba(0, 0, 0, 0.15);
+}
+
+.books-row::-webkit-scrollbar {
+  width: 6px;
+}
+
+.books-row::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+
+.books-row::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+}
+
+.books-row::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .empty-shelf-row {
@@ -680,6 +703,22 @@ html[data-theme="light"] .book-label-frame {
 html[data-theme="light"] .book-spine-icon {
   background-color: rgba(255, 255, 255, 0.25);
   color: #ffffff;
+}
+
+html[data-theme="light"] .books-row {
+  scrollbar-color: rgba(20, 50, 34, 0.3) rgba(20, 50, 34, 0.08);
+}
+
+html[data-theme="light"] .books-row::-webkit-scrollbar-track {
+  background: rgba(20, 50, 34, 0.08);
+}
+
+html[data-theme="light"] .books-row::-webkit-scrollbar-thumb {
+  background: rgba(20, 50, 34, 0.3);
+}
+
+html[data-theme="light"] .books-row::-webkit-scrollbar-thumb:hover {
+  background: rgba(20, 50, 34, 0.5);
 }
 
 
