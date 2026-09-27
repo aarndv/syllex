@@ -709,6 +709,7 @@ function App() {
               ) : activeViewMode === "bookshelf" ? (
                 <BookshelfView
                   nodes={scanResult.root_nodes}
+                  vaultRoot={vaultPath || ""}
                   onSelectFile={handleSelectFileNode}
                   onAddFile={handleAddModule}
                   onRemoveItem={handleRemoveItem}

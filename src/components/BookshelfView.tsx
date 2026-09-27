@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { VaultNode, VaultNodeType } from "../types/vault";
 import { FolderIcon, FileIcon, PlusIcon, CloseIcon, BookIcon, PencilIcon } from "./Icons";
+import { getModuleCoverThumbnail } from "../utils/pdfThumbnail";
 import "./BookshelfView.css";
 
 export interface FolderColorOption {
@@ -34,6 +35,7 @@ const FOLDER_COLORS_STORAGE_KEY = "syllex_folder_custom_colors";
 
 interface BookshelfViewProps {
   nodes: VaultNode[];
+  vaultRoot: string;
   onSelectFile: (node: VaultNode) => void;
   onAddFile: (targetFolderRelPath?: string) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
@@ -42,6 +44,7 @@ interface BookshelfViewProps {
 
 export const BookshelfView: React.FC<BookshelfViewProps> = ({
   nodes,
+  vaultRoot,
   onSelectFile,
   onAddFile,
   onRemoveItem,
@@ -77,6 +80,7 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
           title="General Modules Shelf"
           folderPath={undefined}
           files={fileNodes}
+          vaultRoot={vaultRoot}
           onSelectFile={onSelectFile}
           onAddFile={onAddFile}
           onRemoveItem={onRemoveItem}
@@ -89,6 +93,7 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
           key={folder.relative_path}
           folder={folder}
           folderColors={folderColors}
+          vaultRoot={vaultRoot}
           onSetFolderColor={handleSetFolderColor}
           onSelectFile={onSelectFile}
           onAddFile={onAddFile}
@@ -113,6 +118,7 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
 interface FolderShelfProps {
   folder: VaultNode;
   folderColors: Record<string, string>;
+  vaultRoot: string;
   onSetFolderColor: (relPath: string, colorId: string) => void;
   onSelectFile: (node: VaultNode) => void;
   onAddFile: (targetFolderRelPath?: string) => void;
@@ -123,6 +129,7 @@ interface FolderShelfProps {
 const FolderShelf: React.FC<FolderShelfProps> = ({
   folder,
   folderColors,
+  vaultRoot,
   onSetFolderColor,
   onSelectFile,
   onAddFile,
@@ -240,6 +247,7 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
                 <BookSpineItem
                   key={file.relative_path}
                   node={file}
+                  vaultRoot={vaultRoot}
                   folderColor={folderColor}
                   colorVariant={idx % 4}
                   onSelectFile={onSelectFile}
@@ -275,6 +283,7 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
               key={sub.relative_path}
               folder={sub}
               folderColors={folderColors}
+              vaultRoot={vaultRoot}
               onSetFolderColor={onSetFolderColor}
               onSelectFile={onSelectFile}
               onAddFile={onAddFile}
@@ -292,6 +301,7 @@ interface ShelfSectionProps {
   title: string;
   folderPath?: string;
   files: VaultNode[];
+  vaultRoot: string;
   onSelectFile: (node: VaultNode) => void;
   onAddFile: (targetFolderRelPath?: string) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
@@ -302,6 +312,7 @@ const ShelfSection: React.FC<ShelfSectionProps> = ({
   title,
   folderPath,
   files,
+  vaultRoot,
   onSelectFile,
   onAddFile,
   onRemoveItem,
@@ -341,6 +352,7 @@ const ShelfSection: React.FC<ShelfSectionProps> = ({
             <BookSpineItem
               key={file.relative_path}
               node={file}
+              vaultRoot={vaultRoot}
               folderColor="#059669"
               colorVariant={idx % 4}
               onSelectFile={onSelectFile}
@@ -370,6 +382,7 @@ function getFileExt(type: VaultNodeType): string {
 
 interface BookSpineItemProps {
   node: VaultNode;
+  vaultRoot: string;
   folderColor?: string;
   colorVariant: number;
   onSelectFile: (node: VaultNode) => void;
@@ -379,6 +392,7 @@ interface BookSpineItemProps {
 
 const BookSpineItem: React.FC<BookSpineItemProps> = ({
   node,
+  vaultRoot,
   folderColor,
   colorVariant,
   onSelectFile,
@@ -387,10 +401,35 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
 }) => {
   const ext = getFileExt(node.node_type);
   const savedPage = localStorage.getItem(`syllex_progress_${node.relative_path}`);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (!vaultRoot || (ext !== "PDF" && ext !== "PPT" && ext !== "PPTX")) {
+      setCoverUrl(null);
+      return;
+    }
+
+    getModuleCoverThumbnail(vaultRoot, node.relative_path, ext)
+      .then((url) => {
+        if (isMounted) {
+          setCoverUrl(url);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setCoverUrl(null);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [vaultRoot, node.relative_path, ext]);
 
   return (
     <div
-      className={`book-spine-card variant-${colorVariant}`}
+      className={`book-spine-card variant-${colorVariant} ${coverUrl ? "has-cover-snapshot" : ""}`}
       style={{ "--folder-hover-color": folderColor || "#059669" } as React.CSSProperties}
       onClick={() => onSelectFile(node)}
       title={`Open ${node.name}`}
@@ -427,9 +466,20 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
       </div>
 
       <div className="book-spine-content">
-        <div className="book-spine-icon">
-          {ext === "MD" ? <BookIcon size={18} /> : <FileIcon size={18} />}
-        </div>
+        {coverUrl ? (
+          <div className="book-cover-snapshot-plate">
+            <img
+              src={coverUrl}
+              alt={`${node.name} cover preview`}
+              className="book-cover-snapshot-img"
+              loading="lazy"
+            />
+          </div>
+        ) : (
+          <div className="book-spine-icon">
+            {ext === "MD" ? <BookIcon size={18} /> : <FileIcon size={18} />}
+          </div>
+        )}
         <span className="book-spine-title">{node.name}</span>
       </div>
 
@@ -448,4 +498,5 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
     </div>
   );
 };
+
 
