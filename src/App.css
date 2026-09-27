@@ -41,7 +41,9 @@ body::before {
 .app-layout {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
 }
 
 /* Thin Header */
@@ -55,6 +57,8 @@ body::before {
   color: #fbf9f4;
   box-shadow: 0 4px 12px rgba(27, 54, 39, 0.15);
   position: relative;
+  flex-shrink: 0;
+  z-index: 50;
 }
 
 .header-left-group {
@@ -338,10 +342,12 @@ html[data-theme="light"] .search-shortcut-badge {
   flex: 1;
   display: flex;
   flex-direction: row;
-  min-height: calc(100vh - 56px);
+  height: calc(100vh - 56px);
+  max-height: calc(100vh - 56px);
+  overflow: hidden;
 }
 
-/* Left Sidebar for Vault Explorer */
+/* Left Sidebar for Vault Explorer (Frozen/Sticky) */
 .app-sidebar {
   width: 300px;
   min-width: 260px;
@@ -349,6 +355,13 @@ html[data-theme="light"] .search-shortcut-badge {
   border-right: 1px solid #efeae1;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  max-height: 100%;
+  flex-shrink: 0;
+  overflow: hidden;
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
 
 .sidebar-header {
@@ -358,6 +371,7 @@ html[data-theme="light"] .search-shortcut-badge {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+  flex-shrink: 0;
 }
 
 .sidebar-title {
@@ -369,18 +383,69 @@ html[data-theme="light"] .search-shortcut-badge {
 }
 
 .sidebar-content {
+  flex: 1;
   padding: 0.75rem 0.5rem;
   overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) rgba(0, 0, 0, 0.1);
 }
 
 .app-main-content {
   flex: 1;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 2.5rem 1.5rem;
   max-width: 1000px;
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
   transition: max-width 0.2s ease;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) rgba(0, 0, 0, 0.15);
+}
+
+.app-main-content::-webkit-scrollbar,
+.sidebar-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.app-main-content::-webkit-scrollbar-track,
+.sidebar-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.app-main-content::-webkit-scrollbar-thumb,
+.sidebar-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.app-main-content::-webkit-scrollbar-thumb:hover,
+.sidebar-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+html[data-theme="light"] .app-main-content,
+html[data-theme="light"] .sidebar-content {
+  scrollbar-color: rgba(20, 50, 34, 0.25) rgba(20, 50, 34, 0.05);
+}
+
+html[data-theme="light"] .app-main-content::-webkit-scrollbar-track,
+html[data-theme="light"] .sidebar-content::-webkit-scrollbar-track {
+  background: rgba(20, 50, 34, 0.05);
+}
+
+html[data-theme="light"] .app-main-content::-webkit-scrollbar-thumb,
+html[data-theme="light"] .sidebar-content::-webkit-scrollbar-thumb {
+  background: rgba(20, 50, 34, 0.25);
+}
+
+html[data-theme="light"] .app-main-content::-webkit-scrollbar-thumb:hover,
+html[data-theme="light"] .sidebar-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(20, 50, 34, 0.45);
 }
 
 .app-main-content.sidebar-collapsed {
