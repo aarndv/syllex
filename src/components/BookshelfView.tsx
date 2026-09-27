@@ -436,33 +436,27 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
     >
       <div className="book-spine-ridge-left" />
 
-      <div className="book-spine-header">
-        <span className={`book-type-badge ${ext.toLowerCase()}`}>
-          <span className="badge-dot" />
-          {ext}
-        </span>
-        <div className="book-spine-actions">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onRenameItem(node.relative_path, false, node.name);
-            }}
-            className="book-rename-btn"
-            title="Rename module"
-          >
-            <PencilIcon size={11} />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemoveItem(node.relative_path, false);
-            }}
-            className="book-delete-btn"
-            title="Remove from shelf"
-          >
-            <CloseIcon size={12} />
-          </button>
-        </div>
+      <div className="book-spine-actions">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRenameItem(node.relative_path, false, node.name);
+          }}
+          className="book-rename-btn"
+          title="Rename module"
+        >
+          <PencilIcon size={11} />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemoveItem(node.relative_path, false);
+          }}
+          className="book-delete-btn"
+          title="Remove from shelf"
+        >
+          <CloseIcon size={12} />
+        </button>
       </div>
 
       <div className="book-spine-content">
@@ -484,6 +478,10 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
       </div>
 
       <div className="book-spine-footer">
+        <span className={`book-type-badge ${ext.toLowerCase()}`}>
+          <span className="badge-dot" />
+          {ext}
+        </span>
         {savedPage ? (
           <span className="book-progress-ribbon">Page {savedPage}</span>
         ) : (
