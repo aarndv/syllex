@@ -93,7 +93,7 @@ export const LandingPad: React.FC<LandingPadProps> = ({
 
         {/* Logo and Provisional Branding */}
         <div className="landing-logo-wrapper">
-          <SyllexLogo size={88} showProvisionalTag={true} />
+          <SyllexLogo size={64} showProvisionalTag={true} />
         </div>
 
         {/* Header & Title */}
