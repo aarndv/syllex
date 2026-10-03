@@ -170,3 +170,16 @@ Record decisions that are expensive to reverse or affect multiple parts of the a
 
 **Consequences:** Rust provides a dedicated `rename_item` command that strictly checks vault boundary constraints, prevents directory traversal (`..`, slashes), enforces extension preservation/validation for supported document types, prevents collisions with existing files, and returns the updated relative path. Frontend state migrates cached progress and theme keys smoothly.
 
+## D-016 — Application Launch Landing Pad
+
+**Status:** Accepted
+
+**Decision:** Present a calm, focused landing pad screen when the application launches, featuring the Syllex title, provisional emblem/logo, session details, and vault status before transitioning to the full bookshelf/tree dashboard upon user entry.
+
+**Reason:** Prevents overwhelming the user with the dense library dashboard immediately upon launch. Establishes a focused, deliberate entry into their academic study sanctuary with keyboard shortcut support (`Enter`/`Space`) and quick access to vault management and preferences.
+
+**Alternatives:** Immediately mount the full dashboard or vault explorer upon launch. While fast, it bombards the student with file lists before they are ready to choose their study task.
+
+**Consequences:** The application initializes with `hasEntered = false` displaying `<LandingPad />`. Users enter via the "Enter Syllex" button or keyboard shortcut, and can return to the landing pad at any time via the application header logo.
+
+

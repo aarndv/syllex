@@ -15,6 +15,8 @@ import { QuickSearchModal, SearchResultItem } from "./components/QuickSearchModa
 import { SearchPreviewDrawer } from "./components/SearchPreviewDrawer";
 import { ConfirmDeleteModal, UndoToast } from "./components/ConfirmDeleteModal";
 import { RenameModal } from "./components/RenameModal";
+import { LandingPad } from "./components/LandingPad";
+import { SyllexLogo } from "./components/SyllexLogo";
 import {
   PlusIcon,
   FolderIcon,
@@ -37,8 +39,10 @@ const SETTINGS_STORAGE_KEY = "syllex_app_settings";
 const SIDEBAR_HIDDEN_STORAGE_KEY = "syllex_sidebar_hidden";
 
 function App() {
+  const [hasEntered, setHasEntered] = useState<boolean>(false);
   const [vaultPath, setVaultPath] = useState<string | null>(null);
   const [defaultVaultsRoot, setDefaultVaultsRoot] = useState<string | null>(null);
+
   const [scanResult, setScanResult] = useState<VaultScanResult | null>(null);
   const [activeNode, setActiveNode] = useState<VaultNode | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -507,6 +511,16 @@ function App() {
         />
       )}
 
+      {!hasEntered && (
+        <LandingPad
+          onEnter={() => setHasEntered(true)}
+          vaultPath={vaultPath}
+          courseCount={vaultStats.courses}
+          fileCount={vaultStats.files}
+          onOpenVaultManager={() => setIsVaultManagerOpen(true)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+        />
+      )}
 
       <header className="app-header">
         <div className="header-left-group">
@@ -518,8 +532,18 @@ function App() {
           >
             <SidebarToggleIcon size={18} />
           </button>
-          <h1>Syllex</h1>
+          <button
+            type="button"
+            className="header-title-btn"
+            onClick={() => setHasEntered(false)}
+            title="Syllex — Return to Landing Pad"
+            aria-label="Return to Landing Pad"
+          >
+            <SyllexLogo size={24} />
+            <h1>Syllex</h1>
+          </button>
         </div>
+
 
         {isSidebarHidden && (
           <div className="header-clock-pill" title="Current Time">
