@@ -174,12 +174,13 @@ Record decisions that are expensive to reverse or affect multiple parts of the a
 
 **Status:** Accepted
 
-**Decision:** Present a calm, focused landing pad screen when the application launches, featuring the Syllex title, provisional emblem/logo, session details, and vault status before transitioning to the full bookshelf/tree dashboard upon user entry.
+**Decision:** Present a calm, focused landing pad screen when the application launches, featuring the Syllex title, provisional emblem/logo, and streamlined vault status before transitioning to the full bookshelf/tree dashboard upon user entry.
 
 **Reason:** Prevents overwhelming the user with the dense library dashboard immediately upon launch. Establishes a focused, deliberate entry into their academic study sanctuary with keyboard shortcut support (`Enter`/`Space`) and quick access to vault management and preferences.
 
 **Alternatives:** Immediately mount the full dashboard or vault explorer upon launch. While fast, it bombards the student with file lists before they are ready to choose their study task.
 
-**Consequences:** The application initializes with `hasEntered = false` displaying `<LandingPad />`. Users enter via the "Enter Syllex" button or keyboard shortcut, and can return to the landing pad at any time via the application header logo.
+**Consequences:** The application initializes with `hasEntered = false` displaying `<LandingPad />`. The landing card maintains a decluttered, calm layout focusing purely on the emblem, title/tagline, vault readiness status, and single-click/keyboard entry without extraneous timestamps or visual ornamentation. Users enter via the "Enter Syllex" button or keyboard shortcut, and can return to the landing pad at any time via the application header logo.
+
 
 
