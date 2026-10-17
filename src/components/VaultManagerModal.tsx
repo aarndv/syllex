@@ -3,6 +3,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { VaultSummary } from "../types/vault";
 import { FolderIcon, CloseIcon, PlusIcon } from "./Icons";
+import { toUserFacingError } from "../utils/userFacingError";
 import "./VaultManagerModal.css";
 
 interface VaultManagerModalProps {
@@ -38,8 +39,8 @@ export const VaultManagerModal: React.FC<VaultManagerModalProps> = ({
     try {
       const list = await invoke<VaultSummary[]>("list_subvaults", { parentDir: rootPath });
       setSubvaults(list);
-    } catch (err: any) {
-      setError(typeof err === "string" ? err : err.message || "Failed to list subvaults");
+    } catch (err: unknown) {
+      setError(toUserFacingError(err, "scan this folder"));
       setSubvaults([]);
     } finally {
       setLoadingSubvaults(false);
@@ -58,8 +59,8 @@ export const VaultManagerModal: React.FC<VaultManagerModalProps> = ({
         onSetDefaultVaultsRoot(selected);
         await loadSubvaults(selected);
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to select default folder");
+    } catch (err: unknown) {
+      setError(toUserFacingError(err, "select this folder"));
     }
   }
 
@@ -91,8 +92,8 @@ export const VaultManagerModal: React.FC<VaultManagerModalProps> = ({
 
       onSelectVaultPath(newVaultPath);
       onClose();
-    } catch (err: any) {
-      setError(typeof err === "string" ? err : err.message || "Failed to create new vault");
+    } catch (err: unknown) {
+      setError(toUserFacingError(err, "create this vault"));
     }
   }
 
@@ -108,8 +109,8 @@ export const VaultManagerModal: React.FC<VaultManagerModalProps> = ({
         onSelectVaultPath(selected);
         onClose();
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to select directory");
+    } catch (err: unknown) {
+      setError(toUserFacingError(err, "open this folder"));
     }
   }
 

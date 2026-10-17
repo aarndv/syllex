@@ -37,7 +37,6 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
   const [isSearchingPdfs, setIsSearchingPdfs] = useState<boolean>(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const searchDebounceRef = useRef<any>(null);
 
   // Focus input on modal open
   useEffect(() => {
@@ -149,15 +148,12 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
     }
 
     setIsSearchingPdfs(true);
-    if (searchDebounceRef.current) {
-      clearTimeout(searchDebounceRef.current);
-    }
-
-    let isCancelled = false;
-    searchDebounceRef.current = setTimeout(async () => {
+    const controller = new AbortController();
+    let isCurrentSearch = true;
+    const searchTimeout = window.setTimeout(async () => {
       try {
-        const rawMatches = await searchVaultPdfs(vaultRoot, allPdfNodes, q, 25);
-        if (!isCancelled) {
+        const rawMatches = await searchVaultPdfs(vaultRoot, allPdfNodes, q, 25, controller.signal);
+        if (isCurrentSearch && !controller.signal.aborted) {
           const formatted: SearchResultItem[] = rawMatches.map((m) => ({
             node: m.node,
             parentPath: m.parentPath,
@@ -170,15 +166,14 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
           setIsSearchingPdfs(false);
         }
       } catch {
-        if (!isCancelled) setIsSearchingPdfs(false);
+        if (isCurrentSearch && !controller.signal.aborted) setIsSearchingPdfs(false);
       }
     }, 220);
 
     return () => {
-      isCancelled = true;
-      if (searchDebounceRef.current) {
-        clearTimeout(searchDebounceRef.current);
-      }
+      isCurrentSearch = false;
+      controller.abort();
+      window.clearTimeout(searchTimeout);
     };
   }, [query, vaultRoot, allPdfNodes, scope]);
 

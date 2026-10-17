@@ -74,13 +74,20 @@ pub fn scan_vault<P: AsRef<Path>>(root_path: P) -> Result<VaultScanResult, Strin
                 continue;
             }
 
+            // One metadata lookup is enough to classify a validated entry and capture
+            // its file size. This avoids repeated filesystem probes in large vaults.
+            let metadata = match canonical_path.metadata() {
+                Ok(metadata) => metadata,
+                Err(_) => continue,
+            };
+
             let name = entry.file_name().to_string_lossy().to_string();
             let rel_path = match path.strip_prefix(canonical_root) {
                 Ok(r) => r.to_string_lossy().to_string(),
                 Err(_) => continue,
             };
 
-            if path.is_dir() {
+            if metadata.is_dir() {
                 let children = scan_dir(canonical_root, &path);
                 nodes.push(VaultNode {
                     name,
@@ -89,7 +96,7 @@ pub fn scan_vault<P: AsRef<Path>>(root_path: P) -> Result<VaultScanResult, Strin
                     size_bytes: None,
                     children,
                 });
-            } else if path.is_file() {
+            } else if metadata.is_file() {
                 let ext = match path.extension().and_then(|s| s.to_str()) {
                     Some(e) => e.to_lowercase(),
                     None => continue,
@@ -101,11 +108,6 @@ pub fn scan_vault<P: AsRef<Path>>(root_path: P) -> Result<VaultScanResult, Strin
                     "pptx" => ModuleFileType::Pptx,
                     "md" => ModuleFileType::Md,
                     _ => continue,
-                };
-
-                let metadata = match path.metadata() {
-                    Ok(m) => m,
-                    Err(_) => continue,
                 };
 
                 nodes.push(VaultNode {
