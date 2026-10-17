@@ -21,8 +21,32 @@ export interface MultiPdfSearchResult {
   matchCount: number;
 }
 
-// In-memory cache for extracted text of PDFs
+// Keep recent document text available for fast repeat searches without retaining an
+// unbounded number of complete PDFs in memory.
 const pdfTextCache = new Map<string, PdfPageText[]>();
+const MAX_CACHED_PDF_TEXT_DOCUMENTS = 24;
+const PDF_SEARCH_CONCURRENCY = 3;
+
+function getCachedPdfText(cacheKey: string): PdfPageText[] | undefined {
+  const pages = pdfTextCache.get(cacheKey);
+  if (!pages) return undefined;
+
+  // Map insertion order gives us a small, dependency-free LRU cache.
+  pdfTextCache.delete(cacheKey);
+  pdfTextCache.set(cacheKey, pages);
+  return pages;
+}
+
+function cachePdfText(cacheKey: string, pages: PdfPageText[]): void {
+  pdfTextCache.delete(cacheKey);
+  pdfTextCache.set(cacheKey, pages);
+
+  while (pdfTextCache.size > MAX_CACHED_PDF_TEXT_DOCUMENTS) {
+    const oldestKey = pdfTextCache.keys().next().value;
+    if (!oldestKey) break;
+    pdfTextCache.delete(oldestKey);
+  }
+}
 
 /**
  * Extract text from all pages of a PDF document
@@ -32,8 +56,9 @@ export async function extractPdfText(
   relativePath: string
 ): Promise<PdfPageText[]> {
   const cacheKey = `${vaultRoot}:${relativePath}`;
-  if (pdfTextCache.has(cacheKey)) {
-    return pdfTextCache.get(cacheKey)!;
+  const cachedPages = getCachedPdfText(cacheKey);
+  if (cachedPages) {
+    return cachedPages;
   }
 
   const isPpt =
@@ -55,20 +80,27 @@ export async function extractPdfText(
 
   const uint8Array = new Uint8Array(fileBytes);
   const loadingTask = pdfjsLib.getDocument(getPdfDocumentParams(uint8Array));
-  const doc = await loadingTask.promise;
+  try {
+    const doc = await loadingTask.promise;
+    const pages: PdfPageText[] = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      const text = content.items
+        .map((item: any) => ("str" in item ? item.str : ""))
+        .join(" ");
+      pages.push({ pageNum: i, text });
+    }
 
-  const pages: PdfPageText[] = [];
-  for (let i = 1; i <= doc.numPages; i++) {
-    const page = await doc.getPage(i);
-    const content = await page.getTextContent();
-    const text = content.items
-      .map((item: any) => ("str" in item ? item.str : ""))
-      .join(" ");
-    pages.push({ pageNum: i, text });
+    cachePdfText(cacheKey, pages);
+    return pages;
+  } finally {
+    try {
+      await loadingTask.destroy();
+    } catch {
+      // Preserve the original document error if PDF.js cleanup also fails.
+    }
   }
-
-  pdfTextCache.set(cacheKey, pages);
-  return pages;
 }
 
 /**
@@ -78,8 +110,9 @@ export async function extractLoadedPdfDocText(
   doc: pdfjsLib.PDFDocumentProxy,
   cacheKey?: string
 ): Promise<PdfPageText[]> {
-  if (cacheKey && pdfTextCache.has(cacheKey)) {
-    return pdfTextCache.get(cacheKey)!;
+  const cachedPages = cacheKey ? getCachedPdfText(cacheKey) : undefined;
+  if (cachedPages) {
+    return cachedPages;
   }
 
   const pages: PdfPageText[] = [];
@@ -93,7 +126,7 @@ export async function extractLoadedPdfDocText(
   }
 
   if (cacheKey) {
-    pdfTextCache.set(cacheKey, pages);
+    cachePdfText(cacheKey, pages);
   }
   return pages;
 }
@@ -152,44 +185,53 @@ export async function searchVaultPdfs(
   vaultRoot: string,
   pdfNodes: { node: VaultNode; parentPath: string }[],
   query: string,
-  maxResults: number = 30
+  maxResults: number = 30,
+  signal?: AbortSignal
 ): Promise<MultiPdfSearchResult[]> {
   const q = query.trim().toLowerCase();
   if (!q || q.length < 2) return [];
 
-  const results: MultiPdfSearchResult[] = [];
-
-  for (const item of pdfNodes) {
-    if (results.length >= maxResults) break;
+  async function searchDocument(
+    item: { node: VaultNode; parentPath: string }
+  ): Promise<MultiPdfSearchResult[]> {
     try {
       const pages = await extractPdfText(vaultRoot, item.node.relative_path);
-      const matches = searchInDocPages(pages, q);
+      if (signal?.aborted) return [];
 
-      if (matches.length > 0) {
-        const pageGroups = new Map<number, { count: number; snippet: string }>();
-        for (const m of matches) {
-          if (!pageGroups.has(m.pageNum)) {
-            pageGroups.set(m.pageNum, { count: 1, snippet: m.snippet });
-          } else {
-            pageGroups.get(m.pageNum)!.count++;
-          }
-        }
-
-        for (const [pageNum, { count, snippet }] of pageGroups.entries()) {
-          results.push({
-            node: item.node,
-            parentPath: item.parentPath,
-            pageNum,
-            snippet,
-            matchCount: count,
-          });
-          if (results.length >= maxResults) break;
+      const pageGroups = new Map<number, { count: number; snippet: string }>();
+      for (const match of searchInDocPages(pages, q)) {
+        const existing = pageGroups.get(match.pageNum);
+        if (existing) {
+          existing.count++;
+        } else {
+          pageGroups.set(match.pageNum, { count: 1, snippet: match.snippet });
         }
       }
+
+      return Array.from(pageGroups, ([pageNum, { count, snippet }]) => ({
+        node: item.node,
+        parentPath: item.parentPath,
+        pageNum,
+        snippet,
+        matchCount: count,
+      }));
     } catch {
-      // Ignore individual file read or parse error
+      // A single unreadable document must not prevent results from other modules.
+      return [];
     }
   }
 
-  return results;
+  const results: MultiPdfSearchResult[] = [];
+  for (let start = 0; start < pdfNodes.length && results.length < maxResults; start += PDF_SEARCH_CONCURRENCY) {
+    if (signal?.aborted) return [];
+
+    const batch = pdfNodes.slice(start, start + PDF_SEARCH_CONCURRENCY);
+    const batchResults = await Promise.all(batch.map(searchDocument));
+    for (const documentResults of batchResults) {
+      results.push(...documentResults);
+      if (results.length >= maxResults) break;
+    }
+  }
+
+  return signal?.aborted ? [] : results.slice(0, maxResults);
 }
