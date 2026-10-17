@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, type WheelEvent } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { VaultScanResult, VaultNode } from "./types/vault";
@@ -76,6 +76,7 @@ function App() {
   } | null>(null);
   const [activeViewMode, setActiveViewMode] = useState<"bookshelf" | "tree">("bookshelf");
   const scanRequestRef = useRef(0);
+  const mainContentRef = useRef<HTMLElement>(null);
 
 
   useEffect(() => {
@@ -440,6 +441,17 @@ function App() {
     scanVault(path);
   }
 
+  function handleWorkspaceWheel(event: WheelEvent<HTMLDivElement>) {
+    const mainContent = mainContentRef.current;
+    if (!mainContent || mainContent.contains(event.target as Node)) return;
+
+    const target = event.target;
+    if (target instanceof Element && target.closest(".app-sidebar")) return;
+
+    event.preventDefault();
+    mainContent.scrollBy({ top: event.deltaY, left: event.deltaX });
+  }
+
   return (
     <div className="app-layout">
       {isSettingsOpen && (
@@ -598,7 +610,7 @@ function App() {
       </header>
 
 
-      <div className="app-workspace">
+      <div className="app-workspace" onWheel={handleWorkspaceWheel}>
         {!isSidebarHidden && (
           <aside className="app-sidebar">
             <div className="sidebar-header">
@@ -688,7 +700,10 @@ function App() {
           </aside>
         )}
 
-        <main className={`app-main-content ${isSidebarHidden ? "sidebar-collapsed" : ""}`}>
+        <main
+          ref={mainContentRef}
+          className={`app-main-content ${isSidebarHidden ? "sidebar-collapsed" : ""}`}
+        >
           {error && (
             <div className="error-banner" role="alert">
               <p><strong>Error:</strong> {error}</p>
