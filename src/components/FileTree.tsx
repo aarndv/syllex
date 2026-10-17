@@ -11,6 +11,10 @@ interface FileTreeProps {
   onRenameItem: (relPath: string, isFolder: boolean, currentName: string) => void;
 }
 
+function normalizeRelativePath(path: string): string {
+  return path.replace(/\\/g, "/");
+}
+
 export const FileTree: React.FC<FileTreeProps> = React.memo(({
   nodes,
   activePath,
@@ -55,7 +59,9 @@ const FileTreeNode: React.FC<{
   // Check if active path is inside this folder tree to auto-expand only active lineage
   const containsActive = useMemo(() => {
     if (!activePath) return false;
-    return activePath.startsWith(node.relative_path + "/");
+    return normalizeRelativePath(activePath).startsWith(
+      `${normalizeRelativePath(node.relative_path)}/`
+    );
   }, [activePath, node.relative_path]);
 
   // Start with all subfolders closed by default unless they contain the active file.
@@ -152,7 +158,7 @@ const FileTreeNode: React.FC<{
   }
 
   const badgeStr = getThreeLetterBadge(node.node_type);
-  const isActive = activePath === node.relative_path;
+  const isActive = normalizeRelativePath(activePath || "") === normalizeRelativePath(node.relative_path);
 
   return (
     <li className="tree-item-single">
