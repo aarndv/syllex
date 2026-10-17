@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { VaultNode, VaultNodeType } from "../types/vault";
 import { PlusIcon, CloseIcon, PencilIcon } from "./Icons";
 
@@ -58,10 +58,16 @@ const FileTreeNode: React.FC<{
     return activePath.startsWith(node.relative_path + "/");
   }, [activePath, node.relative_path]);
 
-  // Start with all subfolders closed by default unless it contains active file
+  // Start with all subfolders closed by default unless they contain the active file.
   const [isOpen, setIsOpen] = useState<boolean>(containsActive);
 
   const isFolder = node.node_type === "Folder";
+
+  useEffect(() => {
+    if (containsActive) {
+      setIsOpen(true);
+    }
+  }, [containsActive]);
 
   function getThreeLetterBadge(type: VaultNodeType): string {
     if (typeof type === "object" && "File" in type) {
@@ -78,7 +84,7 @@ const FileTreeNode: React.FC<{
     return (
       <li className="tree-item-group">
         <div
-          className="tree-row folder-row"
+          className={`tree-row folder-row ${containsActive ? "is-active-path" : ""}`}
           onClick={() => setIsOpen((prev) => !prev)}
         >
           <span className="tree-chevron">{isOpen ? "▾" : "▸"}</span>
