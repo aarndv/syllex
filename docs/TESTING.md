@@ -92,3 +92,5 @@ Measure rather than promise fixed targets before representative hardware and doc
 - Cached and uncached presentation-open time
 
 For continuous PDF scrolling, memory should be bounded by pages near the viewport rather than the total number of pages already visited. Test at multiple zoom levels and display scale factors on Fedora/WebKitGTK and Windows 11/WebView2.
+
+Vault indexing must remain read-only and should avoid redundant per-entry filesystem metadata probes. Search validation should cover repeated, cancelled, and rapid query changes: only the latest query may update the interface, and extracted PDF text must remain bounded by the in-memory cache. These behaviors use browser and Rust standard APIs, so they have no platform-specific dependency; verify them on Fedora/WebKitGTK and Windows 11/WebView2 as part of the existing search and large-vault smoke tests.

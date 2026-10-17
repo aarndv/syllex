@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { VaultScanResult, VaultNode } from "./types/vault";
@@ -17,6 +17,7 @@ import { ConfirmDeleteModal, UndoToast } from "./components/ConfirmDeleteModal";
 import { RenameModal } from "./components/RenameModal";
 import { LandingPad } from "./components/LandingPad";
 import { SyllexLogo } from "./components/SyllexLogo";
+import { toUserFacingError } from "./utils/userFacingError";
 import {
   PlusIcon,
   FolderIcon,
@@ -71,9 +72,10 @@ function App() {
     relativePath: string;
     isFolder: boolean;
     name: string;
-    timerId: any;
+    timerId: number;
   } | null>(null);
   const [activeViewMode, setActiveViewMode] = useState<"bookshelf" | "tree">("bookshelf");
+  const scanRequestRef = useRef(0);
 
 
   useEffect(() => {
@@ -86,6 +88,20 @@ function App() {
     window.addEventListener("keydown", handleGlobalKeyDown);
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      scanRequestRef.current++;
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (undoStash) {
+        window.clearTimeout(undoStash.timerId);
+      }
+    };
+  }, [undoStash]);
 
 
   const [settings, setSettings] = useState<AppSettings>(() => {
@@ -150,20 +166,28 @@ function App() {
   }, []);
 
   async function scanVault(path: string) {
+    const requestId = ++scanRequestRef.current;
     setLoading(true);
     setError(null);
     try {
       const res = await invoke<VaultScanResult>("scan_vault", { path });
-      setScanResult(res);
-    } catch (err: any) {
-      setError(typeof err === "string" ? err : err.message || "Failed to scan vault");
-      setScanResult(null);
+      if (requestId === scanRequestRef.current) {
+        setScanResult(res);
+      }
+    } catch (err: unknown) {
+      if (requestId === scanRequestRef.current) {
+        setError(toUserFacingError(err, "scan this vault"));
+        setScanResult(null);
+      }
     } finally {
-      setLoading(false);
+      if (requestId === scanRequestRef.current) {
+        setLoading(false);
+      }
     }
   }
 
   function handleClearVault() {
+    scanRequestRef.current++;
     localStorage.removeItem(VAULT_STORAGE_KEY);
     setVaultPath(null);
     setScanResult(null);
@@ -194,8 +218,8 @@ function App() {
         });
         await scanVault(vaultPath);
       }
-    } catch (err: any) {
-      setError(typeof err === "string" ? err : err.message || "Failed to add module to vault");
+    } catch (err: unknown) {
+      setError(toUserFacingError(err, "add this module"));
     }
   }
 
@@ -210,8 +234,8 @@ function App() {
         relativePath: folderName.trim(),
       });
       await scanVault(vaultPath);
-    } catch (err: any) {
-      setError(typeof err === "string" ? err : err.message || "Failed to create folder");
+    } catch (err: unknown) {
+      setError(toUserFacingError(err, "create this folder"));
     }
   }
 
@@ -240,15 +264,15 @@ function App() {
     setPendingDelete(null);
 
     // Schedule final deletion after 6 seconds
-    const timerId = setTimeout(async () => {
+    const timerId = window.setTimeout(async () => {
       try {
         await invoke("remove_item", {
           vaultRoot: currentVault,
           relativePath,
         });
         await scanVault(currentVault);
-      } catch (err: any) {
-        setError(typeof err === "string" ? err : err.message || "Failed to remove item");
+      } catch (err: unknown) {
+        setError(toUserFacingError(err, "remove this item"));
       } finally {
         setUndoStash(null);
       }
@@ -259,7 +283,7 @@ function App() {
 
   function handleUndoDelete() {
     if (!undoStash) return;
-    clearTimeout(undoStash.timerId);
+    window.clearTimeout(undoStash.timerId);
     setUndoStash(null);
     if (vaultPath) {
       scanVault(vaultPath);
@@ -268,13 +292,13 @@ function App() {
 
   function handleDismissUndoToast() {
     if (!undoStash || !vaultPath) return;
-    clearTimeout(undoStash.timerId);
+    window.clearTimeout(undoStash.timerId);
     const { relativePath } = undoStash;
     const currentVault = vaultPath;
     setUndoStash(null);
     invoke("remove_item", { vaultRoot: currentVault, relativePath })
       .then(() => scanVault(currentVault))
-      .catch((err: any) => setError(typeof err === "string" ? err : err.message || "Failed to remove item"));
+      .catch((err: unknown) => setError(toUserFacingError(err, "remove this item")));
   }
 
   function handleRenameItem(relativePath: string, isFolder: boolean, currentName: string) {
@@ -666,8 +690,17 @@ function App() {
 
         <main className={`app-main-content ${isSidebarHidden ? "sidebar-collapsed" : ""}`}>
           {error && (
-            <div className="error-banner">
+            <div className="error-banner" role="alert">
               <p><strong>Error:</strong> {error}</p>
+              <button
+                type="button"
+                className="error-dismiss-btn"
+                onClick={() => setError(null)}
+                aria-label="Dismiss error"
+                title="Dismiss error"
+              >
+                <CloseIcon size={14} />
+              </button>
             </div>
           )}
 
@@ -685,7 +718,8 @@ function App() {
           )}
 
           {loading && (
-            <div className="loading-state">
+            <div className="loading-state" role="status" aria-live="polite">
+              <span className="loading-spinner" aria-hidden="true" />
               <p>Scanning vault directory tree...</p>
             </div>
           )}

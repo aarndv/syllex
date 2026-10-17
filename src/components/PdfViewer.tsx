@@ -21,6 +21,7 @@ import {
   PdfSearchMatch,
 } from "../utils/pdfSearch";
 import { PdfJsViewer } from "./PdfJsViewer";
+import { toUserFacingError } from "../utils/userFacingError";
 import "./PdfViewer.css";
 
 interface PdfViewerProps {
@@ -118,7 +119,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const [currentMatchIdx, setCurrentMatchIdx] = useState<number>(0);
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
-  const toastTimerRef = useRef<any>(null);
+  const toastTimerRef = useRef<number | null>(null);
 
   const storageKey = `syllex_progress_${node.relative_path}`;
 
@@ -126,9 +127,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     const label = VIEW_MODE_LABELS[mode] || mode;
     setFilterToast(label);
     if (toastTimerRef.current) {
-      clearTimeout(toastTimerRef.current);
+      window.clearTimeout(toastTimerRef.current);
     }
-    toastTimerRef.current = setTimeout(() => {
+    toastTimerRef.current = window.setTimeout(() => {
       setFilterToast(null);
     }, 1800);
   }
@@ -149,6 +150,14 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       return nextMode;
     });
   }
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        window.clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -221,13 +230,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               if (isMounted) setIsExtractingText(false);
             });
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (isMounted) {
-          setError(
-            typeof err === "string"
-              ? err
-              : err.message || "Failed to parse or convert presentation file"
-          );
+          setError(toUserFacingError(err, "open this document"));
           setLoading(false);
         }
       }
