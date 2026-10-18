@@ -1241,6 +1241,18 @@ body {
   font-weight: 700;
 }
 
+.tree-row.folder-row.is-active-path {
+  background-color: rgba(217, 119, 6, 0.1);
+}
+
+html[data-theme="dark"] .tree-row.folder-row.is-active-path {
+  background-color: rgba(217, 119, 6, 0.12);
+}
+
+html[data-theme="light"] .tree-row.folder-row.is-active-path {
+  background-color: #f5efe4;
+}
+
 .primary-btn {
   background-color: #1a452d;
   color: #ffffff;

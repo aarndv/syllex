@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { VaultNode, VaultNodeType } from "../types/vault";
 import { PlusIcon, CloseIcon, PencilIcon } from "./Icons";
 
@@ -9,6 +9,10 @@ interface FileTreeProps {
   onAddFile: (targetFolderRelPath?: string) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
   onRenameItem: (relPath: string, isFolder: boolean, currentName: string) => void;
+}
+
+function normalizeRelativePath(path: string): string {
+  return path.replace(/\\/g, "/");
 }
 
 export const FileTree: React.FC<FileTreeProps> = React.memo(({
@@ -55,13 +59,21 @@ const FileTreeNode: React.FC<{
   // Check if active path is inside this folder tree to auto-expand only active lineage
   const containsActive = useMemo(() => {
     if (!activePath) return false;
-    return activePath.startsWith(node.relative_path + "/");
+    return normalizeRelativePath(activePath).startsWith(
+      `${normalizeRelativePath(node.relative_path)}/`
+    );
   }, [activePath, node.relative_path]);
 
-  // Start with all subfolders closed by default unless it contains active file
+  // Start with all subfolders closed by default unless they contain the active file.
   const [isOpen, setIsOpen] = useState<boolean>(containsActive);
 
   const isFolder = node.node_type === "Folder";
+
+  useEffect(() => {
+    if (containsActive) {
+      setIsOpen(true);
+    }
+  }, [containsActive]);
 
   function getThreeLetterBadge(type: VaultNodeType): string {
     if (typeof type === "object" && "File" in type) {
@@ -78,7 +90,7 @@ const FileTreeNode: React.FC<{
     return (
       <li className="tree-item-group">
         <div
-          className="tree-row folder-row"
+          className={`tree-row folder-row ${containsActive ? "is-active-path" : ""}`}
           onClick={() => setIsOpen((prev) => !prev)}
         >
           <span className="tree-chevron">{isOpen ? "▾" : "▸"}</span>
@@ -146,7 +158,7 @@ const FileTreeNode: React.FC<{
   }
 
   const badgeStr = getThreeLetterBadge(node.node_type);
-  const isActive = activePath === node.relative_path;
+  const isActive = normalizeRelativePath(activePath || "") === normalizeRelativePath(node.relative_path);
 
   return (
     <li className="tree-item-single">
