@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { VaultNode, VaultNodeType } from "../types/vault";
 import { FolderIcon, FileIcon, PlusIcon, CloseIcon, BookIcon, PencilIcon } from "./Icons";
 import { getModuleCoverThumbnail } from "../utils/pdfThumbnail";
@@ -402,6 +403,23 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
   const ext = getFileExt(node.node_type);
   const savedPage = localStorage.getItem(`syllex_progress_${node.relative_path}`);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ left: 0, top: 0 });
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+
+  function updateTooltipPosition(event: React.MouseEvent<HTMLDivElement>) {
+    const edgePadding = 8;
+    const tooltipWidth = 260;
+    const tooltipHeight = 112;
+    const left = Math.min(
+      Math.max(edgePadding, event.clientX + 14),
+      Math.max(edgePadding, window.innerWidth - tooltipWidth - edgePadding),
+    );
+    const top = Math.min(
+      Math.max(edgePadding, event.clientY + 14),
+      Math.max(edgePadding, window.innerHeight - tooltipHeight - edgePadding),
+    );
+    setTooltipPosition({ left, top });
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -432,7 +450,12 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
       className={`book-spine-card variant-${colorVariant} ${coverUrl ? "has-cover-snapshot" : ""}`}
       style={{ "--folder-hover-color": folderColor || "#059669" } as React.CSSProperties}
       onClick={() => onSelectFile(node)}
-      title={`Open ${node.name}`}
+      onMouseEnter={(event) => {
+        updateTooltipPosition(event);
+        setIsTooltipVisible(true);
+      }}
+      onMouseMove={updateTooltipPosition}
+      onMouseLeave={() => setIsTooltipVisible(false)}
     >
       <div className="book-spine-ridge-left" />
 
@@ -493,6 +516,20 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
         <span className="binding-line" />
         <span className="binding-line" />
       </div>
+
+      {isTooltipVisible && (
+        createPortal(
+          <div
+            className="book-metadata-tooltip"
+            role="tooltip"
+            style={{ left: tooltipPosition.left, top: tooltipPosition.top }}
+          >
+            <strong className="book-metadata-tooltip-title">{node.name}</strong>
+            <span>{ext}{savedPage ? ` · Page ${savedPage}` : " · Unread"}</span>
+          </div>,
+          document.body,
+        )
+      )}
     </div>
   );
 };

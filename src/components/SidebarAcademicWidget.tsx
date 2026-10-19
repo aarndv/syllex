@@ -174,11 +174,20 @@ export const SidebarAcademicWidget: React.FC<SidebarAcademicWidgetProps> = ({ on
             <span className="tracker-name">Year Progress</span>
             <span className="tracker-value">{yearPercent}%</span>
           </div>
-          <div className="tracker-progress-bg">
+          <div className="tracker-progress-bg year-progress">
             <div
               className="tracker-progress-fill year"
               style={{ width: `${yearPercent}%` }}
             />
+            <div className="year-progress-ticks" aria-hidden="true">
+              {Array.from({ length: 11 }, (_, index) => (
+                <span
+                  key={index}
+                  className="year-progress-tick"
+                  style={{ left: `${((index + 1) / 12) * 100}%` }}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>

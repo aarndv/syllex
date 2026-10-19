@@ -172,6 +172,24 @@
   background-color: #0284c7;
 }
 
+.tracker-progress-bg.year-progress {
+  position: relative;
+}
+
+.year-progress-ticks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.year-progress-tick {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.85);
+}
+
 /* Light Theme Botanical Parchment Blueprint Overrides */
 html[data-theme="light"] .sidebar-clock-header {
   background-color: #e4ddd0;
@@ -234,5 +252,9 @@ html[data-theme="light"] .tracker-value.bold {
 html[data-theme="light"] .tracker-progress-bg {
   background-color: #e4ddd0;
   border-color: #143222;
+}
+
+html[data-theme="light"] .year-progress-tick {
+  background-color: rgba(20, 50, 34, 0.7);
 }
 

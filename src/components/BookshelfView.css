@@ -157,6 +157,8 @@
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.3);
   padding: 0.35rem 0.75rem;
+  height: 2.1rem;
+  box-sizing: border-box;
   border-radius: 4px;
   font-size: 0.8rem;
   font-weight: 500;
@@ -189,6 +191,9 @@
 .shelf-mini-btn.pencil-btn {
   opacity: 0.65;
   transition: opacity 0.2s ease, background-color 0.2s ease;
+  width: 2.1rem;
+  justify-content: center;
+  padding: 0;
 }
 
 .shelf-header-blueprint:hover .shelf-mini-btn.pencil-btn {
@@ -397,6 +402,40 @@
   border-color: var(--folder-hover-color, #059669);
   box-shadow: -6px 12px 20px rgba(0, 0, 0, 0.4), 0 0 16px var(--folder-hover-color, rgba(5, 150, 105, 0.4));
   z-index: 10;
+}
+
+.book-metadata-tooltip {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: max-content;
+  max-width: min(260px, calc(100vw - 16px));
+  max-height: min(112px, calc(100vh - 16px));
+  box-sizing: border-box;
+  padding: 0.55rem 0.7rem;
+  color: #ffffff;
+  background: #0d2217;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 5px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.book-metadata-tooltip-title {
+  font-size: 0.8rem;
+}
+
+html[data-theme="light"] .book-metadata-tooltip {
+  color: #143222;
+  background: #fbf9f4;
+  border-color: #143222;
+  box-shadow: 0 8px 24px rgba(20, 50, 34, 0.2);
 }
 
 /* Subtle Color Variations on Dark Green Palette */
