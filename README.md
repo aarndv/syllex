@@ -33,17 +33,14 @@ Active MVP implementation. The Tauri application includes vault selection and sc
 
 | Document | Purpose |
 | --- | --- |
-| [AGENTS.md](AGENTS.md) | Binding instructions for coding agents |
 | [docs/PRODUCT.md](docs/PRODUCT.md) | Requirements, scope, and non-goals |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Technical boundaries and system structure |
 | [docs/DESIGN.md](docs/DESIGN.md) | Visual theme, UX principles, and handoff guidelines |
 | [docs/DATA_MODEL.md](docs/DATA_MODEL.md) | Initial SQLite entities and ownership rules |
 | [docs/FILE_FORMATS.md](docs/FILE_FORMATS.md) | Supported modules and flashcard import format |
-| [docs/SECURITY.md](docs/SECURITY.md) | Filesystem, subprocess, and privacy requirements |
 | [docs/TESTING.md](docs/TESTING.md) | Test strategy and platform matrix |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Ordered delivery milestones |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Architecture decision log |
-| [docs/AI_WORKFLOW.md](docs/AI_WORKFLOW.md) | How to assign and verify AI-assisted work |
 
 ## Development platforms
 
