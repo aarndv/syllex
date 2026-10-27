@@ -1,3 +1,4 @@
+pub mod highlights;
 pub mod ppt_converter;
 pub mod vault;
 
@@ -32,11 +33,54 @@ fn remove_item(vault_root: String, relative_path: String) -> Result<(), String> 
 
 #[tauri::command]
 fn rename_item(
+    app: tauri::AppHandle,
     vault_root: String,
     relative_path: String,
     new_name: String,
 ) -> Result<String, String> {
-    vault::rename_item(vault_root, &relative_path, &new_name)
+    let old_path = std::path::Path::new(&vault_root)
+        .join(&relative_path)
+        .canonicalize()
+        .ok();
+    let new_relative_path = vault::rename_item(&vault_root, &relative_path, &new_name)?;
+    if let Some(old_path) = old_path {
+        let new_path = std::path::Path::new(&vault_root)
+            .join(&new_relative_path)
+            .canonicalize()
+            .map_err(|_| "Renamed item could not be resolved".to_string())?;
+        highlights::move_document(&app, &old_path, &new_path)
+            .map_err(|_| "Item was renamed, but its highlights could not be moved".to_string())?;
+    }
+    Ok(new_relative_path)
+}
+
+#[tauri::command]
+fn list_highlights(
+    app: tauri::AppHandle,
+    vault_root: String,
+    relative_path: String,
+) -> Result<Vec<highlights::Highlight>, String> {
+    highlights::list(&app, &vault_root, &relative_path)
+}
+
+#[tauri::command]
+fn save_highlight(
+    app: tauri::AppHandle,
+    vault_root: String,
+    relative_path: String,
+    highlight: highlights::Highlight,
+) -> Result<(), String> {
+    highlights::insert(&app, &vault_root, &relative_path, highlight)
+}
+
+#[tauri::command]
+fn delete_highlight(
+    app: tauri::AppHandle,
+    vault_root: String,
+    relative_path: String,
+    id: String,
+) -> Result<(), String> {
+    highlights::delete(&app, &vault_root, &relative_path, &id)
 }
 
 #[tauri::command]
@@ -75,6 +119,9 @@ pub fn run() {
             create_folder,
             remove_item,
             rename_item,
+            list_highlights,
+            save_highlight,
+            delete_highlight,
             create_vault,
             list_subvaults,
             check_libreoffice_installed,

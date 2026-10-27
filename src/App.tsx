@@ -476,6 +476,8 @@ function App() {
 
       {activeNode && vaultPath && scanResult && (
         <PdfViewer
+          settings={settings}
+          onUpdateSettings={setSettings}
           vaultRoot={vaultPath}
           node={activeNode}
           allNodes={scanResult.root_nodes}

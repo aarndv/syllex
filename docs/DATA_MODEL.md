@@ -58,6 +58,19 @@ Prefer paths relative to the vault when referencing module files.
 
 Bookmarks are post-MVP unless reprioritized.
 
+### highlights (issue #10)
+
+Stored in a versioned `highlights.sqlite3` database under platform application data.
+
+- `id` — unique highlight action
+- `document_path` — canonical path of the validated module (updated on in-app rename)
+- `page_number`
+- `color` — one of the supported palette values
+- `rects_json` — one or more normalized page rectangles; wrapped text remains one action
+- `created_at`
+
+This metadata contains no PDF bytes or selected text. The first migration uses SQLite `user_version = 1`. Generated thumbnails are disposable viewer renderings and are never stored in this table.
+
 ### flashcard_decks
 
 - `id`
@@ -105,6 +118,8 @@ Cached files are disposable even when their metadata is recorded.
 - `updated_at`
 
 Settings keys and value formats must be documented before use.
+
+The current webview settings object includes `pageSidebarVisible` (boolean), `pageSidebarDock` (`left` or `right`), `pageSidebarWidth` (180–360 pixels), and `thumbnailScale` (0.75–1.5). These viewer preferences follow the existing settings object until the planned SQLite settings migration.
 
 ## Migration rules
 

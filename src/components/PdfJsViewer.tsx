@@ -7,6 +7,7 @@ import {
 } from "pdfjs-dist/web/pdf_viewer.mjs";
 import "pdfjs-dist/web/pdf_viewer.css";
 import { pdfjsLib } from "../utils/pdfInit";
+import type { Highlight, HighlightColor, HighlightFocus, HighlightRect } from "../types/highlight";
 import type { DocumentViewMode } from "./PdfViewer";
 
 interface PdfJsViewerProps {
@@ -16,10 +17,32 @@ interface PdfJsViewerProps {
   continuous: boolean;
   viewMode: DocumentViewMode;
   onPageChange: (pageNumber: number) => void;
+  highlights: Highlight[];
+  highlightEnabled: boolean;
+  highlightColor: HighlightColor;
+  onCreateHighlight: (pageNumber: number, rects: HighlightRect[]) => void;
+  focusHighlight: HighlightFocus | null;
+  sidebarVisible: boolean;
+  sidebarWidth: number;
+  sidebarDock: "left" | "right";
 }
 
 interface PageChangingEvent {
   pageNumber: number;
+}
+
+function clippedRect(rect: DOMRect | HighlightRect, page: DOMRect): HighlightRect | null {
+  const left = Math.max(page.left, "left" in rect ? rect.left : page.left + rect.x * page.width);
+  const top = Math.max(page.top, "top" in rect ? rect.top : page.top + rect.y * page.height);
+  const right = Math.min(page.right, "right" in rect ? rect.right : left + rect.width);
+  const bottom = Math.min(page.bottom, "bottom" in rect ? rect.bottom : top + rect.height);
+  if (right - left < 2 || bottom - top < 2) return null;
+  return {
+    x: (left - page.left) / page.width,
+    y: (top - page.top) / page.height,
+    width: (right - left) / page.width,
+    height: (bottom - top) / page.height,
+  };
 }
 
 /**
@@ -33,6 +56,14 @@ export function PdfJsViewer({
   continuous,
   viewMode,
   onPageChange,
+  highlights,
+  highlightEnabled,
+  highlightColor,
+  onCreateHighlight,
+  focusHighlight,
+  sidebarVisible,
+  sidebarWidth,
+  sidebarDock,
 }: PdfJsViewerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const viewerElementRef = useRef<HTMLDivElement | null>(null);
@@ -40,10 +71,51 @@ export function PdfJsViewer({
   const currentPageRef = useRef(currentPage);
   const zoomRef = useRef(zoom);
   const onPageChangeRef = useRef(onPageChange);
+  const highlightsRef = useRef(highlights);
+  const createHighlightRef = useRef(onCreateHighlight);
+  const highlightEnabledRef = useRef(highlightEnabled);
+  const highlightColorRef = useRef(highlightColor);
+  const focusHighlightRef = useRef(focusHighlight);
 
   currentPageRef.current = currentPage;
   zoomRef.current = zoom;
   onPageChangeRef.current = onPageChange;
+  highlightsRef.current = highlights;
+  createHighlightRef.current = onCreateHighlight;
+  highlightEnabledRef.current = highlightEnabled;
+  highlightColorRef.current = highlightColor;
+  focusHighlightRef.current = focusHighlight;
+
+  const renderOverlays = () => {
+    const element = viewerElementRef.current;
+    if (!element) return;
+    for (const page of element.querySelectorAll<HTMLElement>(".page[data-page-number]")) {
+      let layer = page.querySelector<HTMLElement>(".syllex-highlight-layer");
+      if (!layer) {
+        layer = document.createElement("div");
+        layer.className = "syllex-highlight-layer";
+        page.appendChild(layer);
+      }
+      const pageNumber = Number(page.dataset.pageNumber);
+      const fragments = highlightsRef.current
+        .filter((item) => item.page_number === pageNumber)
+        .flatMap((item) => item.rects.map((rect) => {
+          const mark = document.createElement("span");
+          mark.className = `syllex-highlight color-${item.color}${focusHighlightRef.current?.id === item.id ? " focused" : ""}`;
+          mark.dataset.highlightId = item.id;
+          mark.style.left = `${rect.x * 100}%`;
+          mark.style.top = `${rect.y * 100}%`;
+          mark.style.width = `${rect.width * 100}%`;
+          mark.style.height = `${rect.height * 100}%`;
+          return mark;
+        }));
+      layer.replaceChildren(...fragments);
+    }
+  };
+
+  useEffect(() => {
+    renderOverlays();
+  }, [highlights, focusHighlight]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -75,16 +147,28 @@ export function PdfJsViewer({
     };
     const handlePageChanging = ({ pageNumber }: PageChangingEvent) => {
       onPageChangeRef.current(pageNumber);
+      requestAnimationFrame(renderOverlays);
     };
+    const handlePageRendered = () => renderOverlays();
+    const observer = new MutationObserver((records) => {
+      if (records.some((record) =>
+        [...record.addedNodes].some((node) => node instanceof Element && (node.matches(".page") || !!node.querySelector(".page")))
+        || [...record.removedNodes].some((node) => node instanceof Element && (node.matches(".page, .syllex-highlight-layer") || !!node.querySelector(".page")))
+      )) renderOverlays();
+    });
+    observer.observe(viewerElement, { childList: true, subtree: true });
 
     eventBus.on("pagesinit", handlePagesInit);
     eventBus.on("pagechanging", handlePageChanging);
+    eventBus.on("pagerendered", handlePageRendered);
     viewer.setDocument(pdfDoc);
     linkService.setDocument(pdfDoc);
 
     return () => {
       eventBus.off("pagesinit", handlePagesInit);
       eventBus.off("pagechanging", handlePageChanging);
+      eventBus.off("pagerendered", handlePageRendered);
+      observer.disconnect();
       viewer.cleanup();
       viewer.setDocument(null as unknown as pdfjsLib.PDFDocumentProxy);
       linkService.setDocument(null);
@@ -112,8 +196,109 @@ export function PdfJsViewer({
     }
   }, [currentPage, pdfDoc.numPages]);
 
+  useEffect(() => {
+    if (!focusHighlight) return;
+    const viewer = viewerRef.current;
+    if (!viewer?.pdfDocument) return;
+    viewer.currentPageNumber = focusHighlight.pageNumber;
+    viewer.scrollPageIntoView({ pageNumber: focusHighlight.pageNumber });
+    let frame = 0;
+    let attempts = 0;
+    const focus = () => {
+      renderOverlays();
+      const target = [...(viewerElementRef.current?.querySelectorAll<HTMLElement>(".syllex-highlight") || [])]
+        .find((element) => element.dataset.highlightId === focusHighlight.id);
+      if (target) {
+        target.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+      } else if (++attempts < 60) {
+        frame = requestAnimationFrame(focus);
+      }
+    };
+    frame = requestAnimationFrame(focus);
+    return () => cancelAnimationFrame(frame);
+  }, [focusHighlight]);
+
+  useEffect(() => {
+    const element = viewerElementRef.current;
+    if (!element) return;
+    let drag: { page: HTMLElement; pageNumber: number; startX: number; startY: number; pointerId: number; textStart: boolean } | null = null;
+    let draft: HTMLElement | null = null;
+
+    const onDown = (event: PointerEvent) => {
+      if (!highlightEnabledRef.current || event.button !== 0 || !(event.target instanceof Element)) return;
+      const page = event.target.closest<HTMLElement>(".page[data-page-number]");
+      if (!page || !element.contains(page)) return;
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      drag = { page, pageNumber: Number(page.dataset.pageNumber), startX: event.clientX, startY: event.clientY,
+        pointerId: event.pointerId, textStart: !!event.target.closest(".textLayer") };
+      if (!drag.textStart) event.preventDefault();
+    };
+    const onMove = (event: PointerEvent) => {
+      if (!drag || drag.pointerId !== event.pointerId || drag.textStart) return;
+      const pageRect = drag.page.getBoundingClientRect();
+      const box = clippedRect(new DOMRect(Math.min(drag.startX, event.clientX), Math.min(drag.startY, event.clientY),
+        Math.abs(event.clientX - drag.startX), Math.abs(event.clientY - drag.startY)), pageRect);
+      if (!draft) {
+        draft = document.createElement("span");
+        draft.className = `syllex-highlight-draft color-${highlightColorRef.current}`;
+        drag.page.querySelector(".syllex-highlight-layer")?.appendChild(draft);
+      }
+      if (draft && box) {
+        draft.style.left = `${box.x * 100}%`;
+        draft.style.top = `${box.y * 100}%`;
+        draft.style.width = `${box.width * 100}%`;
+        draft.style.height = `${box.height * 100}%`;
+      }
+    };
+    const onUp = (event: PointerEvent) => {
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      const { page, pageNumber, startX, startY, textStart } = drag;
+      drag = null;
+      draft?.remove();
+      draft = null;
+      const pageRect = page.getBoundingClientRect();
+      const selection = window.getSelection();
+      let rects: HighlightRect[] = [];
+      if (textStart && selection && !selection.isCollapsed && selection.rangeCount > 0 && page.contains(selection.anchorNode)) {
+        rects = [...selection.getRangeAt(0).getClientRects()]
+          .map((rect) => clippedRect(rect, pageRect))
+          .filter((rect): rect is HighlightRect => rect !== null)
+          .slice(0, 128);
+      }
+      if (rects.length === 0) {
+        const box = clippedRect(new DOMRect(Math.min(startX, event.clientX), Math.min(startY, event.clientY),
+          Math.abs(event.clientX - startX), Math.abs(event.clientY - startY)), pageRect);
+        if (box) rects = [box];
+      }
+      selection?.removeAllRanges();
+      if (rects.length) createHighlightRef.current(pageNumber, rects);
+    };
+    const onCancel = () => { drag = null; draft?.remove(); draft = null; };
+    const onClick = (event: MouseEvent) => {
+      if (highlightEnabledRef.current && event.target instanceof Element && event.target.closest(".page")) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    element.addEventListener("pointerdown", onDown, true);
+    element.addEventListener("click", onClick, true);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
+    return () => {
+      element.removeEventListener("pointerdown", onDown, true);
+      element.removeEventListener("click", onClick, true);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
+      onCancel();
+    };
+  }, []);
+
   return (
-    <div className={`pdfjs-viewer-shell mode-${viewMode}`}>
+    <div className={`pdfjs-viewer-shell mode-${viewMode} ${highlightEnabled ? "highlight-tool-active" : ""}`}
+      style={sidebarVisible ? { [sidebarDock]: `${sidebarWidth}px` } : undefined}>
       <div ref={containerRef} className="pdfjs-viewer-container">
         <div ref={viewerElementRef} className="pdfViewer" />
       </div>

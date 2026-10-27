@@ -55,8 +55,14 @@ Run on Fedora KDE and Windows 11 for:
 - The generated PDF from a representative PPT/PPTX in both Syllex and an external viewer
 - Viewer sidebar in both themes: compact file icons and names, folder rows without selection tint, and accessible ellipsis actions
 - Collapse each ancestor of the open PDF and confirm the Current file link remains visible; selecting another file should reveal its tree path
+- Issue #10: in both single-page and continuous modes, drag across wrapped text and non-text regions, then switch every reading filter and verify that highlights remain legible and correctly positioned after zoom and navigation
+- Issue #10: dock page previews on each side, change width and thumbnail scale, close and reopen the document, and verify that one tape per highlight remains and each tape focuses the corresponding region
+- Issue #10: add more than ten highlights to one page, verify the later tapes layer behind the first column without expanding the row, and use keyboard focus to reach every tape
+- Issue #10: rename a highlighted module or containing folder and verify that its highlights follow the renamed path; repeat on Fedora/WebKitGTK and Windows 11/WebView2
 
 The viewer sidebar change is React/CSS only and uses the same behavior on Fedora/WebKitGTK and Windows/WebView2. Validate menu positioning, keyboard focus, and the sticky Current file link on both targets during the PDF smoke test.
+
+Issue #10 adds a bundled SQLite dependency and platform application-data database. Rust migration/path tests cover the native boundary; visual highlighting, thumbnail rendering, focus navigation, and filter contrast still need manual validation in both webviews.
 
 ## Required fixtures
 

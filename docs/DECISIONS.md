@@ -182,5 +182,21 @@ Record decisions that are expensive to reverse or affect multiple parts of the a
 
 **Consequences:** The application initializes with `hasEntered = false` displaying `<LandingPad />`. The landing card maintains a decluttered, calm layout focusing purely on the emblem, title/tagline, vault readiness status, and single-click/keyboard entry without extraneous timestamps or visual ornamentation. Users enter via the "Enter Syllex" button or keyboard shortcut, and can return to the landing pad at any time via the application header logo.
 
+## D-017 — Local PDF highlight metadata for issue #10
+
+**Status:** Accepted
+
+**Decision:** Deliver the page-preview and highlighting work requested in issue #10 ahead of the later annotation roadmap item. Store highlight geometry, color, and document identity in a versioned SQLite database under the platform application-data directory. Render highlights as viewer overlays; never embed them in the source PDF or converted presentation.
+
+**Reason:** The owner requested issue #10 and confirmed that highlights must survive reopening a document. Application-created study data already belongs in local application data under D-002 and D-003.
+
+**Alternatives:** Session-only highlights would disappear after closing the viewer. Webview localStorage would extend an existing implementation shortcut but would not follow the documented SQLite ownership rule. PDF annotation writes would change original modules and violate D-003.
+
+**Cross-platform impact:** The bundled SQLite library and Tauri application-data path must work on Fedora and Windows 11. The same normalized page geometry is rendered by PDF.js in both webviews.
+
+**Security impact:** Rust validates the selected vault boundary and document path before database operations. The database stores no document bytes or selected text and makes no network requests.
+
+**Consequences:** A versioned migration and native commands are required. Highlights are associated with a canonical module path, so rename handling must migrate that identity. Thumbnails remain disposable viewer renderings, not database content.
+
 
 

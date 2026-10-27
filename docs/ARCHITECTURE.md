@@ -43,6 +43,7 @@ Application cache -> PDF.js viewer
 ### SQLite
 
 Stores application-created metadata only. It does not store full module files.
+Issue #10 highlights use a versioned database in platform application data. Rust validates module paths and owns highlight reads and writes; React/PDF.js owns overlay geometry and page-preview rendering.
 
 ### Application cache
 

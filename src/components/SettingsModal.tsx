@@ -13,6 +13,10 @@ export interface AppSettings {
   fontSize: FontSizeSetting;
   timeZone: string;
   defaultReadingFilter: string;
+  pageSidebarVisible: boolean;
+  pageSidebarDock: "left" | "right";
+  pageSidebarWidth: number;
+  thumbnailScale: number;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -21,6 +25,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   fontSize: "medium",
   timeZone: "system",
   defaultReadingFilter: "original",
+  pageSidebarVisible: true,
+  pageSidebarDock: "left",
+  pageSidebarWidth: 220,
+  thumbnailScale: 1,
 };
 
 interface SettingsModalProps {
@@ -315,6 +323,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </option>
               ))}
             </select>
+          </section>
+
+          <section className="settings-section">
+            <label className="setting-label">Page Preview Sidebar</label>
+            <div className="setting-options-grid">
+              <button type="button" className={`option-card ${localSettings.pageSidebarVisible ? "selected" : ""}`}
+                onClick={() => handleChange("pageSidebarVisible", !localSettings.pageSidebarVisible)}>
+                <span>{localSettings.pageSidebarVisible ? "Shown" : "Hidden"}</span>
+                {localSettings.pageSidebarVisible && <CheckIcon size={14} />}
+              </button>
+              <button type="button" className={`option-card ${localSettings.pageSidebarDock === "left" ? "selected" : ""}`}
+                onClick={() => handleChange("pageSidebarDock", "left")}>Dock Left</button>
+              <button type="button" className={`option-card ${localSettings.pageSidebarDock === "right" ? "selected" : ""}`}
+                onClick={() => handleChange("pageSidebarDock", "right")}>Dock Right</button>
+            </div>
+            <div className="setting-slider-row">
+              <label htmlFor="setting-preview-width">Sidebar width: {localSettings.pageSidebarWidth}px</label>
+              <input id="setting-preview-width" type="range" min="180" max="360" step="10"
+                value={localSettings.pageSidebarWidth}
+                onChange={(e) => handleChange("pageSidebarWidth", Number(e.target.value))} />
+            </div>
+            <div className="setting-slider-row">
+              <label htmlFor="setting-thumbnail-scale">Thumbnail scale: {Math.round(localSettings.thumbnailScale * 100)}%</label>
+              <input id="setting-thumbnail-scale" type="range" min="0.75" max="1.5" step="0.05"
+                value={localSettings.thumbnailScale}
+                onChange={(e) => handleChange("thumbnailScale", Number(e.target.value))} />
+            </div>
           </section>
 
           {/* Default Storage Directory Section */}

@@ -21,10 +21,15 @@ import {
   PdfSearchMatch,
 } from "../utils/pdfSearch";
 import { PdfJsViewer } from "./PdfJsViewer";
+import { PdfPageSidebar } from "./PdfPageSidebar";
+import type { AppSettings } from "./SettingsModal";
+import type { Highlight, HighlightColor, HighlightFocus, HighlightRect } from "../types/highlight";
 import { toUserFacingError } from "../utils/userFacingError";
 import "./PdfViewer.css";
 
 interface PdfViewerProps {
+  settings: AppSettings;
+  onUpdateSettings: (settings: AppSettings) => void;
   vaultRoot: string;
   node: VaultNode;
   allNodes: VaultNode[];
@@ -73,6 +78,8 @@ const MAX_DRAWER_WIDTH = 750;
 const DRAWER_WIDTH_STORAGE_KEY = "syllex_pdf_drawer_width";
 
 export const PdfViewer: React.FC<PdfViewerProps> = ({
+  settings,
+  onUpdateSettings,
   vaultRoot,
   node,
   allNodes,
@@ -110,6 +117,12 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const [loadingMessage, setLoadingMessage] = useState<string>("Loading document...");
   const [error, setError] = useState<string | null>(null);
   const [filterToast, setFilterToast] = useState<string | null>(null);
+  const [highlights, setHighlights] = useState<Highlight[]>([]);
+  const [highlightEnabled, setHighlightEnabled] = useState(false);
+  const [highlightColor, setHighlightColor] = useState<HighlightColor>("gold");
+  const [highlightError, setHighlightError] = useState<string | null>(null);
+  const [selectedHighlightId, setSelectedHighlightId] = useState<string | null>(null);
+  const [focusHighlight, setFocusHighlight] = useState<HighlightFocus | null>(null);
 
   // In-PDF Text Search state
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(!!initialSearchQuery);
@@ -120,8 +133,57 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const toastTimerRef = useRef<number | null>(null);
+  const documentKeyRef = useRef(`${vaultRoot}\0${node.relative_path}`);
+  documentKeyRef.current = `${vaultRoot}\0${node.relative_path}`;
 
   const storageKey = `syllex_progress_${node.relative_path}`;
+
+  useEffect(() => {
+    let active = true;
+    setHighlights([]);
+    setSelectedHighlightId(null);
+    setFocusHighlight(null);
+    setHighlightError(null);
+    invoke<Highlight[]>("list_highlights", { vaultRoot, relativePath: node.relative_path })
+      .then((items) => {
+        if (active) setHighlights((current) => [
+          ...items,
+          ...current.filter((item) => !items.some((loaded) => loaded.id === item.id)),
+        ]);
+      })
+      .catch((error: unknown) => { if (active) setHighlightError(toUserFacingError(error, "load highlights")); });
+    return () => { active = false; };
+  }, [vaultRoot, node.relative_path]);
+
+  async function handleCreateHighlight(pageNumber: number, rects: HighlightRect[]) {
+    const documentKey = documentKeyRef.current;
+    const highlight: Highlight = { id: crypto.randomUUID(), page_number: pageNumber, color: highlightColor, rects };
+    try {
+      await invoke("save_highlight", { vaultRoot, relativePath: node.relative_path, highlight });
+      if (documentKeyRef.current === documentKey) {
+        setHighlights((current) => [...current, highlight]);
+        setHighlightError(null);
+      }
+    } catch (error) {
+      if (documentKeyRef.current === documentKey) setHighlightError(toUserFacingError(error, "save this highlight"));
+    }
+  }
+
+  async function handleDeleteSelectedHighlight() {
+    if (!selectedHighlightId) return;
+    const documentKey = documentKeyRef.current;
+    try {
+      await invoke("delete_highlight", { vaultRoot, relativePath: node.relative_path, id: selectedHighlightId });
+      if (documentKeyRef.current === documentKey) {
+        setHighlights((current) => current.filter((item) => item.id !== selectedHighlightId));
+        setSelectedHighlightId(null);
+        setFocusHighlight(null);
+        setHighlightError(null);
+      }
+    } catch (error) {
+      if (documentKeyRef.current === documentKey) setHighlightError(toUserFacingError(error, "remove this highlight"));
+    }
+  }
 
   function triggerFilterToast(mode: DocumentViewMode) {
     const label = VIEW_MODE_LABELS[mode] || mode;
@@ -341,6 +403,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         return;
       }
 
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement) return;
+
       if (e.key === "ArrowLeft") {
         handlePrevPage();
       } else if (e.key === "ArrowRight") {
@@ -351,6 +415,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         handleZoomOut();
       } else if (e.key.toLowerCase() === "d") {
         cycleViewMode();
+      } else if (e.key.toLowerCase() === "t") {
+        onUpdateSettings({ ...settings, pageSidebarVisible: !settings.pageSidebarVisible });
       } else if (e.key === "Escape") {
         if (isSearchOpen) {
           setIsSearchOpen(false);
@@ -364,7 +430,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [currentPage, numPages, zoom, isSearchOpen]);
+  }, [currentPage, numPages, zoom, isSearchOpen, settings, onUpdateSettings]);
 
   const handleMouseDownResize = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -514,6 +580,23 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           </div>
 
           <div className="toolbar-right">
+            <button type="button" className={`toolbar-btn ${settings.pageSidebarVisible ? "active" : ""}`}
+              title="Toggle page previews (T)" aria-pressed={settings.pageSidebarVisible}
+              onClick={() => onUpdateSettings({ ...settings, pageSidebarVisible: !settings.pageSidebarVisible })}>Pages</button>
+            <button type="button" className={`toolbar-btn ${highlightEnabled ? "active" : ""}`}
+              title="Drag across text or a page region to highlight" aria-pressed={highlightEnabled}
+              onClick={() => setHighlightEnabled((current) => !current)}>Highlight</button>
+            {highlightEnabled && (
+              <label className="highlight-color-control">Color
+                <select aria-label="Highlight color" value={highlightColor}
+                  onChange={(event) => setHighlightColor(event.target.value as HighlightColor)}>
+                  <option value="gold">Gold</option><option value="mint">Mint</option>
+                  <option value="rose">Rose</option><option value="blue">Blue</option>
+                  <option value="violet">Violet</option>
+                </select>
+              </label>
+            )}
+            {selectedHighlightId && <button type="button" className="toolbar-btn" onClick={handleDeleteSelectedHighlight}>Remove highlight</button>}
             {/* Find in Document Button */}
             <button
               onClick={handleToggleSearch}
@@ -653,6 +736,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               <span className="toast-shortcut-badge">Press 'D' to cycle</span>
             </div>
           )}
+          {highlightError && <div className="pdf-highlight-error" role="alert">{highlightError}</div>}
 
           {/* Active Search Match Snippet Pill */}
           {isSearchOpen && activeMatch && (
@@ -672,17 +756,33 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           )}
 
           {!loading && !error && pdfDoc && (
+            <>
+            {settings.pageSidebarVisible && (
+              <PdfPageSidebar pdfDoc={pdfDoc} currentPage={currentPage} highlights={highlights}
+                width={settings.pageSidebarWidth} scale={settings.thumbnailScale} dock={settings.pageSidebarDock}
+                selectedHighlightId={selectedHighlightId} onPageSelect={setCurrentPage}
+                onHighlightSelect={(focus) => { setSelectedHighlightId(focus.id); setFocusHighlight(focus); }} />
+            )}
             <PdfJsViewer
               pdfDoc={pdfDoc}
               currentPage={currentPage}
               zoom={zoom}
               continuous={isContinuousScroll}
               viewMode={viewMode}
+              highlights={highlights}
+              highlightEnabled={highlightEnabled}
+              highlightColor={highlightColor}
+              onCreateHighlight={(pageNumber, rects) => { void handleCreateHighlight(pageNumber, rects); }}
+              focusHighlight={focusHighlight}
+              sidebarVisible={settings.pageSidebarVisible}
+              sidebarWidth={settings.pageSidebarWidth}
+              sidebarDock={settings.pageSidebarDock}
               onPageChange={(pageNumber) => {
                 setCurrentPage(pageNumber);
                 localStorage.setItem(storageKey, pageNumber.toString());
               }}
             />
+            </>
           )}
         </main>
       </div>
