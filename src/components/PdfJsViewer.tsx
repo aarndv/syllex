@@ -33,6 +33,8 @@ interface PageChangingEvent {
   pageNumber: number;
 }
 
+const TEXT_HIT_TOLERANCE_PX = 1;
+
 function clippedRect(rect: DOMRect | HighlightRect, page: DOMRect): HighlightRect | null {
   const left = Math.max(page.left, "left" in rect ? rect.left : page.left + rect.x * page.width);
   const top = Math.max(page.top, "top" in rect ? rect.top : page.top + rect.y * page.height);
@@ -45,6 +47,31 @@ function clippedRect(rect: DOMRect | HighlightRect, page: DOMRect): HighlightRec
     width: (right - left) / page.width,
     height: (bottom - top) / page.height,
   };
+}
+
+function startsOnTextGlyph(target: Element, x: number, y: number): boolean {
+  const textLayer = target.closest(".textLayer");
+  if (!textLayer) return false;
+  const caretRange = document.caretRangeFromPoint?.(x, y);
+  const caretPosition = caretRange ? null : document.caretPositionFromPoint?.(x, y);
+  const node = caretRange?.startContainer ?? caretPosition?.offsetNode;
+  const offset = caretRange?.startOffset ?? caretPosition?.offset;
+  if (!(node instanceof Text) || offset === undefined || !textLayer.contains(node)
+    || node.parentElement?.closest('[role="img"]')) return false;
+
+  const range = document.createRange();
+  for (const index of [offset - 1, offset]) {
+    if (index < 0 || index >= node.length || /\s/.test(node.data[index])) continue;
+    range.setStart(node, index);
+    range.setEnd(node, index + 1);
+    for (const rect of range.getClientRects()) {
+      if (x >= rect.left - TEXT_HIT_TOLERANCE_PX && x <= rect.right + TEXT_HIT_TOLERANCE_PX
+        && y >= rect.top - TEXT_HIT_TOLERANCE_PX && y <= rect.bottom + TEXT_HIT_TOLERANCE_PX) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 /**
@@ -251,7 +278,7 @@ export function PdfJsViewer({
       const selection = window.getSelection();
       selection?.removeAllRanges();
       drag = { page, pageNumber: Number(page.dataset.pageNumber), startX: event.clientX, startY: event.clientY,
-        pointerId: event.pointerId, textStart: !!event.target.closest(".textLayer") };
+        pointerId: event.pointerId, textStart: startsOnTextGlyph(event.target, event.clientX, event.clientY) };
       if (!drag.textStart) event.preventDefault();
     };
     const onMove = (event: PointerEvent) => {
