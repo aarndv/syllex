@@ -18,7 +18,7 @@ A college student using Fedora Linux and Windows 11 who stores course modules lo
 2. Treat first-level directories as courses by default.
 3. Recursively discover supported documents (`.pdf`, `.ppt`, `.pptx`, `.md`) without modifying existing files.
 4. Provide an "Add Module" feature to copy new PDF, PPT, or Markdown files into a selected course directory inside the vault.
-5. Display PDFs internally with navigation, zoom, search, and remember the last opened page to resume reading (no explicit completion status).
+5. Display PDFs internally with navigation, zoom (including fine-grained percentage scaling, fit-to-width, and Ctrl+/- / Ctrl+wheel shortcuts), search, and remember the last opened page to resume reading (no explicit completion status).
 6. Provide Original and Fast Dark viewing modes.
 7. Convert PPT/PPTX files to cached PDFs when LibreOffice is available.
 8. Render Markdown (`.md`) self-notes directly in the application.
