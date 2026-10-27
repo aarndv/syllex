@@ -6,30 +6,43 @@ Syllex works offline and leaves your original course files untouched. It is desi
 
 The name combines *syllabus* and *index*.
 
-## Planned technology
+## Key features
 
-- Tauri 2 desktop shell
-- React, TypeScript, and Vite frontend
-- Rust for trusted filesystem and process operations
-- SQLite for local application metadata
-- PDF.js for PDF rendering
-- LibreOffice headless mode for optional PowerPoint-to-PDF conversion
-- Vitest, Rust tests, and end-to-end tests
+- **Course vault:** Choose an existing folder and browse your modules by course.
+- **Document reading:** Read PDFs and preview presentation slides when available. Navigate pages, zoom, search, and resume where you left off.
+- **Page previews and highlights:** Jump between pages, mark text or page areas in multiple colors, and return to saved highlights. An eraser lets you remove marks you no longer need.
+- **Reading filters:** Switch between original, dark, and other viewing modes without changing the source document.
+- **Local control:** Work offline, keep your original files untouched, and open them in your system application whenever you prefer.
 
-## Product principles
+## Project status
 
-- Local-first and usable offline
-- Fast startup and responsive document navigation
-- Original modules remain untouched
-- Linux and Windows are first-class targets
-- Features are delivered in small, testable milestones
-- No cloud account or server is required for the initial release
+Syllex is in active MVP development. Flashcards and release hardening are planned; see the [roadmap](docs/ROADMAP.md) for the current scope.
 
-## Current status
+## Run locally
 
-Active MVP implementation. The Tauri application includes vault selection and scanning, PDF viewing and search, page previews and persistent viewer highlights, reversible document filters, and cached PowerPoint preview conversion through LibreOffice. Flashcards and release hardening remain future roadmap work. See [docs/ROADMAP.md](docs/ROADMAP.md) for milestone status and [docs/PDF_VIEWER_BUG_REPORT.md](docs/PDF_VIEWER_BUG_REPORT.md) for the PDF rendering regression record.
+Development takes place on Fedora KDE. Install Node.js, npm, Rust, and the system dependencies required by Tauri 2, then run:
 
-## Documentation map
+```bash
+npm ci
+npm run tauri dev
+```
+
+PowerPoint previews require LibreOffice installed locally. PDF reading works without it. Windows 11 is a runtime, CI, packaging, and manual validation target.
+
+Available checks:
+
+```bash
+npm run build
+cargo fmt --check --manifest-path src-tauri/Cargo.toml
+cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
+cargo test --manifest-path src-tauri/Cargo.toml
+```
+
+## Technology
+
+Syllex uses Tauri 2, React, TypeScript, Vite, Rust, SQLite, and PDF.js. The [architecture](docs/ARCHITECTURE.md) explains how the desktop interface, native filesystem operations, and local metadata fit together.
+
+## Documentation
 
 | Document | Purpose |
 | --- | --- |
@@ -41,19 +54,8 @@ Active MVP implementation. The Tauri application includes vault selection and sc
 | [docs/TESTING.md](docs/TESTING.md) | Test strategy and platform matrix |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Ordered delivery milestones |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Architecture decision log |
+| [docs/PDF_VIEWER_BUG_REPORT.md](docs/PDF_VIEWER_BUG_REPORT.md) | PDF rendering regression record |
 
-## Development platforms
+## License
 
-Fedora KDE on the Linux laptop is the sole development environment. Windows 11 remains a supported runtime and validation target, using native Windows CI builds and periodic testing of packaged releases on the PC. Platform-specific behavior must be kept behind Tauri/Rust commands and tested on the actual target operating system.
-
-## Repository setup
-
-Before implementation begins:
-
-1. Review every document in `docs/`.
-2. Replace any unresolved assumptions with explicit decisions.
-3. Initialize Git and create the documentation baseline commit.
-4. Give the first agent only the scaffold milestone in `docs/ROADMAP.md`.
-5. Review the generated diff before allowing feature work.
-
-No license has been selected. Treat the repository as private and all rights reserved until the owner adds a license.
+No license has been selected. This repository is private and all rights are reserved until the owner adds one.
