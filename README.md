@@ -1,10 +1,10 @@
 # Syllex
 
-Syllex is a contraction of syllabus and index, conveying a structured academic repository without leaning on literal words like vault or course.
+Syllex is a personal study library for the course materials already on your computer. Choose your course folder as a vault, much like an Obsidian vault, and browse your classes and readings together. It gives you a comfortable place to read, keep your place, and return to the passages you've highlighted.
 
-Syllex is a fast, local-first desktop study application for organizing and reading college course modules. It opens a user-selected directory, called a vault, similarly to an Obsidian vault; groups modules by course; displays PDF files; converts PowerPoint presentations into cached PDFs when LibreOffice is available; and provides reversible document dark modes. It also includes locally stored flashcard decks imported from a documented CSV format.
+Syllex works offline and leaves your original course files untouched. It is designed for Fedora Linux and Windows 11.
 
-The application is intended to run on Fedora Linux and Windows 11. Original course files remain under the user's control and must never be modified by the application.
+The name combines *syllabus* and *index*.
 
 ## Planned technology
 
