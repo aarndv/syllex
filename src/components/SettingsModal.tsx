@@ -17,6 +17,7 @@ export interface AppSettings {
   pageSidebarDock: "left" | "right";
   pageSidebarWidth: number;
   thumbnailScale: number;
+  pageSidebarLayoutVersion: number;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -27,8 +28,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   defaultReadingFilter: "original",
   pageSidebarVisible: true,
   pageSidebarDock: "left",
-  pageSidebarWidth: 170,
+  pageSidebarWidth: 110,
   thumbnailScale: 1,
+  pageSidebarLayoutVersion: 2,
 };
 
 interface SettingsModalProps {
@@ -340,7 +342,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
             <div className="setting-slider-row">
               <label htmlFor="setting-preview-width">Sidebar width: {localSettings.pageSidebarWidth}px</label>
-              <input id="setting-preview-width" type="range" min="170" max="300" step="10"
+              <input id="setting-preview-width" type="range" min="100" max="220" step="10"
                 value={localSettings.pageSidebarWidth}
                 onChange={(e) => handleChange("pageSidebarWidth", Number(e.target.value))} />
             </div>

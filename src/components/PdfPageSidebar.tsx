@@ -68,7 +68,7 @@ function PageThumbnail({ pdfDoc, pageNumber, scale, scrollRoot }: {
   }, [pdfDoc, pageNumber, visible]);
 
   return (
-    <div ref={hostRef} className="pdf-page-thumbnail" style={{ width: `${Math.round(78 * scale)}px` }}>
+    <div ref={hostRef} className="pdf-page-thumbnail" style={{ width: `${Math.round(72 * scale)}px` }}>
       {failed ? <span className="pdf-thumbnail-fallback">Preview unavailable</span> : <canvas ref={canvasRef} aria-hidden="true" />}
     </div>
   );
@@ -83,6 +83,10 @@ export function PdfPageSidebar({
 
   useEffect(() => {
     const current = scrollRef.current?.querySelector(`[data-thumbnail-page="${currentPage}"]`);
+    const focusedPage = scrollRef.current?.querySelector(".pdf-thumbnail-page-button:focus");
+    if (focusedPage && current && !current.contains(focusedPage)) {
+      current.querySelector<HTMLButtonElement>(".pdf-thumbnail-page-button")?.focus({ preventScroll: true });
+    }
     current?.scrollIntoView({ block: "nearest" });
   }, [currentPage]);
 
@@ -95,7 +99,10 @@ export function PdfPageSidebar({
           const pageHighlights = highlights.filter((item) => item.page_number === pageNumber);
           return (
             <div className={`pdf-thumbnail-row ${currentPage === pageNumber ? "current" : ""}`} key={pageNumber} data-thumbnail-page={pageNumber}>
-              <button type="button" className="pdf-thumbnail-page-button" onClick={() => onPageSelect(pageNumber)} aria-label={`Go to page ${pageNumber}`} aria-current={currentPage === pageNumber ? "page" : undefined}>
+              <button type="button" className="pdf-thumbnail-page-button" onClick={(event) => {
+                onPageSelect(pageNumber);
+                if (event.detail > 0) event.currentTarget.blur();
+              }} aria-label={`Go to page ${pageNumber}`} aria-current={currentPage === pageNumber ? "page" : undefined}>
                 <PageThumbnail pdfDoc={pdfDoc} pageNumber={pageNumber} scale={scale} scrollRoot={scrollRef} />
                 <span className="pdf-thumbnail-page-label" aria-hidden="true">p{pageNumber}</span>
               </button>
@@ -110,7 +117,7 @@ export function PdfPageSidebar({
                       style={{
                         top: `${(tapeIndex % 10) * 10}%`,
                         transform: `translateY(-${(tapeIndex % 10) * 10}%)`,
-                        [dock === "left" ? "left" : "right"]: `calc(100% - 2px + ${Math.min(layer * 3, 12)}px)`,
+                        [dock === "left" ? "left" : "right"]: `calc(100% - 2px + ${Math.min(layer * 6, 18)}px)`,
                         zIndex: Math.max(1, 100 - layer),
                       }}
                       title={`Go to highlight ${tapeIndex + 1} on page ${pageNumber}`}

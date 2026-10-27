@@ -109,7 +109,16 @@ function App() {
     const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
     if (saved) {
       try {
-        return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved) as Partial<AppSettings> | null;
+        const restored = { ...DEFAULT_SETTINGS, ...(parsed && typeof parsed === "object" ? parsed : {}) };
+        if (parsed?.pageSidebarLayoutVersion !== 2) {
+          const previousWidth = parsed?.pageSidebarWidth;
+          restored.pageSidebarWidth = previousWidth === 170 || previousWidth === 220
+            ? DEFAULT_SETTINGS.pageSidebarWidth
+            : Math.max(100, Math.min(220, Number(previousWidth) || DEFAULT_SETTINGS.pageSidebarWidth));
+          restored.pageSidebarLayoutVersion = 2;
+        }
+        return restored;
       } catch {
         return DEFAULT_SETTINGS;
       }

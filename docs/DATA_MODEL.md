@@ -119,7 +119,7 @@ Cached files are disposable even when their metadata is recorded.
 
 Settings keys and value formats must be documented before use.
 
-The current webview settings object includes `pageSidebarVisible` (boolean), `pageSidebarDock` (`left` or `right`), `pageSidebarWidth` (170–300 pixels), and `thumbnailScale` (0.7–1.4). These viewer preferences follow the existing settings object until the planned SQLite settings migration.
+The current webview settings object includes `pageSidebarVisible` (boolean), `pageSidebarDock` (`left` or `right`), `pageSidebarWidth` (100–220 pixels), `thumbnailScale` (0.7–1.4), and `pageSidebarLayoutVersion` (2). On first load of this compact layout, the earlier default widths of 170 or 220 pixels become 110 pixels; other saved widths are clamped to the new range. These viewer preferences follow the existing settings object until the planned SQLite settings migration.
 
 ## Migration rules
 
