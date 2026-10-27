@@ -13,6 +13,7 @@ import {
   SearchIcon,
   ChevronUpIcon,
   ChevronDownIcon,
+  FitWidthIcon,
 } from "./Icons";
 import {
   extractLoadedPdfDocText,
@@ -72,6 +73,10 @@ const MIN_DRAWER_WIDTH = 220;
 const MAX_DRAWER_WIDTH = 750;
 const DRAWER_WIDTH_STORAGE_KEY = "syllex_pdf_drawer_width";
 
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 5.0;
+const PRESET_ZOOMS = [50, 75, 90, 100, 110, 125, 150, 175, 200, 250, 300, 400];
+
 export const PdfViewer: React.FC<PdfViewerProps> = ({
   vaultRoot,
   node,
@@ -101,6 +106,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(initialPage || 1);
   const [zoom, setZoom] = useState<number>(1.0);
+  const [isFitWidth, setIsFitWidth] = useState<boolean>(false);
   const [isContinuousScroll, setIsContinuousScroll] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<DocumentViewMode>(() => {
     const saved = localStorage.getItem("syllex_pdf_view_mode") as DocumentViewMode;
@@ -120,6 +126,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const toastTimerRef = useRef<number | null>(null);
+  const mainAreaRef = useRef<HTMLDivElement | null>(null);
+  const wheelAccumulatorRef = useRef<number>(0);
+  const wheelTimerRef = useRef<number | null>(null);
 
   const storageKey = `syllex_progress_${node.relative_path}`;
 
@@ -311,19 +320,145 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     }
   }
 
-  function handleZoomIn() {
-    setZoom((prev) => Math.min(prev + 0.2, 3.0));
-  }
+  const handleZoomIn = useCallback(() => {
+    setIsFitWidth(false);
+    setZoom((prev) => {
+      const next = Math.floor(prev * 10 + 1.0001) / 10;
+      return Math.min(MAX_ZOOM, Math.max(prev + 0.05, next));
+    });
+  }, []);
 
-  function handleZoomOut() {
-    setZoom((prev) => Math.max(prev - 0.2, 0.5));
-  }
+  const handleZoomOut = useCallback(() => {
+    setIsFitWidth(false);
+    setZoom((prev) => {
+      const prevStep = Math.ceil(prev * 10 - 1.0001) / 10;
+      return Math.max(MIN_ZOOM, Math.min(prev - 0.05, prevStep));
+    });
+  }, []);
+
+  const handleWheelZoomIn = useCallback(() => {
+    setIsFitWidth(false);
+    setZoom((prev) => {
+      const next = Math.floor(prev * 20 + 1.0001) / 20;
+      return Math.min(MAX_ZOOM, Math.max(prev + 0.01, next));
+    });
+  }, []);
+
+  const handleWheelZoomOut = useCallback(() => {
+    setIsFitWidth(false);
+    setZoom((prev) => {
+      const prevStep = Math.ceil(prev * 20 - 1.0001) / 20;
+      return Math.max(MIN_ZOOM, Math.min(prev - 0.01, prevStep));
+    });
+  }, []);
+
+  const handleToggleFitWidth = useCallback(() => {
+    setIsFitWidth((prev) => {
+      if (prev) {
+        setZoom(1.0);
+        return false;
+      }
+      return true;
+    });
+  }, []);
+
+  const handleSelectZoom = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    if (val === "fit-width") {
+      setIsFitWidth(true);
+    } else {
+      const parsed = parseInt(val, 10);
+      if (!isNaN(parsed)) {
+        setIsFitWidth(false);
+        setZoom(parsed / 100);
+      }
+    }
+  }, []);
+
+  // Prevent browser window zoom on Ctrl+Wheel in the desktop application
+  useEffect(() => {
+    const handlePreventWebviewZoom = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("wheel", handlePreventWebviewZoom, { passive: false });
+    return () => {
+      window.removeEventListener("wheel", handlePreventWebviewZoom);
+    };
+  }, []);
+
+  // Handle Ctrl+Scroll zoom inside the PDF main reading area
+  useEffect(() => {
+    const mainArea = mainAreaRef.current;
+    if (!mainArea) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        let delta = e.deltaY;
+        if (e.deltaMode === 1) delta *= 33;
+        else if (e.deltaMode === 2) delta *= 100;
+
+        wheelAccumulatorRef.current += delta;
+
+        if (wheelTimerRef.current) {
+          window.clearTimeout(wheelTimerRef.current);
+        }
+        wheelTimerRef.current = window.setTimeout(() => {
+          wheelAccumulatorRef.current = 0;
+        }, 200);
+
+        const THRESHOLD = 35;
+        if (Math.abs(wheelAccumulatorRef.current) >= THRESHOLD) {
+          const isZoomIn = wheelAccumulatorRef.current < 0;
+          wheelAccumulatorRef.current = 0;
+          if (isZoomIn) {
+            handleWheelZoomIn();
+          } else {
+            handleWheelZoomOut();
+          }
+        }
+      }
+    };
+
+    mainArea.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      mainArea.removeEventListener("wheel", handleWheel);
+      if (wheelTimerRef.current) {
+        window.clearTimeout(wheelTimerRef.current);
+      }
+    };
+  }, [handleWheelZoomIn, handleWheelZoomOut]);
 
   // Global keyboard shortcuts within viewer
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      const isCtrlOrMeta = e.ctrlKey || e.metaKey;
+
+      // Handle Ctrl + (+/=), Ctrl + (-/_), Ctrl + 0 (Fit Width)
+      if (isCtrlOrMeta) {
+        if (e.key === "+" || e.key === "=" || e.code === "Equal" || e.code === "NumpadAdd") {
+          e.preventDefault();
+          handleZoomIn();
+          return;
+        }
+        if (e.key === "-" || e.key === "_" || e.code === "Minus" || e.code === "NumpadSubtract") {
+          e.preventDefault();
+          handleZoomOut();
+          return;
+        }
+        if (e.key === "0" || e.code === "Digit0" || e.code === "Numpad0") {
+          e.preventDefault();
+          handleToggleFitWidth();
+          return;
+        }
+      }
+
       // Ctrl+F / Cmd+F: open search
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
+      if (isCtrlOrMeta && e.key.toLowerCase() === "f") {
         e.preventDefault();
         setIsSearchOpen(true);
         setTimeout(() => {
@@ -333,7 +468,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         return;
       }
 
-      // If search input is focused, don't hijack arrow keys
+      // If search input is focused, don't hijack arrow keys or single-key navigation
       if (document.activeElement === searchInputRef.current) {
         if (e.key === "Escape") {
           setIsSearchOpen(false);
@@ -345,9 +480,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         handlePrevPage();
       } else if (e.key === "ArrowRight") {
         handleNextPage();
-      } else if (e.key === "+" || e.key === "=") {
+      } else if (e.key === "+" || e.key === "=" || e.code === "NumpadAdd") {
         handleZoomIn();
-      } else if (e.key === "-" || e.key === "_") {
+      } else if (e.key === "-" || e.key === "_" || e.code === "NumpadSubtract") {
         handleZoomOut();
       } else if (e.key.toLowerCase() === "d") {
         cycleViewMode();
@@ -364,7 +499,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [currentPage, numPages, zoom, isSearchOpen]);
+  }, [currentPage, numPages, isSearchOpen, handleZoomIn, handleZoomOut, handleToggleFitWidth, onClose]);
 
   const handleMouseDownResize = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -455,7 +590,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         )}
       </aside>
 
-      <div className="pdf-main-area">
+      <div className="pdf-main-area" ref={mainAreaRef}>
         <header className="pdf-viewer-toolbar">
           <div className="toolbar-left">
             {!isDrawerOpen && (
@@ -543,21 +678,61 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               </div>
             </div>
 
+            {/* Fit to Width Button */}
+            <button
+              onClick={handleToggleFitWidth}
+              className={`toolbar-btn fit-width-btn ${isFitWidth ? "active" : ""}`}
+              title="Fit to width (Ctrl+0)"
+            >
+              <FitWidthIcon size={14} /> <span>Fit Width</span>
+            </button>
+
             <div className="toolbar-control-group zoom-controls">
               <button
                 onClick={handleZoomOut}
-                disabled={zoom <= 0.5}
+                disabled={zoom <= MIN_ZOOM}
                 className="toolbar-icon-btn"
-                title="Zoom Out (-)"
+                title="Zoom Out (Ctrl - or -)"
+                aria-label="Zoom Out"
               >
                 -
               </button>
-              <span className="zoom-indicator">{Math.round(zoom * 100)}%</span>
+              <div className="custom-select-wrapper zoom-select-wrapper">
+                <select
+                  value={isFitWidth ? "fit-width" : String(Math.round(zoom * 100))}
+                  onChange={handleSelectZoom}
+                  className="zoom-select"
+                  aria-label="Zoom level"
+                  title="Zoom percentage (Presets)"
+                >
+                  {isFitWidth ? (
+                    <option value="fit-width">Fit Width ({Math.round(zoom * 100)}%)</option>
+                  ) : (
+                    <option value="fit-width">Fit Width</option>
+                  )}
+                  {!isFitWidth && !PRESET_ZOOMS.includes(Math.round(zoom * 100)) && (
+                    <option value={String(Math.round(zoom * 100))}>{Math.round(zoom * 100)}%</option>
+                  )}
+                  <option value="50">50%</option>
+                  <option value="75">75%</option>
+                  <option value="90">90%</option>
+                  <option value="100">100%</option>
+                  <option value="110">110%</option>
+                  <option value="125">125%</option>
+                  <option value="150">150%</option>
+                  <option value="175">175%</option>
+                  <option value="200">200%</option>
+                  <option value="250">250%</option>
+                  <option value="300">300%</option>
+                  <option value="400">400%</option>
+                </select>
+              </div>
               <button
                 onClick={handleZoomIn}
-                disabled={zoom >= 3.0}
+                disabled={zoom >= MAX_ZOOM}
                 className="toolbar-icon-btn"
-                title="Zoom In (+)"
+                title="Zoom In (Ctrl + or +)"
+                aria-label="Zoom In"
               >
                 +
               </button>
@@ -676,12 +851,14 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               pdfDoc={pdfDoc}
               currentPage={currentPage}
               zoom={zoom}
+              isFitWidth={isFitWidth}
               continuous={isContinuousScroll}
               viewMode={viewMode}
               onPageChange={(pageNumber) => {
                 setCurrentPage(pageNumber);
                 localStorage.setItem(storageKey, pageNumber.toString());
               }}
+              onScaleChange={(scale) => setZoom(scale)}
             />
           )}
         </main>

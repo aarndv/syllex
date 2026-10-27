@@ -496,6 +496,26 @@ export const EnterKeyIcon: React.FC<IconProps> = ({ className = "", size = 16, c
   </svg>
 );
 
+export const FitWidthIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`inline-icon ${className}`}
+  >
+    <path d="M3 5v14" />
+    <path d="M21 5v14" />
+    <path d="M18 12H6" />
+    <polyline points="15 9 18 12 15 15" />
+    <polyline points="9 9 6 12 9 15" />
+  </svg>
+);
+
 
 
 

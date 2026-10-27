@@ -31,7 +31,7 @@ Acceptance criteria:
 ## M3 — Basic PDF viewer
 
 - [x] Open PDFs through PDF.js
-- [x] Navigate pages and zoom
+- [x] Navigate pages and zoom (granular steps, fit-to-width, and Ctrl+/- / Ctrl+wheel shortcuts)
 - [x] Render pages lazily
 - [x] Remember the last page locally
 - [x] Handle malformed or protected PDFs
