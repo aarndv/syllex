@@ -121,12 +121,13 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const [filterToast, setFilterToast] = useState<string | null>(null);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [highlightEnabled, setHighlightEnabled] = useState(false);
+  const [erasingHighlights, setErasingHighlights] = useState(false);
   const [highlightColor, setHighlightColor] = useState<HighlightColor>(() => {
     const saved = localStorage.getItem(HIGHLIGHT_COLOR_STORAGE_KEY);
     return HIGHLIGHT_COLORS.find((color) => color.id === saved)?.id ?? "gold";
   });
   const [highlightError, setHighlightError] = useState<string | null>(null);
-  const [lastSavedHighlightId, setLastSavedHighlightId] = useState<string | null>(null);
+  const [highlightToast, setHighlightToast] = useState<{ kind: "saved" | "erased"; highlight: Highlight } | null>(null);
   const [selectedHighlightId, setSelectedHighlightId] = useState<string | null>(null);
   const [focusHighlight, setFocusHighlight] = useState<HighlightFocus | null>(null);
 
@@ -140,10 +141,16 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const toastTimerRef = useRef<number | null>(null);
   const highlightToastTimerRef = useRef<number | null>(null);
+  const deletingHighlightIdsRef = useRef(new Set<string>());
+  const undoPendingRef = useRef(false);
   const documentKeyRef = useRef(`${vaultRoot}\0${node.relative_path}`);
   documentKeyRef.current = `${vaultRoot}\0${node.relative_path}`;
 
   const storageKey = `syllex_progress_${node.relative_path}`;
+
+  useEffect(() => {
+    if (!highlightEnabled) setErasingHighlights(false);
+  }, [highlightEnabled]);
 
   useEffect(() => {
     let active = true;
@@ -151,7 +158,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     setSelectedHighlightId(null);
     setFocusHighlight(null);
     setHighlightError(null);
-    setLastSavedHighlightId(null);
+    setHighlightToast(null);
+    setHighlightEnabled(false);
+    setErasingHighlights(false);
     if (highlightToastTimerRef.current) window.clearTimeout(highlightToastTimerRef.current);
     invoke<Highlight[]>("list_highlights", { vaultRoot, relativePath: node.relative_path })
       .then((items) => {
@@ -164,6 +173,17 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     return () => { active = false; };
   }, [vaultRoot, node.relative_path]);
 
+  function showHighlightToast(kind: "saved" | "erased", highlight: Highlight) {
+    if (highlightToastTimerRef.current) window.clearTimeout(highlightToastTimerRef.current);
+    setHighlightToast({ kind, highlight });
+    highlightToastTimerRef.current = window.setTimeout(() => setHighlightToast(null), 6000);
+  }
+
+  function clearHighlightToast() {
+    if (highlightToastTimerRef.current) window.clearTimeout(highlightToastTimerRef.current);
+    setHighlightToast(null);
+  }
+
   async function handleCreateHighlight(pageNumber: number, rects: HighlightRect[]) {
     const documentKey = documentKeyRef.current;
     const highlight: Highlight = { id: crypto.randomUUID(), page_number: pageNumber, color: highlightColor, rects };
@@ -172,16 +192,18 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       if (documentKeyRef.current === documentKey) {
         setHighlights((current) => [...current, highlight]);
         setHighlightError(null);
-        setLastSavedHighlightId(highlight.id);
-        if (highlightToastTimerRef.current) window.clearTimeout(highlightToastTimerRef.current);
-        highlightToastTimerRef.current = window.setTimeout(() => setLastSavedHighlightId(null), 6000);
+        showHighlightToast("saved", highlight);
       }
     } catch (error) {
       if (documentKeyRef.current === documentKey) setHighlightError(toUserFacingError(error, "save this highlight"));
     }
   }
 
-  async function handleDeleteHighlight(id: string) {
+  async function handleDeleteHighlight(id: string, showUndo = true) {
+    if (deletingHighlightIdsRef.current.has(id)) return;
+    const highlight = highlights.find((item) => item.id === id);
+    if (!highlight) return;
+    deletingHighlightIdsRef.current.add(id);
     const documentKey = documentKeyRef.current;
     try {
       await invoke("delete_highlight", { vaultRoot, relativePath: node.relative_path, id });
@@ -189,16 +211,42 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         setHighlights((current) => current.filter((item) => item.id !== id));
         setSelectedHighlightId((current) => current === id ? null : current);
         setFocusHighlight((current) => current?.id === id ? null : current);
-        setLastSavedHighlightId((current) => current === id ? null : current);
+        if (showUndo) showHighlightToast("erased", highlight);
+        else clearHighlightToast();
         setHighlightError(null);
       }
     } catch (error) {
       if (documentKeyRef.current === documentKey) setHighlightError(toUserFacingError(error, "remove this highlight"));
+    } finally {
+      deletingHighlightIdsRef.current.delete(id);
+    }
+  }
+
+  async function handleUndoHighlight() {
+    if (!highlightToast || undoPendingRef.current) return;
+    undoPendingRef.current = true;
+    const documentKey = documentKeyRef.current;
+    try {
+      if (highlightToast.kind === "saved") {
+        await handleDeleteHighlight(highlightToast.highlight.id, false);
+        return;
+      }
+      await invoke("save_highlight", { vaultRoot, relativePath: node.relative_path, highlight: highlightToast.highlight });
+      if (documentKeyRef.current === documentKey) {
+        setHighlights((current) => [...current, highlightToast.highlight]);
+        setHighlightError(null);
+        clearHighlightToast();
+      }
+    } catch (error) {
+      if (documentKeyRef.current === documentKey) setHighlightError(toUserFacingError(error, "restore this highlight"));
+    } finally {
+      undoPendingRef.current = false;
     }
   }
 
   function handleChooseHighlightColor(color: HighlightColor) {
     setHighlightColor(color);
+    setErasingHighlights(false);
     localStorage.setItem(HIGHLIGHT_COLOR_STORAGE_KEY, color);
   }
 
@@ -612,12 +660,12 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               title="Toggle page previews (T)" aria-pressed={settings.pageSidebarVisible}
               onClick={() => onUpdateSettings({ ...settings, pageSidebarVisible: !settings.pageSidebarVisible })}>Pages</button>
             <button type="button" className={`toolbar-btn highlighter-toggle ${highlightEnabled ? "active" : ""}`}
-              title="Toggle highlighter (H)" aria-label={`Highlight with ${highlightColor} (H)`}
+              title="Toggle highlight tool (H)" aria-label={erasingHighlights ? "Highlight eraser (H)" : `Highlight with ${highlightColor} (H)`}
               aria-keyshortcuts="H" aria-pressed={highlightEnabled} disabled={loading || !!error || !pdfDoc}
               onClick={() => { setIsSearchOpen(false); setHighlightEnabled((current) => !current); }}>
-              <span className="highlighter-color-chip" aria-hidden="true"
-                style={{ backgroundColor: HIGHLIGHT_COLORS.find((color) => color.id === highlightColor)?.swatch }} />
-              <span>Highlight</span>
+              {!erasingHighlights && <span className="highlighter-color-chip" aria-hidden="true"
+                style={{ backgroundColor: HIGHLIGHT_COLORS.find((color) => color.id === highlightColor)?.swatch }} />}
+              <span>{erasingHighlights ? "Eraser" : "Highlight"}</span>
             </button>
             {selectedHighlightId && <button type="button" className="toolbar-btn" onClick={() => { void handleDeleteHighlight(selectedHighlightId); }}>Remove highlight</button>}
             {/* Find in Document Button */}
@@ -673,16 +721,19 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
 
         {highlightEnabled && !loading && !error && pdfDoc && (
           <div className="pdf-highlight-palette" role="group" aria-label="Highlighter controls">
-            <span className="pdf-highlight-palette-title">Highlight color</span>
-            <div className="pdf-highlight-swatches" role="group" aria-label="Choose highlight color">
+            <span className="pdf-highlight-palette-title">Highlight tool</span>
+            <div className="pdf-highlight-swatches" role="group" aria-label="Choose highlight color or eraser">
               {HIGHLIGHT_COLORS.map((color) => (
                 <button key={color.id} type="button" className="pdf-highlight-swatch"
                   style={{ backgroundColor: color.swatch }} title={color.label}
-                  aria-label={`${color.label} highlight`} aria-pressed={highlightColor === color.id}
+                  aria-label={`${color.label} highlight`} aria-pressed={!erasingHighlights && highlightColor === color.id}
                   onClick={() => handleChooseHighlightColor(color.id)} />
               ))}
+              <button type="button" className="pdf-highlight-eraser" title="Erase a highlight"
+                aria-label="Erase highlights" aria-pressed={erasingHighlights}
+                onClick={() => setErasingHighlights(true)}>Erase</button>
             </div>
-            <span className="pdf-highlight-palette-hint">Drag over text or any page area · Esc to finish</span>
+            <span className="pdf-highlight-palette-hint">{erasingHighlights ? "Click a highlight to erase it" : "Drag over text or any page area"} · Esc to finish</span>
             <button type="button" className="pdf-highlight-done" onClick={() => setHighlightEnabled(false)}>Done</button>
           </div>
         )}
@@ -776,10 +827,10 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             </div>
           )}
           {highlightError && <div className="pdf-highlight-error" role="alert">{highlightError}</div>}
-          {lastSavedHighlightId && (
-            <div className="pdf-highlight-saved-toast" role="status" aria-live="polite">
-              <span>Highlight saved</span>
-              <button type="button" onClick={() => { void handleDeleteHighlight(lastSavedHighlightId); }}>Undo</button>
+          {highlightToast && (
+            <div className="pdf-highlight-toast" role="status" aria-live="polite">
+              <span>Highlight {highlightToast.kind === "saved" ? "saved" : "erased"}</span>
+              <button type="button" onClick={() => { void handleUndoHighlight(); }}>Undo</button>
             </div>
           )}
 
@@ -816,8 +867,10 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               viewMode={viewMode}
               highlights={highlights}
               highlightEnabled={highlightEnabled}
+              erasingHighlights={erasingHighlights}
               highlightColor={highlightColor}
               onCreateHighlight={(pageNumber, rects) => { void handleCreateHighlight(pageNumber, rects); }}
+              onEraseHighlight={(id) => { void handleDeleteHighlight(id); }}
               focusHighlight={focusHighlight}
               sidebarVisible={settings.pageSidebarVisible}
               sidebarWidth={settings.pageSidebarWidth}

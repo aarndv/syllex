@@ -19,8 +19,10 @@ interface PdfJsViewerProps {
   onPageChange: (pageNumber: number) => void;
   highlights: Highlight[];
   highlightEnabled: boolean;
+  erasingHighlights: boolean;
   highlightColor: HighlightColor;
   onCreateHighlight: (pageNumber: number, rects: HighlightRect[]) => void;
+  onEraseHighlight: (id: string) => void;
   focusHighlight: HighlightFocus | null;
   sidebarVisible: boolean;
   sidebarWidth: number;
@@ -58,8 +60,10 @@ export function PdfJsViewer({
   onPageChange,
   highlights,
   highlightEnabled,
+  erasingHighlights,
   highlightColor,
   onCreateHighlight,
+  onEraseHighlight,
   focusHighlight,
   sidebarVisible,
   sidebarWidth,
@@ -73,7 +77,9 @@ export function PdfJsViewer({
   const onPageChangeRef = useRef(onPageChange);
   const highlightsRef = useRef(highlights);
   const createHighlightRef = useRef(onCreateHighlight);
+  const eraseHighlightRef = useRef(onEraseHighlight);
   const highlightEnabledRef = useRef(highlightEnabled);
+  const erasingHighlightsRef = useRef(erasingHighlights);
   const highlightColorRef = useRef(highlightColor);
   const focusHighlightRef = useRef(focusHighlight);
 
@@ -82,7 +88,9 @@ export function PdfJsViewer({
   onPageChangeRef.current = onPageChange;
   highlightsRef.current = highlights;
   createHighlightRef.current = onCreateHighlight;
+  eraseHighlightRef.current = onEraseHighlight;
   highlightEnabledRef.current = highlightEnabled;
+  erasingHighlightsRef.current = erasingHighlights;
   highlightColorRef.current = highlightColor;
   focusHighlightRef.current = focusHighlight;
 
@@ -228,6 +236,18 @@ export function PdfJsViewer({
       if (!highlightEnabledRef.current || event.button !== 0 || !(event.target instanceof Element)) return;
       const page = event.target.closest<HTMLElement>(".page[data-page-number]");
       if (!page || !element.contains(page)) return;
+      if (erasingHighlightsRef.current) {
+        event.preventDefault();
+        event.stopPropagation();
+        const pageRect = page.getBoundingClientRect();
+        const x = (event.clientX - pageRect.left) / pageRect.width;
+        const y = (event.clientY - pageRect.top) / pageRect.height;
+        const highlight = [...highlightsRef.current].reverse().find((item) =>
+          item.page_number === Number(page.dataset.pageNumber) && item.rects.some((rect) =>
+            x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height));
+        if (highlight) eraseHighlightRef.current(highlight.id);
+        return;
+      }
       const selection = window.getSelection();
       selection?.removeAllRanges();
       drag = { page, pageNumber: Number(page.dataset.pageNumber), startX: event.clientX, startY: event.clientY,
@@ -297,7 +317,7 @@ export function PdfJsViewer({
   }, []);
 
   return (
-    <div className={`pdfjs-viewer-shell mode-${viewMode} ${highlightEnabled ? "highlight-tool-active" : ""}`}
+    <div className={`pdfjs-viewer-shell mode-${viewMode} ${highlightEnabled ? (erasingHighlights ? "highlight-eraser-active" : "highlight-tool-active") : ""}`}
       style={sidebarVisible ? { [sidebarDock]: `${sidebarWidth}px` } : undefined}>
       <div ref={containerRef} className="pdfjs-viewer-container">
         <div ref={viewerElementRef} className="pdfViewer" />

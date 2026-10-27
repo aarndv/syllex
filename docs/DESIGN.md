@@ -50,7 +50,7 @@ Syllex uses a **Warm Academic Library** aesthetic—a cozy, focused study sanctu
 ## 3. Interaction & Safety Principles
 
 - **Reading Filter Feedback & Visual Polish:** Module viewer toolbars must feature unified height, aligned control groups (page controls, mode toggles, zoom segments), themed custom select dropdowns (no unstyled native white popups), and immediate floating toast notifications when cycling dark mode filters (via keyboard shortcut 'D' or dropdown selection).
-- **Highlighting Controls:** When the highlighter is active, show labeled color swatches with a visible selected state and a short drag instruction. Keep color choice available in one click and provide a brief Undo action after saving.
+- **Highlighting Controls:** When the highlighter is active, show labeled color swatches and an Erase option with a visible selected state and a short instruction. Keep each choice available in one click, let the eraser remove a highlight by clicking it on the page, and provide a brief Undo action after saving or erasing.
 - **Current Page Preview:** Mark the active page with a translucent green overlay and a full-edge frame, while keeping its page label and highlight tapes legible.
 - **Defensive Confirmation & Feedback:**
   - Destructive or state-changing UI actions (e.g., deleting decks or modules) must provide clear visual confirmation modals accompanied by non-blocking undo toasts (e.g., 6-second undo window).

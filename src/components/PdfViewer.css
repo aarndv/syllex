@@ -384,15 +384,22 @@ html[data-theme="light"] .pdf-drawer .tree-current-link {
 .pdf-highlight-swatch:hover { transform: scale(1.12); }
 .pdf-highlight-swatch[aria-pressed="true"] { outline: 2px solid #fbf9f4; outline-offset: 2px; }
 .pdf-highlight-swatch:focus-visible { outline: 2px solid #facc15; outline-offset: 3px; }
+.pdf-highlight-eraser { height: 32px; padding: 0 0.45rem; border: 1px solid #e5e5dd; border-radius: 4px; background: transparent; color: inherit; font: 700 0.75rem Georgia, serif; cursor: pointer; }
+.pdf-highlight-eraser:hover, .pdf-highlight-eraser[aria-pressed="true"] { background: #355641; }
+.pdf-highlight-eraser[aria-pressed="true"] { outline: 2px solid #fbf9f4; outline-offset: 2px; }
+.pdf-highlight-eraser:focus-visible { outline: 2px solid #facc15; outline-offset: 3px; }
 .pdf-highlight-palette-hint { font-size: 0.73rem; color: #d3e2d4; white-space: nowrap; }
 .pdf-highlight-done { padding: 0.2rem 0.5rem; border: 1px solid #9fb6a1; border-radius: 4px; background: transparent; color: inherit; font: inherit; font-size: 0.75rem; cursor: pointer; }
 .pdf-highlight-done:hover, .pdf-highlight-done:focus-visible { background: #355641; }
-.pdf-highlight-saved-toast { position: absolute; right: 1rem; bottom: 1rem; z-index: 120; display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.7rem; border: 1px solid #42634d; border-radius: 6px; background: #fbf9f4; color: #143222; box-shadow: 0 5px 20px #0006; font-size: 0.82rem; }
-.pdf-highlight-saved-toast button { border: 0; background: transparent; color: #145c3b; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
+.pdf-highlight-toast { position: absolute; right: 1rem; bottom: 1rem; z-index: 120; display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.7rem; border: 1px solid #42634d; border-radius: 6px; background: #fbf9f4; color: #143222; box-shadow: 0 5px 20px #0006; font-size: 0.82rem; }
+.pdf-highlight-toast button { border: 0; background: transparent; color: #145c3b; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
 html[data-theme="light"] .pdf-highlight-palette { background: #fbf9f4; color: #143222; border-bottom-color: #b8ae9f; }
 html[data-theme="light"] .pdf-highlight-palette-hint { color: #42634d; }
 html[data-theme="light"] .pdf-highlight-swatch { border-color: #fbf9f4; box-shadow: 0 0 0 1px #143222; }
 html[data-theme="light"] .pdf-highlight-swatch[aria-pressed="true"] { outline-color: #143222; }
+html[data-theme="light"] .pdf-highlight-eraser { border-color: #42634d; }
+html[data-theme="light"] .pdf-highlight-eraser:hover, html[data-theme="light"] .pdf-highlight-eraser[aria-pressed="true"] { background: #e4ddd0; }
+html[data-theme="light"] .pdf-highlight-eraser[aria-pressed="true"] { outline-color: #143222; }
 html[data-theme="light"] .pdf-highlight-done { border-color: #42634d; }
 html[data-theme="light"] .pdf-highlight-done:hover, html[data-theme="light"] .pdf-highlight-done:focus-visible { background: #e4ddd0; }
 .pdf-highlight-error { position: absolute; top: 0.5rem; left: 50%; transform: translateX(-50%); z-index: 120; background: #fbf9f4; color: #8a2525; border: 1px solid #8a2525; border-radius: 6px; padding: 0.5rem 0.75rem; max-width: 80%; }
@@ -687,7 +694,9 @@ html[data-theme="light"] .pdf-highlight-done:hover, html[data-theme="light"] .pd
 .syllex-highlight.color-pink, .syllex-highlight-draft.color-pink { --highlight-rgb: 249 155 216; }
 .syllex-highlight.color-blue, .syllex-highlight-draft.color-blue { --highlight-rgb: 89 174 255; }
 .syllex-highlight.color-violet, .syllex-highlight-draft.color-violet { --highlight-rgb: 189 143 255; }
-.pdfjs-viewer-shell.highlight-tool-active .pdfjs-viewer-container .page { cursor: crosshair; }
+.pdfjs-viewer-shell.highlight-tool-active .pdfjs-viewer-container .page,
+.pdfjs-viewer-shell.highlight-eraser-active .pdfjs-viewer-container .page { cursor: crosshair; }
+.pdfjs-viewer-shell.highlight-eraser-active .pdfjs-viewer-container .page * { cursor: crosshair !important; }
 
 .pdfjs-viewer-container {
   position: absolute;
