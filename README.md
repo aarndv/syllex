@@ -20,16 +20,22 @@ Syllex is in active MVP development. Flashcards and release hardening are planne
 
 ## Run locally
 
-Development takes place on Fedora KDE. Install Node.js, npm, Rust, and the system dependencies required by Tauri 2, then run:
+### Linux (Fedora KDE)
+
+Install Node.js, npm, Rust, and the Linux system dependencies required by Tauri 2. From the repository root, run:
 
 ```bash
 npm ci
 npm run tauri dev
 ```
 
-PowerPoint previews require LibreOffice installed locally. PDF reading works without it. Windows 11 is a runtime, CI, packaging, and manual validation target.
+### Windows 11
 
-Available checks:
+Syllex is intended to run as a native Windows desktop application. Use a Windows package from a native build when one is available; installer packaging and validation are tracked in [M8](docs/ROADMAP.md). Source development takes place on Fedora KDE.
+
+On either platform, PowerPoint previews require LibreOffice installed locally. PDF reading works without it.
+
+Checks on the Fedora development machine:
 
 ```bash
 npm run build

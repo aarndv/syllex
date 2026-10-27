@@ -90,3 +90,7 @@ Issue #10 (page previews and persistent highlights) was explicitly requested as 
 - [ ] Fast fuzzy search across course catalog and modules
 - [ ] Visual hit navigation with direct jumping to matched page coordinates
 
+## M11 — Mobile version (future)
+
+A mobile version is planned after the desktop milestones. Supported mobile platforms, feature scope, and local file access will be decided before implementation. Fedora Linux and Windows 11 remain the current desktop targets.
+
