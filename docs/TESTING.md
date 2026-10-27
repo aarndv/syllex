@@ -57,6 +57,7 @@ Run on Fedora KDE and Windows 11 for:
 - Collapse each ancestor of the open PDF and confirm the Current file link remains visible; selecting another file should reveal its tree path
 - Issue #10: in both single-page and continuous modes, drag across wrapped text and non-text regions, then switch every reading filter and verify that highlights remain legible and correctly positioned after zoom and navigation
 - Issue #10: dock page previews on each side, change width and thumbnail scale, close and reopen the document, and verify that one tape per highlight remains and each tape focuses the corresponding region
+- Issue #10: verify compact previews have no blank row spacing, use `p1`, `p2`, … labels at the upper corner, keep tapes outside the page edge on either dock, and follow every document filter without recoloring the tape
 - Issue #10: add more than ten highlights to one page, verify the later tapes layer behind the first column without expanding the row, and use keyboard focus to reach every tape
 - Issue #10: rename a highlighted module or containing folder and verify that its highlights follow the renamed path; repeat on Fedora/WebKitGTK and Windows 11/WebView2
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { pdfjsLib } from "../utils/pdfInit";
 import type { Highlight, HighlightFocus } from "../types/highlight";
+import type { DocumentViewMode } from "./PdfViewer";
 
 interface SidebarProps {
   pdfDoc: pdfjsLib.PDFDocumentProxy;
@@ -9,6 +10,7 @@ interface SidebarProps {
   width: number;
   scale: number;
   dock: "left" | "right";
+  viewMode: DocumentViewMode;
   selectedHighlightId: string | null;
   onPageSelect: (pageNumber: number) => void;
   onHighlightSelect: (focus: HighlightFocus) => void;
@@ -66,14 +68,14 @@ function PageThumbnail({ pdfDoc, pageNumber, scale, scrollRoot }: {
   }, [pdfDoc, pageNumber, visible]);
 
   return (
-    <div ref={hostRef} className="pdf-page-thumbnail" style={{ width: `${Math.round(140 * scale)}px` }}>
+    <div ref={hostRef} className="pdf-page-thumbnail" style={{ width: `${Math.round(78 * scale)}px` }}>
       {failed ? <span className="pdf-thumbnail-fallback">Preview unavailable</span> : <canvas ref={canvasRef} aria-hidden="true" />}
     </div>
   );
 }
 
 export function PdfPageSidebar({
-  pdfDoc, currentPage, highlights, width, scale, dock, selectedHighlightId,
+  pdfDoc, currentPage, highlights, width, scale, dock, viewMode, selectedHighlightId,
   onPageSelect, onHighlightSelect,
 }: SidebarProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -85,7 +87,7 @@ export function PdfPageSidebar({
   }, [currentPage]);
 
   return (
-    <aside className={`pdf-page-sidebar dock-${dock}`} style={{ width }} aria-label="Page previews">
+    <aside className={`pdf-page-sidebar dock-${dock} mode-${viewMode}`} style={{ width }} aria-label="Page previews">
       <div className="pdf-page-sidebar-heading">Pages <span>{pdfDoc.numPages}</span></div>
       <div className="pdf-page-sidebar-scroll" ref={scrollRef}>
         {Array.from({ length: pdfDoc.numPages }, (_, index) => {
@@ -95,7 +97,7 @@ export function PdfPageSidebar({
             <div className={`pdf-thumbnail-row ${currentPage === pageNumber ? "current" : ""}`} key={pageNumber} data-thumbnail-page={pageNumber}>
               <button type="button" className="pdf-thumbnail-page-button" onClick={() => onPageSelect(pageNumber)} aria-label={`Go to page ${pageNumber}`} aria-current={currentPage === pageNumber ? "page" : undefined}>
                 <PageThumbnail pdfDoc={pdfDoc} pageNumber={pageNumber} scale={scale} scrollRoot={scrollRef} />
-                <span>Page {pageNumber}</span>
+                <span className="pdf-thumbnail-page-label" aria-hidden="true">p{pageNumber}</span>
               </button>
               <div className="pdf-thumbnail-tapes" aria-label={`Highlights on page ${pageNumber}`}>
                 {pageHighlights.map((highlight, tapeIndex) => {
@@ -105,7 +107,12 @@ export function PdfPageSidebar({
                       type="button"
                       key={highlight.id}
                       className={`pdf-highlight-tape color-${highlight.color} ${selectedHighlightId === highlight.id ? "selected" : ""}`}
-                      style={{ top: `${(tapeIndex % 10) * 15}px`, left: `${Math.min(layer * 4, 20)}px`, zIndex: Math.max(1, 100 - layer) }}
+                      style={{
+                        top: `${(tapeIndex % 10) * 10}%`,
+                        transform: `translateY(-${(tapeIndex % 10) * 10}%)`,
+                        [dock === "left" ? "left" : "right"]: `calc(100% - 2px + ${Math.min(layer * 3, 12)}px)`,
+                        zIndex: Math.max(1, 100 - layer),
+                      }}
                       title={`Go to highlight ${tapeIndex + 1} on page ${pageNumber}`}
                       aria-label={`Go to highlight ${tapeIndex + 1} on page ${pageNumber}`}
                       onClick={() => onHighlightSelect({ id: highlight.id, pageNumber, sequence: ++focusSequence.current })}

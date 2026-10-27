@@ -27,7 +27,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   defaultReadingFilter: "original",
   pageSidebarVisible: true,
   pageSidebarDock: "left",
-  pageSidebarWidth: 220,
+  pageSidebarWidth: 170,
   thumbnailScale: 1,
 };
 
@@ -340,13 +340,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
             <div className="setting-slider-row">
               <label htmlFor="setting-preview-width">Sidebar width: {localSettings.pageSidebarWidth}px</label>
-              <input id="setting-preview-width" type="range" min="180" max="360" step="10"
+              <input id="setting-preview-width" type="range" min="170" max="300" step="10"
                 value={localSettings.pageSidebarWidth}
                 onChange={(e) => handleChange("pageSidebarWidth", Number(e.target.value))} />
             </div>
             <div className="setting-slider-row">
               <label htmlFor="setting-thumbnail-scale">Thumbnail scale: {Math.round(localSettings.thumbnailScale * 100)}%</label>
-              <input id="setting-thumbnail-scale" type="range" min="0.75" max="1.5" step="0.05"
+              <input id="setting-thumbnail-scale" type="range" min="0.7" max="1.4" step="0.05"
                 value={localSettings.thumbnailScale}
                 onChange={(e) => handleChange("thumbnailScale", Number(e.target.value))} />
             </div>

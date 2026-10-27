@@ -759,7 +759,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             <>
             {settings.pageSidebarVisible && (
               <PdfPageSidebar pdfDoc={pdfDoc} currentPage={currentPage} highlights={highlights}
-                width={settings.pageSidebarWidth} scale={settings.thumbnailScale} dock={settings.pageSidebarDock}
+                width={settings.pageSidebarWidth} scale={settings.thumbnailScale} dock={settings.pageSidebarDock} viewMode={viewMode}
                 selectedHighlightId={selectedHighlightId} onPageSelect={setCurrentPage}
                 onHighlightSelect={(focus) => { setSelectedHighlightId(focus.id); setFocusHighlight(focus); }} />
             )}
