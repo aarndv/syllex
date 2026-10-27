@@ -53,6 +53,10 @@ Run on Fedora KDE and Windows 11 for:
 - Confirm PDF.js's viewer buffer releases distant page views without leaving partial canvases
 - Complex tables, non-embedded standard fonts, and CMap-encoded text
 - The generated PDF from a representative PPT/PPTX in both Syllex and an external viewer
+- Viewer sidebar in both themes: compact file icons and names, folder rows without selection tint, and accessible ellipsis actions
+- Collapse each ancestor of the open PDF and confirm the Current file link remains visible; selecting another file should reveal its tree path
+
+The viewer sidebar change is React/CSS only and uses the same behavior on Fedora/WebKitGTK and Windows/WebView2. Validate menu positioning, keyboard focus, and the sticky Current file link on both targets during the PDF smoke test.
 
 ## Required fixtures
 

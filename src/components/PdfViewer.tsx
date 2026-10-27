@@ -436,6 +436,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           <FileTree
             nodes={allNodes}
             activePath={node.relative_path}
+            compact
             onSelectFile={onSelectNode}
             onAddFile={onAddFile}
             onRemoveItem={onRemoveItem}

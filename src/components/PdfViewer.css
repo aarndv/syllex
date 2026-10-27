@@ -141,6 +141,212 @@ html[data-theme="light"] .pdf-drawer.is-resizing .pdf-drawer-resizer::after {
   padding: 1rem;
 }
 
+/* Compact file navigation while reading a document. */
+.pdf-drawer .drawer-tree-container {
+  padding: 0.6rem 0.5rem;
+}
+
+.pdf-drawer .file-tree-container.is-compact .tree-row {
+  gap: 0.2rem;
+  padding: 0.22rem 0.35rem;
+  min-height: 28px;
+}
+
+.pdf-drawer .file-tree-container.is-compact .tree-row-main {
+  gap: 0.35rem;
+}
+
+.pdf-drawer .file-tree-container.is-compact .tree-chevron,
+.pdf-drawer .file-tree-container.is-compact .tree-chevron-placeholder {
+  width: 0.7rem;
+  flex: 0 0 0.7rem;
+}
+
+.pdf-drawer .file-tree-container.is-compact .tree-type-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  flex: 0 0 16px;
+  color: #b8c6b9;
+}
+
+.pdf-drawer .file-tree-container.is-compact .tree-type-icon.pdf {
+  color: #f1a7a7;
+}
+
+.pdf-drawer .file-tree-container.is-compact .tree-type-icon.ppt,
+.pdf-drawer .file-tree-container.is-compact .tree-type-icon.pptx {
+  color: #c3b8f0;
+}
+
+.pdf-drawer .file-tree-container.is-compact .tree-type-icon.md {
+  color: #9dd8bb;
+}
+
+.pdf-drawer .file-tree-container.is-compact .tree-label {
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.pdf-drawer .file-tree-container.is-compact .tree-sub-list {
+  margin-left: 0.42rem;
+  padding-left: 0.4rem;
+}
+
+.pdf-drawer .file-tree-container.is-compact .folder-row,
+.pdf-drawer .file-tree-container.is-compact .folder-row:hover {
+  background: transparent;
+}
+
+.pdf-drawer .tree-item-menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.pdf-drawer .tree-menu-trigger {
+  width: 24px;
+  height: 24px;
+  padding: 0 0 5px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: 700 15px/1 system-ui, sans-serif;
+  cursor: pointer;
+  opacity: 0.65;
+}
+
+.pdf-drawer .tree-menu-trigger:hover,
+.pdf-drawer .tree-menu-trigger[aria-expanded="true"] {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.14);
+}
+
+.pdf-drawer .tree-menu-panel {
+  position: absolute;
+  top: calc(100% + 2px);
+  right: 0;
+  z-index: 40;
+  min-width: 158px;
+  padding: 4px;
+  border: 1px solid #496352;
+  border-radius: 6px;
+  background: #1b3627;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+
+.pdf-drawer .tree-menu-panel button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #fbf9f4;
+  font: inherit;
+  font-size: 0.76rem;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pdf-drawer .tree-menu-panel button:hover {
+  background: #345942;
+}
+
+.pdf-drawer .tree-menu-panel .tree-menu-delete:hover {
+  background: #672d2d;
+}
+
+.pdf-drawer .tree-current-file {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin-bottom: 0.65rem;
+  padding: 0.35rem;
+  border-bottom: 1px solid #496352;
+  background: #142a1d;
+}
+
+.pdf-drawer .tree-current-heading {
+  display: block;
+  margin-bottom: 0.2rem;
+  color: #b8c6b9;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pdf-drawer .tree-current-link {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.3rem 0.4rem;
+  border: 0;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.13);
+  color: #fbf9f4;
+  font: inherit;
+  font-size: 0.78rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pdf-drawer .tree-current-link span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-theme="light"] .pdf-drawer .file-tree-container.is-compact .tree-type-icon {
+  color: #42634d;
+}
+
+html[data-theme="light"] .pdf-drawer .file-tree-container.is-compact .tree-type-icon.pdf {
+  color: #9a3535;
+}
+
+html[data-theme="light"] .pdf-drawer .file-tree-container.is-compact .tree-type-icon.ppt,
+html[data-theme="light"] .pdf-drawer .file-tree-container.is-compact .tree-type-icon.pptx {
+  color: #584795;
+}
+
+html[data-theme="light"] .pdf-drawer .tree-menu-panel {
+  border-color: #b8ae9f;
+  background: #fbf9f4;
+}
+
+html[data-theme="light"] .pdf-drawer .tree-menu-panel button {
+  color: #143222;
+}
+
+html[data-theme="light"] .pdf-drawer .tree-menu-panel button:hover {
+  background: #e4ddd0;
+}
+
+html[data-theme="light"] .pdf-drawer .tree-menu-panel .tree-menu-delete:hover {
+  background: #fee2e2;
+}
+
+html[data-theme="light"] .pdf-drawer .tree-current-file {
+  border-bottom-color: #b8ae9f;
+  background: #fbf9f4;
+}
+
+html[data-theme="light"] .pdf-drawer .tree-current-heading {
+  color: #42634d;
+}
+
+html[data-theme="light"] .pdf-drawer .tree-current-link {
+  background: #e4ddd0;
+  color: #143222;
+}
+
 /* Main PDF View */
 .pdf-main-area {
   flex: 1;
