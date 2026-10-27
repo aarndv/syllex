@@ -129,6 +129,17 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const mainAreaRef = useRef<HTMLDivElement | null>(null);
   const wheelAccumulatorRef = useRef<number>(0);
   const wheelTimerRef = useRef<number | null>(null);
+  const pageFlipCooldownRef = useRef<number>(0);
+  const pageFlipAccumulatorRef = useRef<number>(0);
+  const pageFlipTimerRef = useRef<number | null>(null);
+
+  // Live refs so wheel handlers can read current state without stale closures
+  const isContinuousScrollRef = useRef(isContinuousScroll);
+  const currentPageRef = useRef(currentPage);
+  const numPagesRef = useRef(numPages);
+  isContinuousScrollRef.current = isContinuousScroll;
+  currentPageRef.current = currentPage;
+  numPagesRef.current = numPages;
 
   const storageKey = `syllex_progress_${node.relative_path}`;
 
@@ -388,13 +399,14 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     };
   }, []);
 
-  // Handle Ctrl+Scroll zoom inside the PDF main reading area
+  // Handle Ctrl+Scroll (zoom) and plain Scroll (page-flip in single-page mode)
   useEffect(() => {
     const mainArea = mainAreaRef.current;
     if (!mainArea) return;
 
     const handleWheel = (e: WheelEvent) => {
       if (e.ctrlKey || e.metaKey) {
+        // ── Ctrl + wheel → zoom ───────────────────────────────────────────
         e.preventDefault();
         e.stopPropagation();
 
@@ -404,15 +416,13 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
 
         wheelAccumulatorRef.current += delta;
 
-        if (wheelTimerRef.current) {
-          window.clearTimeout(wheelTimerRef.current);
-        }
+        if (wheelTimerRef.current) window.clearTimeout(wheelTimerRef.current);
         wheelTimerRef.current = window.setTimeout(() => {
           wheelAccumulatorRef.current = 0;
         }, 200);
 
-        const THRESHOLD = 35;
-        if (Math.abs(wheelAccumulatorRef.current) >= THRESHOLD) {
+        const ZOOM_THRESHOLD = 35;
+        if (Math.abs(wheelAccumulatorRef.current) >= ZOOM_THRESHOLD) {
           const isZoomIn = wheelAccumulatorRef.current < 0;
           wheelAccumulatorRef.current = 0;
           if (isZoomIn) {
@@ -421,15 +431,49 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             handleWheelZoomOut();
           }
         }
+      } else if (!isContinuousScrollRef.current) {
+        // ── Plain wheel in single-page mode → page flip ───────────────────
+        // Accumulate scroll distance; flip the page once enough has built up.
+        // A short cooldown (300 ms) prevents runaway multi-page jumps on
+        // fast trackpads. The PDF.js container itself has no scrollable
+        // content in single-page mode so we don't need to preventDefault.
+        let delta = e.deltaY;
+        if (e.deltaMode === 1) delta *= 33;
+        else if (e.deltaMode === 2) delta *= 500;
+
+        pageFlipAccumulatorRef.current += delta;
+
+        // Reset accumulator if the user pauses scrolling
+        if (pageFlipTimerRef.current) window.clearTimeout(pageFlipTimerRef.current);
+        pageFlipTimerRef.current = window.setTimeout(() => {
+          pageFlipAccumulatorRef.current = 0;
+        }, 400);
+
+        const PAGE_FLIP_THRESHOLD = 80; // px of scroll to trigger a page turn
+        const now = Date.now();
+        const COOLDOWN_MS = 350; // minimum ms between consecutive page flips
+
+        if (Math.abs(pageFlipAccumulatorRef.current) >= PAGE_FLIP_THRESHOLD) {
+          const goForward = pageFlipAccumulatorRef.current > 0;
+          pageFlipAccumulatorRef.current = 0;
+
+          if (now - pageFlipCooldownRef.current >= COOLDOWN_MS) {
+            pageFlipCooldownRef.current = now;
+            if (goForward && currentPageRef.current < numPagesRef.current) {
+              setCurrentPage((p) => p + 1);
+            } else if (!goForward && currentPageRef.current > 1) {
+              setCurrentPage((p) => p - 1);
+            }
+          }
+        }
       }
     };
 
     mainArea.addEventListener("wheel", handleWheel, { passive: false });
     return () => {
       mainArea.removeEventListener("wheel", handleWheel);
-      if (wheelTimerRef.current) {
-        window.clearTimeout(wheelTimerRef.current);
-      }
+      if (wheelTimerRef.current) window.clearTimeout(wheelTimerRef.current);
+      if (pageFlipTimerRef.current) window.clearTimeout(pageFlipTimerRef.current);
     };
   }, [handleWheelZoomIn, handleWheelZoomOut]);
 
