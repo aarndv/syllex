@@ -23,6 +23,7 @@ import {
 import { PdfJsViewer } from "./PdfJsViewer";
 import { PdfPageSidebar } from "./PdfPageSidebar";
 import type { AppSettings } from "./SettingsModal";
+import { HIGHLIGHT_COLORS } from "../types/highlight";
 import type { Highlight, HighlightColor, HighlightFocus, HighlightRect } from "../types/highlight";
 import { toUserFacingError } from "../utils/userFacingError";
 import "./PdfViewer.css";
@@ -76,6 +77,7 @@ const DEFAULT_DRAWER_WIDTH = 320;
 const MIN_DRAWER_WIDTH = 220;
 const MAX_DRAWER_WIDTH = 750;
 const DRAWER_WIDTH_STORAGE_KEY = "syllex_pdf_drawer_width";
+const HIGHLIGHT_COLOR_STORAGE_KEY = "syllex_highlight_color";
 
 export const PdfViewer: React.FC<PdfViewerProps> = ({
   settings,
@@ -119,8 +121,12 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const [filterToast, setFilterToast] = useState<string | null>(null);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [highlightEnabled, setHighlightEnabled] = useState(false);
-  const [highlightColor, setHighlightColor] = useState<HighlightColor>("gold");
+  const [highlightColor, setHighlightColor] = useState<HighlightColor>(() => {
+    const saved = localStorage.getItem(HIGHLIGHT_COLOR_STORAGE_KEY);
+    return HIGHLIGHT_COLORS.find((color) => color.id === saved)?.id ?? "gold";
+  });
   const [highlightError, setHighlightError] = useState<string | null>(null);
+  const [lastSavedHighlightId, setLastSavedHighlightId] = useState<string | null>(null);
   const [selectedHighlightId, setSelectedHighlightId] = useState<string | null>(null);
   const [focusHighlight, setFocusHighlight] = useState<HighlightFocus | null>(null);
 
@@ -133,6 +139,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const toastTimerRef = useRef<number | null>(null);
+  const highlightToastTimerRef = useRef<number | null>(null);
   const documentKeyRef = useRef(`${vaultRoot}\0${node.relative_path}`);
   documentKeyRef.current = `${vaultRoot}\0${node.relative_path}`;
 
@@ -144,6 +151,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     setSelectedHighlightId(null);
     setFocusHighlight(null);
     setHighlightError(null);
+    setLastSavedHighlightId(null);
+    if (highlightToastTimerRef.current) window.clearTimeout(highlightToastTimerRef.current);
     invoke<Highlight[]>("list_highlights", { vaultRoot, relativePath: node.relative_path })
       .then((items) => {
         if (active) setHighlights((current) => [
@@ -163,26 +172,34 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       if (documentKeyRef.current === documentKey) {
         setHighlights((current) => [...current, highlight]);
         setHighlightError(null);
+        setLastSavedHighlightId(highlight.id);
+        if (highlightToastTimerRef.current) window.clearTimeout(highlightToastTimerRef.current);
+        highlightToastTimerRef.current = window.setTimeout(() => setLastSavedHighlightId(null), 6000);
       }
     } catch (error) {
       if (documentKeyRef.current === documentKey) setHighlightError(toUserFacingError(error, "save this highlight"));
     }
   }
 
-  async function handleDeleteSelectedHighlight() {
-    if (!selectedHighlightId) return;
+  async function handleDeleteHighlight(id: string) {
     const documentKey = documentKeyRef.current;
     try {
-      await invoke("delete_highlight", { vaultRoot, relativePath: node.relative_path, id: selectedHighlightId });
+      await invoke("delete_highlight", { vaultRoot, relativePath: node.relative_path, id });
       if (documentKeyRef.current === documentKey) {
-        setHighlights((current) => current.filter((item) => item.id !== selectedHighlightId));
-        setSelectedHighlightId(null);
-        setFocusHighlight(null);
+        setHighlights((current) => current.filter((item) => item.id !== id));
+        setSelectedHighlightId((current) => current === id ? null : current);
+        setFocusHighlight((current) => current?.id === id ? null : current);
+        setLastSavedHighlightId((current) => current === id ? null : current);
         setHighlightError(null);
       }
     } catch (error) {
       if (documentKeyRef.current === documentKey) setHighlightError(toUserFacingError(error, "remove this highlight"));
     }
+  }
+
+  function handleChooseHighlightColor(color: HighlightColor) {
+    setHighlightColor(color);
+    localStorage.setItem(HIGHLIGHT_COLOR_STORAGE_KEY, color);
   }
 
   function triggerFilterToast(mode: DocumentViewMode) {
@@ -217,6 +234,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     return () => {
       if (toastTimerRef.current) {
         window.clearTimeout(toastTimerRef.current);
+      }
+      if (highlightToastTimerRef.current) {
+        window.clearTimeout(highlightToastTimerRef.current);
       }
     };
   }, []);
@@ -352,6 +372,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   }
 
   function handleToggleSearch() {
+    if (!isSearchOpen) setHighlightEnabled(false);
     setIsSearchOpen((prev) => {
       const next = !prev;
       if (next) {
@@ -387,6 +408,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       // Ctrl+F / Cmd+F: open search
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
         e.preventDefault();
+        setHighlightEnabled(false);
         setIsSearchOpen(true);
         setTimeout(() => {
           searchInputRef.current?.focus();
@@ -403,7 +425,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         return;
       }
 
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement || (e.target instanceof HTMLElement && e.target.isContentEditable)) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
 
       if (e.key === "ArrowLeft") {
         handlePrevPage();
@@ -417,9 +440,14 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         cycleViewMode();
       } else if (e.key.toLowerCase() === "t") {
         onUpdateSettings({ ...settings, pageSidebarVisible: !settings.pageSidebarVisible });
+      } else if (e.key.toLowerCase() === "h" && pdfDoc && !error) {
+        setIsSearchOpen(false);
+        setHighlightEnabled((current) => !current);
       } else if (e.key === "Escape") {
         if (isSearchOpen) {
           setIsSearchOpen(false);
+        } else if (highlightEnabled) {
+          setHighlightEnabled(false);
         } else {
           onClose();
         }
@@ -430,7 +458,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [currentPage, numPages, zoom, isSearchOpen, settings, onUpdateSettings]);
+  }, [currentPage, numPages, zoom, isSearchOpen, highlightEnabled, pdfDoc, error, settings, onUpdateSettings]);
 
   const handleMouseDownResize = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -583,20 +611,15 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             <button type="button" className={`toolbar-btn ${settings.pageSidebarVisible ? "active" : ""}`}
               title="Toggle page previews (T)" aria-pressed={settings.pageSidebarVisible}
               onClick={() => onUpdateSettings({ ...settings, pageSidebarVisible: !settings.pageSidebarVisible })}>Pages</button>
-            <button type="button" className={`toolbar-btn ${highlightEnabled ? "active" : ""}`}
-              title="Drag across text or a page region to highlight" aria-pressed={highlightEnabled}
-              onClick={() => setHighlightEnabled((current) => !current)}>Highlight</button>
-            {highlightEnabled && (
-              <label className="highlight-color-control">Color
-                <select aria-label="Highlight color" value={highlightColor}
-                  onChange={(event) => setHighlightColor(event.target.value as HighlightColor)}>
-                  <option value="gold">Gold</option><option value="mint">Mint</option>
-                  <option value="rose">Rose</option><option value="blue">Blue</option>
-                  <option value="violet">Violet</option>
-                </select>
-              </label>
-            )}
-            {selectedHighlightId && <button type="button" className="toolbar-btn" onClick={handleDeleteSelectedHighlight}>Remove highlight</button>}
+            <button type="button" className={`toolbar-btn highlighter-toggle ${highlightEnabled ? "active" : ""}`}
+              title="Toggle highlighter (H)" aria-label={`Highlight with ${highlightColor} (H)`}
+              aria-keyshortcuts="H" aria-pressed={highlightEnabled} disabled={loading || !!error || !pdfDoc}
+              onClick={() => { setIsSearchOpen(false); setHighlightEnabled((current) => !current); }}>
+              <span className="highlighter-color-chip" aria-hidden="true"
+                style={{ backgroundColor: HIGHLIGHT_COLORS.find((color) => color.id === highlightColor)?.swatch }} />
+              <span>Highlight</span>
+            </button>
+            {selectedHighlightId && <button type="button" className="toolbar-btn" onClick={() => { void handleDeleteHighlight(selectedHighlightId); }}>Remove highlight</button>}
             {/* Find in Document Button */}
             <button
               onClick={handleToggleSearch}
@@ -647,6 +670,22 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             </div>
           </div>
         </header>
+
+        {highlightEnabled && !loading && !error && pdfDoc && (
+          <div className="pdf-highlight-palette" role="group" aria-label="Highlighter controls">
+            <span className="pdf-highlight-palette-title">Highlight color</span>
+            <div className="pdf-highlight-swatches" role="group" aria-label="Choose highlight color">
+              {HIGHLIGHT_COLORS.map((color) => (
+                <button key={color.id} type="button" className="pdf-highlight-swatch"
+                  style={{ backgroundColor: color.swatch }} title={color.label}
+                  aria-label={`${color.label} highlight`} aria-pressed={highlightColor === color.id}
+                  onClick={() => handleChooseHighlightColor(color.id)} />
+              ))}
+            </div>
+            <span className="pdf-highlight-palette-hint">Drag over text or any page area · Esc to finish</span>
+            <button type="button" className="pdf-highlight-done" onClick={() => setHighlightEnabled(false)}>Done</button>
+          </div>
+        )}
 
         {/* Floating In-PDF Search Bar */}
         {isSearchOpen && (
@@ -737,6 +776,12 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             </div>
           )}
           {highlightError && <div className="pdf-highlight-error" role="alert">{highlightError}</div>}
+          {lastSavedHighlightId && (
+            <div className="pdf-highlight-saved-toast" role="status" aria-live="polite">
+              <span>Highlight saved</span>
+              <button type="button" onClick={() => { void handleDeleteHighlight(lastSavedHighlightId); }}>Undo</button>
+            </div>
+          )}
 
           {/* Active Search Match Snippet Pill */}
           {isSearchOpen && activeMatch && (

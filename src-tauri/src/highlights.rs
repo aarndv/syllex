@@ -105,7 +105,16 @@ fn validate_highlight(highlight: &Highlight) -> Result<(), String> {
         || highlight.page_number > 100_000
         || !matches!(
             highlight.color.as_str(),
-            "gold" | "mint" | "rose" | "blue" | "violet"
+            "gold"
+                | "yellow"
+                | "orange"
+                | "rose"
+                | "pink"
+                | "mint"
+                | "lime"
+                | "teal"
+                | "blue"
+                | "violet"
         )
         || highlight.rects.is_empty()
         || highlight.rects.len() > 128
@@ -275,6 +284,26 @@ mod tests {
             }],
         };
         assert!(validate_highlight(&highlight).is_err());
+    }
+
+    #[test]
+    fn accepts_extended_highlight_palette() {
+        for color in [
+            "gold", "yellow", "orange", "rose", "pink", "mint", "lime", "teal", "blue", "violet",
+        ] {
+            let highlight = Highlight {
+                id: "12345678-1234".to_string(),
+                page_number: 1,
+                color: color.to_string(),
+                rects: vec![HighlightRect {
+                    x: 0.1,
+                    y: 0.1,
+                    width: 0.2,
+                    height: 0.1,
+                }],
+            };
+            assert!(validate_highlight(&highlight).is_ok(), "{color}");
+        }
     }
 
     #[test]

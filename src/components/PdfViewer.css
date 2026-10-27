@@ -375,8 +375,26 @@ html[data-theme="light"] .pdf-drawer .tree-current-link {
 
 .pdf-viewer-toolbar > * { flex-shrink: 0; }
 
-.highlight-color-control { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; }
-.highlight-color-control select { height: 32px; border-radius: 5px; background: #1b3627; color: #fbf9f4; border: 1px solid #8fa694; }
+.highlighter-toggle .highlighter-color-chip { width: 14px; height: 14px; border-radius: 50%; border: 1px solid #fff; box-shadow: 0 0 0 1px #0005; flex: 0 0 auto; }
+.highlighter-toggle:disabled { opacity: 0.45; cursor: not-allowed; }
+.pdf-highlight-palette { display: flex; align-items: center; flex-wrap: wrap; gap: 0.45rem 0.65rem; flex: 0 0 auto; padding: 0.4rem 0.75rem; background: #1b3627; color: #fbf9f4; border-bottom: 1px solid #42634d; font-family: Georgia, serif; }
+.pdf-highlight-palette-title { font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+.pdf-highlight-swatches { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem; }
+.pdf-highlight-swatch { width: 32px; height: 32px; padding: 0; border: 2px solid #1b3627; border-radius: 50%; box-shadow: 0 0 0 1px #e5e5dd; cursor: pointer; flex: 0 0 auto; }
+.pdf-highlight-swatch:hover { transform: scale(1.12); }
+.pdf-highlight-swatch[aria-pressed="true"] { outline: 2px solid #fbf9f4; outline-offset: 2px; }
+.pdf-highlight-swatch:focus-visible { outline: 2px solid #facc15; outline-offset: 3px; }
+.pdf-highlight-palette-hint { font-size: 0.73rem; color: #d3e2d4; white-space: nowrap; }
+.pdf-highlight-done { padding: 0.2rem 0.5rem; border: 1px solid #9fb6a1; border-radius: 4px; background: transparent; color: inherit; font: inherit; font-size: 0.75rem; cursor: pointer; }
+.pdf-highlight-done:hover, .pdf-highlight-done:focus-visible { background: #355641; }
+.pdf-highlight-saved-toast { position: absolute; right: 1rem; bottom: 1rem; z-index: 120; display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.7rem; border: 1px solid #42634d; border-radius: 6px; background: #fbf9f4; color: #143222; box-shadow: 0 5px 20px #0006; font-size: 0.82rem; }
+.pdf-highlight-saved-toast button { border: 0; background: transparent; color: #145c3b; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
+html[data-theme="light"] .pdf-highlight-palette { background: #fbf9f4; color: #143222; border-bottom-color: #b8ae9f; }
+html[data-theme="light"] .pdf-highlight-palette-hint { color: #42634d; }
+html[data-theme="light"] .pdf-highlight-swatch { border-color: #fbf9f4; box-shadow: 0 0 0 1px #143222; }
+html[data-theme="light"] .pdf-highlight-swatch[aria-pressed="true"] { outline-color: #143222; }
+html[data-theme="light"] .pdf-highlight-done { border-color: #42634d; }
+html[data-theme="light"] .pdf-highlight-done:hover, html[data-theme="light"] .pdf-highlight-done:focus-visible { background: #e4ddd0; }
 .pdf-highlight-error { position: absolute; top: 0.5rem; left: 50%; transform: translateX(-50%); z-index: 120; background: #fbf9f4; color: #8a2525; border: 1px solid #8a2525; border-radius: 6px; padding: 0.5rem 0.75rem; max-width: 80%; }
 
 .toolbar-left,
@@ -638,8 +656,13 @@ html[data-theme="light"] .pdf-drawer .tree-current-link {
 .pdf-highlight-tape { position: absolute; width: 12px; height: 6px; padding: 0; border: 1px solid #19251b; border-radius: 1px; box-shadow: 1px 1px 2px #0007; cursor: pointer; pointer-events: auto; }
 .pdf-highlight-tape.selected, .pdf-highlight-tape:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .pdf-highlight-tape.color-gold { background: #f3c65b; }
+.pdf-highlight-tape.color-yellow { background: #ffe150; }
+.pdf-highlight-tape.color-orange { background: #f4a24e; }
 .pdf-highlight-tape.color-mint { background: #75d9a5; }
+.pdf-highlight-tape.color-lime { background: #c4e76a; }
+.pdf-highlight-tape.color-teal { background: #6ad5cd; }
 .pdf-highlight-tape.color-rose { background: #ef9aaa; }
+.pdf-highlight-tape.color-pink { background: #f99bd8; }
 .pdf-highlight-tape.color-blue { background: #82b9ed; }
 .pdf-highlight-tape.color-violet { background: #c2a5ef; }
 
@@ -655,8 +678,13 @@ html[data-theme="light"] .pdf-drawer .tree-current-link {
 .syllex-highlight-draft { border-style: dashed; }
 .syllex-highlight.focused { outline: 2px solid #fff; outline-offset: 2px; }
 .syllex-highlight.color-gold, .syllex-highlight-draft.color-gold { --highlight-rgb: 255 198 59; }
+.syllex-highlight.color-yellow, .syllex-highlight-draft.color-yellow { --highlight-rgb: 255 225 80; }
+.syllex-highlight.color-orange, .syllex-highlight-draft.color-orange { --highlight-rgb: 244 162 78; }
 .syllex-highlight.color-mint, .syllex-highlight-draft.color-mint { --highlight-rgb: 92 232 151; }
+.syllex-highlight.color-lime, .syllex-highlight-draft.color-lime { --highlight-rgb: 196 231 106; }
+.syllex-highlight.color-teal, .syllex-highlight-draft.color-teal { --highlight-rgb: 106 213 205; }
 .syllex-highlight.color-rose, .syllex-highlight-draft.color-rose { --highlight-rgb: 255 116 145; }
+.syllex-highlight.color-pink, .syllex-highlight-draft.color-pink { --highlight-rgb: 249 155 216; }
 .syllex-highlight.color-blue, .syllex-highlight-draft.color-blue { --highlight-rgb: 89 174 255; }
 .syllex-highlight.color-violet, .syllex-highlight-draft.color-violet { --highlight-rgb: 189 143 255; }
 .pdfjs-viewer-shell.highlight-tool-active .pdfjs-viewer-container .page { cursor: crosshair; }
