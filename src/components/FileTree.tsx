@@ -220,12 +220,16 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = React.memo(({
       onFocus={(event) => {
         if (event.target === event.currentTarget) onFocusItem(node.relative_path);
       }}
+      onClick={(event) => {
+        if (!(event.target instanceof Element) ||
+          event.target.closest('[role="treeitem"]') !== event.currentTarget ||
+          event.target.closest(".tree-item-menu")) return;
+        onFocusItem(node.relative_path);
+        onActivate(node);
+      }}
       onKeyDown={(event) => onKeyDown(event, node)}>
       <div className={`tree-row ${isFolder ? "folder-row" : "file-row"} ${isActive ? "is-active" : ""}`}>
-        <div className="tree-row-main" onClick={() => {
-          onFocusItem(node.relative_path);
-          onActivate(node);
-        }} title={node.name}>
+        <div className="tree-row-main" title={node.name}>
           {isFolder ? <span className="tree-chevron" aria-hidden="true">{isOpen ? "▾" : "▸"}</span>
             : <span className="tree-chevron-placeholder" aria-hidden="true" />}
           {compact ? (
@@ -242,7 +246,7 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = React.memo(({
         <div className="tree-item-menu">
           <button type="button" className="tree-menu-trigger" tabIndex={-1}
             aria-label={`Actions for ${node.name}`} aria-expanded={openMenuPath === node.relative_path}
-            onClick={() => onToggleMenu(node.relative_path)}>...</button>
+            onClick={() => onToggleMenu(node.relative_path)}>…</button>
           {openMenuPath === node.relative_path && (
             <div className="tree-menu-panel">
               <button type="button" aria-label={`Rename ${node.name}`} onClick={() => {

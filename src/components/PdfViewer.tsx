@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useId, useRef, useState, useMemo, useCallback } from "react";
 import { pdfjsLib, getPdfDocumentParams } from "../utils/pdfInit";
 import { invoke } from "@tauri-apps/api/core";
 import { VaultNode } from "../types/vault";
@@ -100,6 +100,11 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   onClose,
 }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(true);
+  const [isToolsOpen, setIsToolsOpen] = useState(false);
+  const toolsPanelId = useId();
+  const toolsMenuRef = useRef<HTMLDivElement | null>(null);
+  const toolsPanelRef = useRef<HTMLDivElement | null>(null);
+  const toolsButtonRef = useRef<HTMLButtonElement | null>(null);
   const previousDrawerOpenRef = useRef(isDrawerOpen);
   const expandDrawerButtonRef = useRef<HTMLButtonElement | null>(null);
   const collapseDrawerButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -176,6 +181,30 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     previousDrawerOpenRef.current = isDrawerOpen;
     (isDrawerOpen ? collapseDrawerButtonRef : expandDrawerButtonRef).current?.focus();
   }, [isDrawerOpen]);
+
+  useEffect(() => {
+    if (!isToolsOpen) return;
+    toolsPanelRef.current?.querySelector<HTMLElement>("button:not(:disabled), select")?.focus();
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Node && !toolsMenuRef.current?.contains(event.target)) {
+        setIsToolsOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        setIsToolsOpen(false);
+        toolsButtonRef.current?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isToolsOpen]);
 
   useEffect(() => {
     if (!highlightEnabled) setErasingHighlights(false);
@@ -666,6 +695,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         return;
       }
 
+      if (e.target instanceof HTMLElement &&
+        e.target.closest(".toolbar-tools-panel, .tree-menu-panel")) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement || (e.target instanceof HTMLElement && e.target.isContentEditable)) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
 
@@ -743,7 +774,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         inert={!isDrawerOpen}
         style={{
           width: `${drawerWidth}px`,
-          marginLeft: isDrawerOpen ? "0px" : `-${drawerWidth}px`,
+          marginLeft: isDrawerOpen ? "0px" : `calc(0px - min(${drawerWidth}px, 45vw))`,
           transition: isResizing ? "none" : undefined,
         }}
       >
@@ -813,6 +844,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             <span className="doc-title" title={node.name}>{node.name}</span>
           </div>
 
+          <div className="toolbar-main-controls">
           <div className="toolbar-center">
             {!isContinuousScroll ? (
               <div className="toolbar-control-group page-controls">
@@ -821,6 +853,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                   disabled={currentPage <= 1}
                   className="toolbar-icon-btn"
                   title="Previous Page (Left Arrow)"
+                  aria-label="Previous page"
                 >
                   <ChevronLeftIcon size={14} />
                 </button>
@@ -832,6 +865,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                   disabled={currentPage >= numPages}
                   className="toolbar-icon-btn"
                   title="Next Page (Right Arrow)"
+                  aria-label="Next page"
                 >
                   <ChevronRightIcon size={14} />
                 </button>
@@ -848,12 +882,23 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               onClick={() => setIsContinuousScroll((prev) => !prev)}
               className={`toolbar-btn scroll-toggle-btn ${isContinuousScroll ? "active" : ""}`}
               title="Toggle Continuous Scroll / Single Page Mode"
+              aria-pressed={isContinuousScroll}
             >
               <ScrollIcon size={14} /> <span>{isContinuousScroll ? "Continuous" : "Single Page"}</span>
             </button>
           </div>
 
-          <div className="toolbar-right">
+          <div className="toolbar-right" ref={toolsMenuRef} onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) setIsToolsOpen(false);
+          }}>
+            <button type="button" ref={toolsButtonRef} className="toolbar-btn tools-toggle-btn"
+              aria-label="Reader tools" aria-expanded={isToolsOpen}
+              aria-controls={isToolsOpen ? toolsPanelId : undefined}
+              onClick={() => setIsToolsOpen((open) => !open)}>
+              Tools <ChevronDownIcon size={14} />
+            </button>
+            {isToolsOpen && <div id={toolsPanelId} ref={toolsPanelRef} className="toolbar-tools-panel"
+              role="group" aria-label="Reader tools">
             <button type="button" className={`toolbar-btn ${settings.pageSidebarVisible ? "active" : ""}`}
               title="Toggle page previews (T)" aria-pressed={settings.pageSidebarVisible}
               onClick={() => onUpdateSettings({ ...settings, pageSidebarVisible: !settings.pageSidebarVisible })}>Pages</button>
@@ -871,6 +916,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               onClick={handleToggleSearch}
               className={`toolbar-btn search-doc-btn ${isSearchOpen ? "active" : ""}`}
               title="Find in document (Ctrl+F)"
+              aria-pressed={isSearchOpen}
             >
               <SearchIcon size={14} /> <span>Find</span>
             </button>
@@ -900,6 +946,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               onClick={handleToggleFitWidth}
               className={`toolbar-btn fit-width-btn ${isFitWidth ? "active" : ""}`}
               title="Fit to width (Ctrl+0)"
+              aria-pressed={isFitWidth}
             >
               <FitWidthIcon size={14} /> <span>Fit Width</span>
             </button>
@@ -954,6 +1001,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                 +
               </button>
             </div>
+            </div>}
+          </div>
           </div>
         </header>
 
@@ -985,6 +1034,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                 ref={searchInputRef}
                 type="text"
                 className="pdf-search-input"
+                aria-label="Find in document"
                 placeholder="Find in document... (Enter / Shift+Enter)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -1005,6 +1055,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                   className="search-clear-btn"
                   onClick={() => setSearchQuery("")}
                   title="Clear query"
+                  aria-label="Clear search query"
                 >
                   <CloseIcon size={12} />
                 </button>
@@ -1030,6 +1081,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                 disabled={searchMatches.length === 0}
                 onClick={handlePrevMatch}
                 title="Previous match (Shift+Enter)"
+                aria-label="Previous search match"
               >
                 <ChevronUpIcon size={13} />
               </button>
@@ -1039,6 +1091,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                 disabled={searchMatches.length === 0}
                 onClick={handleNextMatch}
                 title="Next match (Enter)"
+                aria-label="Next search match"
               >
                 <ChevronDownIcon size={13} />
               </button>
@@ -1049,6 +1102,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               className="search-close-btn"
               onClick={() => setIsSearchOpen(false)}
               title="Close search (Esc)"
+              aria-label="Close search"
             >
               <CloseIcon size={14} />
             </button>

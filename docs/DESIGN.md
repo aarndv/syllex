@@ -49,7 +49,7 @@ Syllex uses a **Warm Academic Library** aesthetic—a cozy, focused study sanctu
 
 ## 3. Interaction & Safety Principles
 
-- **Reading Filter Feedback & Visual Polish:** Module viewer toolbars must feature unified height, aligned control groups (page controls, mode toggles, fit-to-width toggles, and granular zoom segments with preset dropdowns and shortcuts), themed custom select dropdowns (no unstyled native white popups), and immediate floating toast notifications when cycling dark mode filters (via keyboard shortcut 'D' or dropdown selection).
+- **Reader Controls:** Keep the document title, page controls, reading mode, and a labeled Tools button visible as the reader narrows. Group page previews, highlighting, search, filters, fit-to-width, and zoom in a keyboard-accessible Tools panel with visible focus and accurate pressed states. Keep themed select controls and existing keyboard shortcuts; show immediate floating feedback when cycling reading filters with 'D' or the dropdown.
 - **Highlighting Controls:** When the highlighter is active, show labeled color swatches and an Erase option with a visible selected state and a short instruction. Keep each choice available in one click, let the eraser remove a highlight by clicking it on the page, and provide a brief Undo action after saving or erasing.
 - **Highlight Placement:** Begin text selection only when the drag starts on a rendered text character. Drags from images, whitespace, or open page areas create a free-area highlight.
 - **Current Page Preview:** Mark the active page with a translucent green overlay and a full-edge frame, while keeping its page label and highlight tapes legible.
