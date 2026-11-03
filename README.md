@@ -1,3 +1,5 @@
+# Syllex 
+---
 <img width="3750" height="1250" alt="Syllex Logo (6000 x 2000 px)" src="https://github.com/user-attachments/assets/871c7bc8-ab83-4b7e-9e7a-4874548a328e" />
 
 Syllex is a personal study library for the course materials already on your computer. Choose your course folder as a vault, much like an Obsidian vault, and browse your classes and readings together. It gives you a comfortable place to read, keep your place, and return to the passages you've highlighted.
