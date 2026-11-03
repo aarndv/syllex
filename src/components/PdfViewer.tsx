@@ -536,6 +536,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     if (!mainArea) return;
 
     const handleWheel = (e: WheelEvent) => {
+      if (e.target instanceof Element && e.target.closest(".pdf-page-sidebar")) return;
+
       if (e.ctrlKey || e.metaKey) {
         // ── Ctrl + wheel → zoom ───────────────────────────────────────────
         e.preventDefault();
