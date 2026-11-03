@@ -16,6 +16,8 @@ No frontend unit-test runner is currently configured. Until one is added, `npm r
 
 Issue #9 date-only calendar calculations have focused Node built-in tests. Run `TZ=America/Los_Angeles node --test tests/academicDates.test.mjs` and `TZ=Asia/Manila node --test tests/academicDates.test.mjs` to cover both sides of UTC. The configured trimester end date is inclusive; progress reaches 100% at the next local midnight. This does not provide the broader frontend test setup tracked in issue #7.
 
+Issue #11 tree navigation has focused Node built-in tests: `node --test tests/treeNavigation.test.mjs`. Tree semantics, focus behavior, and row actions still require manual checks in both desktop webviews.
+
 ### Rust unit and integration tests
 
 Cover native behavior such as:
@@ -57,6 +59,7 @@ Run on Fedora KDE and Windows 11 for:
 - The generated PDF from a representative PPT/PPTX in both Syllex and an external viewer
 - Viewer sidebar in both themes: compact file icons and names, folder rows without selection tint, and accessible ellipsis actions
 - Issue #8: on the bookshelf in both themes, Tab to a book, open it with Enter and Space, then Tab to its visible Rename and Remove actions; confirm their focus rings and screen reader names include the module name, format, and reading state.
+- Issue #11: in the full and compact Explorer trees, Tab into one focused row and use Up, Down, Home, End, Left, Right, Enter, and Space across nested and empty folders and files. Confirm collapsed descendants are skipped, focus and selection are distinct, and Shift+F10 or the context-menu key opens the focused row's actions; Escape restores tree focus. Check screen reader tree, group, expanded, and selected announcements.
 - Collapse each ancestor of the open PDF and confirm the Current file link remains visible; selecting another file should reveal its tree path
 - Issue #10: in both single-page and continuous modes, drag across wrapped text and non-text regions, then switch every reading filter and verify that highlights remain legible and correctly positioned after zoom and navigation
 - Issue #10: drag across an image immediately beside selectable text, including near the edge of a text span, and confirm it creates a free-area box without snapping to text; start directly on letters to confirm wrapped text selection still works on Fedora/WebKitGTK and Windows 11/WebView2

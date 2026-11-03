@@ -579,7 +579,7 @@ html[data-theme="light"] .sidebar-content::-webkit-scrollbar-thumb:hover {
   border-top: 3px solid #1b3627;
   border-radius: 6px;
   box-shadow: 0 4px 16px rgba(27, 54, 39, 0.06);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .tree-card-header {
@@ -619,6 +619,18 @@ html[data-theme="light"] .sidebar-content::-webkit-scrollbar-thumb:hover {
 /* Minimal FileTree Component Styling */
 .file-tree-container {
   font-family: inherit;
+}
+
+.tree-keyboard-hint {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .tree-root-list {
@@ -666,12 +678,22 @@ html[data-theme="light"] .sidebar-content::-webkit-scrollbar-thumb:hover {
   cursor: pointer;
 }
 
-.tree-row-main:focus-visible,
 .tree-menu-trigger:focus-visible,
 .tree-menu-panel button:focus-visible,
 .tree-current-link:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 2px;
+}
+
+.tree-item-group:focus-visible,
+.tree-item-single:focus-visible {
+  outline: none;
+}
+
+.tree-item-group:focus-visible > .tree-row,
+.tree-item-single:focus-visible > .tree-row {
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
 }
 
 .tree-row:hover {
@@ -722,44 +744,93 @@ html[data-theme="light"] .sidebar-content::-webkit-scrollbar-thumb:hover {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-.tree-item-actions {
-  display: flex;
-  gap: 0.3rem;
-  opacity: 0.3;
-  transition: opacity 0.2s;
+.tree-item-menu {
+  position: relative;
+  z-index: 20;
+  flex: 0 0 auto;
 }
 
-.tree-row:hover .tree-item-actions,
-.tree-row:hover .tree-mini-btn {
-  opacity: 1;
+.tree-item-menu:focus-within {
+  z-index: 50;
 }
 
-.tree-mini-btn {
-  background: none;
-  border: 1px solid #3d684e;
-  color: #1b3627;
-  border-radius: 3px;
-  font-size: 0.75rem;
-  padding: 0.05rem 0.35rem;
+.tree-menu-trigger {
+  width: 24px;
+  height: 24px;
+  padding: 0 0 5px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: 700 15px/1 system-ui, sans-serif;
   cursor: pointer;
-  transition: all 0.2s;
-  opacity: 0.3;
+  opacity: 0.65;
 }
 
-.tree-mini-btn:hover {
-  background-color: #2a4c38;
-  color: #ffffff;
+.tree-menu-trigger:hover,
+.tree-menu-trigger[aria-expanded="true"],
+.tree-item-group:focus-visible > .tree-row .tree-menu-trigger,
+.tree-item-single:focus-visible > .tree-row .tree-menu-trigger {
+  opacity: 1;
+  background: #efeae1;
 }
 
-.tree-mini-btn.delete {
-  border-color: #e2d9c8;
-  color: #a3a3a3;
+.tree-menu-panel {
+  position: absolute;
+  top: calc(100% + 2px);
+  right: 0;
+  z-index: 40;
+  min-width: 158px;
+  padding: 4px;
+  border: 1px solid #42634d;
+  border-radius: 6px;
+  background: #fbf9f4;
+  color: #143222;
+  box-shadow: 0 8px 18px #0004;
 }
 
-.tree-mini-btn.delete:hover {
-  background-color: #fee2e2;
+.tree-menu-panel button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.76rem;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tree-menu-panel button:hover {
+  background: #efeae1;
+}
+
+.tree-menu-panel .tree-menu-delete:hover {
+  background: #fee2e2;
   color: #991b1b;
-  border-color: #fca5a5;
+}
+
+html[data-theme="dark"] .tree-menu-panel {
+  background: #1b3627;
+  color: #fbf9f4;
+}
+
+html[data-theme="dark"] .tree-item-group:focus-visible > .tree-row .tree-menu-trigger,
+html[data-theme="dark"] .tree-item-single:focus-visible > .tree-row .tree-menu-trigger {
+  background: #345942;
+}
+
+html[data-theme="dark"] .tree-menu-panel button:hover {
+  background: #345942;
+}
+
+html[data-theme="dark"] .tree-menu-panel .tree-menu-delete:hover {
+  background: #672d2d;
 }
 
 .tree-type-pill {

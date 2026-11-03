@@ -100,6 +100,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   onClose,
 }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(true);
+  const previousDrawerOpenRef = useRef(isDrawerOpen);
+  const expandDrawerButtonRef = useRef<HTMLButtonElement | null>(null);
+  const collapseDrawerButtonRef = useRef<HTMLButtonElement | null>(null);
   const [drawerWidth, setDrawerWidth] = useState<number>(() => {
     const saved = localStorage.getItem(DRAWER_WIDTH_STORAGE_KEY);
     if (saved) {
@@ -167,6 +170,12 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   numPagesRef.current = numPages;
 
   const storageKey = `syllex_progress_${node.relative_path}`;
+
+  useEffect(() => {
+    if (previousDrawerOpenRef.current === isDrawerOpen) return;
+    previousDrawerOpenRef.current = isDrawerOpen;
+    (isDrawerOpen ? collapseDrawerButtonRef : expandDrawerButtonRef).current?.focus();
+  }, [isDrawerOpen]);
 
   useEffect(() => {
     if (!highlightEnabled) setErasingHighlights(false);
@@ -729,6 +738,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     <div className={`pdf-viewer-overlay ${isDrawerOpen ? "drawer-open" : "drawer-closed"}`}>
       <aside
         className={`pdf-drawer ${isResizing ? "is-resizing" : ""}`}
+        aria-label="Vault Explorer"
+        aria-hidden={!isDrawerOpen}
+        inert={!isDrawerOpen}
         style={{
           width: `${drawerWidth}px`,
           marginLeft: isDrawerOpen ? "0px" : `-${drawerWidth}px`,
@@ -750,6 +762,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               </button>
             )}
             <button
+              ref={collapseDrawerButtonRef}
               onClick={() => setIsDrawerOpen(false)}
               className="drawer-toggle-btn"
               title="Collapse sidebar"
@@ -786,6 +799,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           <div className="toolbar-left">
             {!isDrawerOpen && (
               <button
+                ref={expandDrawerButtonRef}
                 onClick={() => setIsDrawerOpen(true)}
                 className="toolbar-btn expand-btn"
                 title="Expand sidebar"
