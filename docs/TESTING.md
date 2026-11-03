@@ -14,6 +14,8 @@ Cover pure frontend logic such as:
 
 No frontend unit-test runner is currently configured. Until one is added, `npm run build` provides TypeScript and production-bundle verification but does not replace behavioral viewer tests.
 
+Issue #9 date-only calendar calculations have focused Node built-in tests. Run `TZ=America/Los_Angeles node --test tests/academicDates.test.mjs` and `TZ=Asia/Manila node --test tests/academicDates.test.mjs` to cover both sides of UTC. The configured trimester end date is inclusive; progress reaches 100% at the next local midnight. This does not provide the broader frontend test setup tracked in issue #7.
+
 ### Rust unit and integration tests
 
 Cover native behavior such as:

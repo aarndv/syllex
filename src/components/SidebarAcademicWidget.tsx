@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { ClockIcon, SettingsIcon } from "./Icons";
+import { getDaysUntil, getTrimesterPercent } from "../utils/academicDates";
 import "./SidebarAcademicWidget.css";
 
 interface AcademicData {
@@ -68,38 +69,15 @@ export const SidebarAcademicWidget: React.FC<SidebarAcademicWidgetProps> = ({ on
     return now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }, [now]);
 
-  // Calculate days until target date
-  function getDaysUntil(dateStr: string): number | null {
-    if (!dateStr) return null;
-    const target = new Date(dateStr);
-    if (isNaN(target.getTime())) {
-      const parsedNum = parseInt(dateStr, 10);
-      return isNaN(parsedNum) ? null : parsedNum;
-    }
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const targetDay = new Date(target.getFullYear(), target.getMonth(), target.getDate());
-    const diffTime = targetDay.getTime() - today.getTime();
-    return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-  }
-
-  const daysToMidterms = getDaysUntil(data.midtermDate);
-  const daysToFinals = getDaysUntil(data.finalsDate);
+  const daysToMidterms = getDaysUntil(data.midtermDate, now);
+  const daysToFinals = getDaysUntil(data.finalsDate, now);
 
   // Calculate percentage of trimester complete
   const trimesterPercent = useMemo(() => {
     if (data.manualTrimesterPercent !== null && data.manualTrimesterPercent !== undefined) {
       return Math.min(100, Math.max(0, data.manualTrimesterPercent));
     }
-    if (data.trimesterStartDate && data.trimesterEndDate) {
-      const start = new Date(data.trimesterStartDate).getTime();
-      const end = new Date(data.trimesterEndDate).getTime();
-      const current = now.getTime();
-      if (end > start) {
-        const pct = Math.round(((current - start) / (end - start)) * 100);
-        return Math.min(100, Math.max(0, pct));
-      }
-    }
-    return null;
+    return getTrimesterPercent(data.trimesterStartDate, data.trimesterEndDate, now);
   }, [data, now]);
 
   // Calculate percentage of year complete automatically
