@@ -138,6 +138,7 @@ html[data-theme="light"] .pdf-drawer.is-resizing .pdf-drawer-resizer::after {
 .drawer-tree-container {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
   padding: 1rem;
 }
 

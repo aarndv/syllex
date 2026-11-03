@@ -151,7 +151,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const undoPendingRef = useRef(false);
   const documentKeyRef = useRef(`${vaultRoot}\0${node.relative_path}`);
   documentKeyRef.current = `${vaultRoot}\0${node.relative_path}`;
-  const mainAreaRef = useRef<HTMLDivElement | null>(null);
+  const readingAreaRef = useRef<HTMLElement | null>(null);
   const wheelAccumulatorRef = useRef<number>(0);
   const wheelTimerRef = useRef<number | null>(null);
   const pageFlipCooldownRef = useRef<number>(0);
@@ -532,11 +532,14 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
 
   // Handle Ctrl+Scroll (zoom) and plain Scroll (page-flip in single-page mode)
   useEffect(() => {
-    const mainArea = mainAreaRef.current;
-    if (!mainArea) return;
+    const readingArea = readingAreaRef.current;
+    if (!readingArea) return;
 
     const handleWheel = (e: WheelEvent) => {
-      if (e.target instanceof Element && e.target.closest(".pdf-page-sidebar")) return;
+      if (!(e.target instanceof Element) || !e.target.closest(".pdfjs-viewer-shell")) {
+        pageFlipAccumulatorRef.current = 0;
+        return;
+      }
 
       if (e.ctrlKey || e.metaKey) {
         // ── Ctrl + wheel → zoom ───────────────────────────────────────────
@@ -602,9 +605,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       }
     };
 
-    mainArea.addEventListener("wheel", handleWheel, { passive: false });
+    readingArea.addEventListener("wheel", handleWheel, { passive: false });
     return () => {
-      mainArea.removeEventListener("wheel", handleWheel);
+      readingArea.removeEventListener("wheel", handleWheel);
       if (wheelTimerRef.current) window.clearTimeout(wheelTimerRef.current);
       if (pageFlipTimerRef.current) window.clearTimeout(pageFlipTimerRef.current);
     };
@@ -778,7 +781,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         )}
       </aside>
 
-      <div className="pdf-main-area" ref={mainAreaRef}>
+      <div className="pdf-main-area">
         <header className="pdf-viewer-toolbar">
           <div className="toolbar-left">
             {!isDrawerOpen && (
@@ -1039,6 +1042,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         )}
 
         <main
+          ref={readingAreaRef}
           className={`pdf-viewer-body ${!loading && !error && pdfDoc ? "has-document" : ""}`}
         >
           {filterToast && (
