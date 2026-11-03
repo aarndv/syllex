@@ -56,6 +56,7 @@ Run on Fedora KDE and Windows 11 for:
 - Complex tables, non-embedded standard fonts, and CMap-encoded text
 - The generated PDF from a representative PPT/PPTX in both Syllex and an external viewer
 - Viewer sidebar in both themes: compact file icons and names, folder rows without selection tint, and accessible ellipsis actions
+- Issue #8: on the bookshelf in both themes, Tab to a book, open it with Enter and Space, then Tab to its visible Rename and Remove actions; confirm their focus rings and screen reader names include the module name, format, and reading state.
 - Collapse each ancestor of the open PDF and confirm the Current file link remains visible; selecting another file should reveal its tree path
 - Issue #10: in both single-page and continuous modes, drag across wrapped text and non-text regions, then switch every reading filter and verify that highlights remain legible and correctly positioned after zoom and navigation
 - Issue #10: drag across an image immediately beside selectable text, including near the edge of a text span, and confirm it creates a free-area box without snapping to text; start directly on letters to confirm wrapped text selection still works on Fedora/WebKitGTK and Windows 11/WebView2

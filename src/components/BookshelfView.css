@@ -378,7 +378,6 @@
   justify-content: space-between;
   padding: 0.65rem 0.65rem 0.5rem 0.65rem;
   box-sizing: border-box;
-  cursor: pointer;
   position: relative;
   transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease, box-shadow 0.2s ease;
   user-select: none;
@@ -396,8 +395,29 @@
   pointer-events: none;
 }
 
+.book-spine-open {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.book-spine-open:focus-visible {
+  outline: 2px solid #facc15;
+  outline-offset: 3px;
+}
+
 /* Standing Book Lift & Hover Effect */
-.book-spine-card:hover {
+.book-spine-card:hover,
+.book-spine-card:focus-within {
   transform: translateY(-8px) scale(1.03);
   border-color: var(--folder-hover-color, #059669);
   box-shadow: -6px 12px 20px rgba(0, 0, 0, 0.4), 0 0 16px var(--folder-hover-color, rgba(5, 150, 105, 0.4));
@@ -471,7 +491,8 @@ html[data-theme="light"] .book-metadata-tooltip {
   padding: 0.1rem;
 }
 
-.book-spine-card:hover .book-spine-actions {
+.book-spine-card:hover .book-spine-actions,
+.book-spine-card:focus-within .book-spine-actions {
   opacity: 1;
 }
 
@@ -497,6 +518,12 @@ html[data-theme="light"] .book-metadata-tooltip {
 .book-delete-btn:hover {
   color: #fca5a5;
   background-color: rgba(239, 68, 68, 0.2);
+}
+
+.book-rename-btn:focus-visible,
+.book-delete-btn:focus-visible {
+  outline: 2px solid #facc15;
+  outline-offset: 1px;
 }
 
 .book-spine-content {

@@ -449,7 +449,6 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
     <div
       className={`book-spine-card variant-${colorVariant} ${coverUrl ? "has-cover-snapshot" : ""}`}
       style={{ "--folder-hover-color": folderColor || "#059669" } as React.CSSProperties}
-      onClick={() => onSelectFile(node)}
       onMouseEnter={(event) => {
         updateTooltipPosition(event);
         setIsTooltipVisible(true);
@@ -457,62 +456,60 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
       onMouseMove={updateTooltipPosition}
       onMouseLeave={() => setIsTooltipVisible(false)}
     >
-      <div className="book-spine-ridge-left" />
+      <div className="book-spine-ridge-left" aria-hidden="true" />
+
+      <button type="button" className="book-spine-open"
+        onClick={() => onSelectFile(node)}
+        aria-label={`Open ${node.name}, ${ext} module, ${savedPage ? `last read page ${savedPage}` : "unread"}`}>
+        <span className="book-spine-content">
+          {coverUrl ? (
+            <span className="book-cover-snapshot-plate">
+              <img
+                src={coverUrl}
+                alt=""
+                className="book-cover-snapshot-img"
+                loading="lazy"
+              />
+            </span>
+          ) : (
+            <span className="book-spine-icon" aria-hidden="true">
+              {ext === "MD" ? <BookIcon size={18} /> : <FileIcon size={18} />}
+            </span>
+          )}
+          <span className="book-spine-title">{node.name}</span>
+        </span>
+
+        <span className="book-spine-footer">
+          <span className={`book-type-badge ${ext.toLowerCase()}`}>
+            <span className="badge-dot" />
+            {ext}
+          </span>
+          {savedPage ? (
+            <span className="book-progress-ribbon">Page {savedPage}</span>
+          ) : (
+            <span className="book-unread-tag">Unread</span>
+          )}
+        </span>
+      </button>
 
       <div className="book-spine-actions">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onRenameItem(node.relative_path, false, node.name);
-          }}
+        <button type="button"
+          onClick={() => onRenameItem(node.relative_path, false, node.name)}
           className="book-rename-btn"
-          title="Rename module"
+          aria-label={`Rename ${node.name}`} title="Rename module"
         >
           <PencilIcon size={11} />
         </button>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemoveItem(node.relative_path, false);
-          }}
+        <button type="button"
+          onClick={() => onRemoveItem(node.relative_path, false)}
           className="book-delete-btn"
-          title="Remove from shelf"
+          aria-label={`Remove ${node.name} from shelf`} title="Remove from shelf"
         >
           <CloseIcon size={12} />
         </button>
       </div>
 
-      <div className="book-spine-content">
-        {coverUrl ? (
-          <div className="book-cover-snapshot-plate">
-            <img
-              src={coverUrl}
-              alt={`${node.name} cover preview`}
-              className="book-cover-snapshot-img"
-              loading="lazy"
-            />
-          </div>
-        ) : (
-          <div className="book-spine-icon">
-            {ext === "MD" ? <BookIcon size={18} /> : <FileIcon size={18} />}
-          </div>
-        )}
-        <span className="book-spine-title">{node.name}</span>
-      </div>
-
-      <div className="book-spine-footer">
-        <span className={`book-type-badge ${ext.toLowerCase()}`}>
-          <span className="badge-dot" />
-          {ext}
-        </span>
-        {savedPage ? (
-          <span className="book-progress-ribbon">Page {savedPage}</span>
-        ) : (
-          <span className="book-unread-tag">Unread</span>
-        )}
-      </div>
-
-      <div className="book-binding-lines">
+      <div className="book-binding-lines" aria-hidden="true">
         <span className="binding-line" />
         <span className="binding-line" />
       </div>
