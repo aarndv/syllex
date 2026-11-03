@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from "react";
-import { SyllexLogo } from "./SyllexLogo";
+import logoWithText from "../assets/syllex-icon-with-text.png";
 import {
   FolderIcon,
   SettingsIcon,
@@ -75,14 +75,15 @@ export const LandingPad: React.FC<LandingPadProps> = ({
       <div className="landing-pad-backdrop-pattern" />
 
       <div className="landing-pad-card">
-        {/* Logo and Provisional Tag */}
+        {/* Syllex wordmark */}
         <div className="landing-logo-wrapper">
-          <SyllexLogo size={56} showProvisionalTag={true} />
+          <h1 className="landing-app-title">
+            <img src={logoWithText} alt="Syllex" width="6000" height="2000" />
+          </h1>
         </div>
 
-        {/* Header & Title */}
+        {/* Tagline */}
         <div className="landing-header-section">
-          <h1 className="landing-app-title">Syllex</h1>
           <p className="landing-tagline">Academic Repository & Module Sanctuary</p>
         </div>
 

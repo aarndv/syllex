@@ -586,7 +586,7 @@ function App() {
             title="Syllex — Return to Landing Pad"
             aria-label="Return to Landing Pad"
           >
-            <SyllexLogo size={24} />
+            <SyllexLogo size={32} />
             <h1>Syllex</h1>
           </button>
         </div>

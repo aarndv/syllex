@@ -777,7 +777,7 @@ html[data-theme="light"] .pdf-highlight-done:hover, html[data-theme="light"] .pd
 .pdf-thumbnail-page-button:focus-visible { outline: 1px dashed #fbf9f4; outline-offset: 2px; }
 .pdf-page-thumbnail { max-width: 100%; display: block; background: #fbf9f4; }
 .pdf-page-thumbnail canvas { width: 100%; height: auto; display: block; }
-.pdf-thumbnail-page-label { position: absolute; top: 2px; left: 2px; z-index: 2; padding: 1px 3px; background: rgba(20, 42, 29, 0.9); color: #fbf9f4; font: 700 10px/1.2 Georgia, serif; }
+.pdf-thumbnail-page-label { position: absolute; top: 2px; left: 2px; z-index: 2; padding: 1px 3px; background: rgba(20, 42, 29, 0.9); color: #fbf9f4; font: 700 10px/1.2 system-ui, -apple-system, "Segoe UI", sans-serif; }
 .pdf-page-sidebar.dock-right .pdf-thumbnail-page-label { left: auto; right: 2px; }
 .pdf-thumbnail-fallback { display: block; min-height: 58px; box-sizing: border-box; color: #5b4d3f; text-align: center; padding: 1.4rem 0.25rem 0.25rem; font-size: 0.67rem; }
 .pdf-thumbnail-tapes { position: absolute; inset: 0; pointer-events: none; }

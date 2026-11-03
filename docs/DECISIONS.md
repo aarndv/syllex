@@ -174,13 +174,13 @@ Record decisions that are expensive to reverse or affect multiple parts of the a
 
 **Status:** Accepted
 
-**Decision:** Present a calm, focused landing pad screen when the application launches, featuring the Syllex title, provisional emblem/logo, and streamlined vault status before transitioning to the full bookshelf/tree dashboard upon user entry.
+**Decision:** Present a calm, focused landing pad screen when the application launches, featuring the Syllex title and logo, and streamlined vault status before transitioning to the full bookshelf/tree dashboard upon user entry.
 
 **Reason:** Prevents overwhelming the user with the dense library dashboard immediately upon launch. Establishes a focused, deliberate entry into their academic study sanctuary with keyboard shortcut support (`Enter`/`Space`) and quick access to vault management and preferences.
 
 **Alternatives:** Immediately mount the full dashboard or vault explorer upon launch. While fast, it bombards the student with file lists before they are ready to choose their study task.
 
-**Consequences:** The application initializes with `hasEntered = false` displaying `<LandingPad />`. The landing card maintains a decluttered, calm layout focusing purely on the emblem, title/tagline, vault readiness status, and single-click/keyboard entry without extraneous timestamps or visual ornamentation. Users enter via the "Enter Syllex" button or keyboard shortcut, and can return to the landing pad at any time via the application header logo.
+**Consequences:** The application initializes with `hasEntered = false` displaying `<LandingPad />`. The landing card maintains a decluttered, calm layout focusing on the supplied Syllex wordmark, tagline, vault readiness status, and single-click/keyboard entry. The supplied square mark appears in the application header and native desktop icons. Users enter via the "Enter Syllex" button or keyboard shortcut, and can return to the landing pad at any time via the application header logo.
 
 ## D-017 — Local PDF highlight metadata for issue #10
 
@@ -197,6 +197,22 @@ Record decisions that are expensive to reverse or affect multiple parts of the a
 **Security impact:** Rust validates the selected vault boundary and document path before database operations. The database stores no document bytes or selected text and makes no network requests.
 
 **Consequences:** A versioned migration and native commands are required. Highlights are associated with a canonical module path, so rename handling must migrate that identity. Thumbnails remain disposable viewer renderings, not database content.
+
+## D-018 — Supplied Syllex marks and compact page labels
+
+**Status:** Accepted
+
+**Decision:** Use the owner-supplied square Syllex mark for the application header, favicon, and native desktop icons, and the supplied mark with text on the landing pad. Use a sans-serif face for the small page-preview number labels.
+
+**Reason:** The owner provided both logo assets and requested their use, along with a change to the page-preview number typography. The dark artwork needs a light backing on the existing dark surfaces to remain visible.
+
+**Alternatives:** Keep the provisional SVG and plain title, or use the wide wordmark in the narrow header. Both would leave the supplied assets unused or make the header cramped. Keeping Georgia on ten-pixel page labels would leave the requested typography unchanged.
+
+**Cross-platform impact:** The same bundled images and CSS display in Fedora WebKitGTK and Windows WebView2. Native icon files are regenerated from the square mark for Linux and Windows packaging. Windows visual validation remains pending on that platform.
+
+**Security impact:** Assets are bundled locally; no network access, storage change, or course-file operation is added.
+
+**Consequences:** The placeholder emblem and provisional badge are removed. The broader visual identity remains open beyond these supplied marks.
 
 
 

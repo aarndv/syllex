@@ -86,6 +86,13 @@ body::before {
   background-color: rgba(255, 255, 255, 0.08);
 }
 
+.header-title-btn .syllex-logo-container {
+  display: block;
+  flex-shrink: 0;
+  background-color: #fbf9f4;
+  border-radius: 4px;
+}
+
 .app-header h1 {
   margin: 0;
   font-size: 1.5rem;
