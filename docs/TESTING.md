@@ -57,6 +57,7 @@ Run on Fedora KDE and Windows 11 for:
 - Confirm PDF.js's viewer buffer releases distant page views without leaving partial canvases
 - Complex tables, non-embedded standard fonts, and CMap-encoded text
 - The generated PDF from a representative PPT/PPTX in both Syllex and an external viewer
+- Issue #1: hover book covers near each window edge and with a long filename at 800×600 and a narrow window; confirm the tooltip flips or clamps inside the visible viewport and keeps its metadata readable in both themes on Fedora/WebKitGTK and Windows/WebView2.
 - Viewer sidebar in both themes: compact file icons and names, folder rows without selection tint, and accessible ellipsis actions
 - Issue #8: on the bookshelf in both themes, Tab to a book, open it with Enter and Space, then Tab to its visible Rename and Remove actions; confirm their focus rings and screen reader names include the module name, format, and reading state.
 - Issue #11: in the full and compact Explorer trees, Tab into one focused row and use Up, Down, Home, End, Left, Right, Enter, and Space across nested and empty folders and files. Confirm collapsed descendants are skipped, focus and selection are distinct, and Shift+F10 or the context-menu key opens the focused row's actions; Escape restores tree focus. Check screen reader tree, group, expanded, and selected announcements.

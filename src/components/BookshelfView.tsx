@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { VaultNode, VaultNodeType } from "../types/vault";
 import { FolderIcon, FileIcon, PlusIcon, CloseIcon, BookIcon, PencilIcon } from "./Icons";
 import { getModuleCoverThumbnail } from "../utils/pdfThumbnail";
+import { getTooltipPosition } from "../utils/tooltipPosition";
 import "./BookshelfView.css";
 
 export interface FolderColorOption {
@@ -403,23 +404,48 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
   const ext = getFileExt(node.node_type);
   const savedPage = localStorage.getItem(`syllex_progress_${node.relative_path}`);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
-  const [tooltipPosition, setTooltipPosition] = useState({ left: 0, top: 0 });
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
+  const pointerRef = useRef({ x: 0, y: 0 });
+
+  const positionTooltip = useCallback(() => {
+    const tooltip = tooltipRef.current;
+    if (!tooltip) return;
+
+    const visualViewport = window.visualViewport;
+    const viewport = {
+      left: visualViewport?.offsetLeft ?? 0,
+      top: visualViewport?.offsetTop ?? 0,
+      width: visualViewport?.width ?? document.documentElement.clientWidth,
+      height: visualViewport?.height ?? document.documentElement.clientHeight,
+    };
+    tooltip.style.maxWidth = `${Math.max(1, viewport.width - 16)}px`;
+    tooltip.style.maxHeight = `${Math.max(1, viewport.height - 16)}px`;
+    const { width, height } = tooltip.getBoundingClientRect();
+    const { x, y } = getTooltipPosition(pointerRef.current, { width, height }, viewport);
+    tooltip.style.left = `${x}px`;
+    tooltip.style.top = `${y}px`;
+    tooltip.style.visibility = "visible";
+  }, []);
 
   function updateTooltipPosition(event: React.MouseEvent<HTMLDivElement>) {
-    const edgePadding = 8;
-    const tooltipWidth = 260;
-    const tooltipHeight = 112;
-    const left = Math.min(
-      Math.max(edgePadding, event.clientX + 14),
-      Math.max(edgePadding, window.innerWidth - tooltipWidth - edgePadding),
-    );
-    const top = Math.min(
-      Math.max(edgePadding, event.clientY + 14),
-      Math.max(edgePadding, window.innerHeight - tooltipHeight - edgePadding),
-    );
-    setTooltipPosition({ left, top });
+    pointerRef.current = { x: event.clientX, y: event.clientY };
+    positionTooltip();
   }
+
+  useLayoutEffect(() => {
+    if (!isTooltipVisible) return;
+    positionTooltip();
+    const visualViewport = window.visualViewport;
+    window.addEventListener("resize", positionTooltip);
+    visualViewport?.addEventListener("resize", positionTooltip);
+    visualViewport?.addEventListener("scroll", positionTooltip);
+    return () => {
+      window.removeEventListener("resize", positionTooltip);
+      visualViewport?.removeEventListener("resize", positionTooltip);
+      visualViewport?.removeEventListener("scroll", positionTooltip);
+    };
+  }, [isTooltipVisible, node.name, savedPage, positionTooltip]);
 
   useEffect(() => {
     let isMounted = true;
@@ -517,9 +543,9 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
       {isTooltipVisible && (
         createPortal(
           <div
+            ref={tooltipRef}
             className="book-metadata-tooltip"
             role="tooltip"
-            style={{ left: tooltipPosition.left, top: tooltipPosition.top }}
           >
             <strong className="book-metadata-tooltip-title">{node.name}</strong>
             <span>{ext}{savedPage ? ` · Page ${savedPage}` : " · Unread"}</span>
