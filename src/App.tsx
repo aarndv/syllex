@@ -584,10 +584,9 @@ function App() {
             className="header-title-btn"
             onClick={() => setHasEntered(false)}
             title="Syllex — Return to Landing Pad"
-            aria-label="Return to Landing Pad"
+            aria-label="Syllex — Return to Landing Pad"
           >
-            <SyllexLogo size={32} />
-            <h1>Syllex</h1>
+            <SyllexLogo />
           </button>
         </div>
 

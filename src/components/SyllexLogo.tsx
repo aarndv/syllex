@@ -1,17 +1,17 @@
-import logoIcon from "../assets/syllex-icon.png";
+import logoWithTextDark from "../assets/syllex-icon-with-text-dark.png";
 
 interface SyllexLogoProps {
-  size?: number;
+  width?: number;
   className?: string;
 }
 
-export function SyllexLogo({ size = 72, className = "" }: SyllexLogoProps) {
+export function SyllexLogo({ width = 135, className = "" }: SyllexLogoProps) {
   return (
     <img
       className={`syllex-logo-container ${className}`}
-      src={logoIcon}
-      width={size}
-      height={size}
+      src={logoWithTextDark}
+      width={width}
+      height={width / 3}
       alt=""
       aria-hidden="true"
     />

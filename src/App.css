@@ -89,17 +89,6 @@ body::before {
 .header-title-btn .syllex-logo-container {
   display: block;
   flex-shrink: 0;
-  background-color: #fbf9f4;
-  border-radius: 4px;
-}
-
-.app-header h1 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #fbf9f4;
-  letter-spacing: 0.05em;
-  font-family: inherit;
 }
 
 .sidebar-toggle-btn {
@@ -1004,7 +993,6 @@ html[data-font-style="serif"] .tree-label.file-label,
 html[data-font-style="serif"] .shelf-title,
 html[data-font-style="serif"] .shelf-title-sub,
 html[data-font-style="serif"] .sidebar-title,
-html[data-font-style="serif"] .app-header h1,
 html[data-font-style="serif"] .toggle-mode-btn,
 html[data-font-style="serif"] .primary-btn,
 html[data-font-style="serif"] .secondary-btn,

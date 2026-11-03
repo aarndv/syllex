@@ -180,7 +180,7 @@ Record decisions that are expensive to reverse or affect multiple parts of the a
 
 **Alternatives:** Immediately mount the full dashboard or vault explorer upon launch. While fast, it bombards the student with file lists before they are ready to choose their study task.
 
-**Consequences:** The application initializes with `hasEntered = false` displaying `<LandingPad />`. The landing card maintains a decluttered, calm layout focusing on the supplied Syllex wordmark, tagline, vault readiness status, and single-click/keyboard entry. The supplied square mark appears in the application header and native desktop icons. Users enter via the "Enter Syllex" button or keyboard shortcut, and can return to the landing pad at any time via the application header logo.
+**Consequences:** The application initializes with `hasEntered = false` displaying `<LandingPad />`. The landing card maintains a decluttered, calm layout focusing on the supplied Syllex wordmark, tagline, vault readiness status, and single-click/keyboard entry. The horizontal wordmark appears in the application header; the square mark remains in native desktop icons. Users enter via the "Enter Syllex" button or keyboard shortcut, and can return to the landing pad at any time via the application header logo.
 
 ## D-017 — Local PDF highlight metadata for issue #10
 
@@ -202,17 +202,17 @@ Record decisions that are expensive to reverse or affect multiple parts of the a
 
 **Status:** Accepted
 
-**Decision:** Use the owner-supplied square Syllex mark for the application header, favicon, and native desktop icons, and the supplied mark with text on the landing pad. Use a sans-serif face for the small page-preview number labels.
+**Decision:** Use the owner-supplied horizontal Syllex wordmark in the application header and landing pad. Use its light variant directly on dark surfaces and its dark variant on the light landing card. Keep the square mark for the favicon and native desktop icons. Use a sans-serif face for the small page-preview number labels.
 
-**Reason:** The owner provided both logo assets and requested their use, along with a change to the page-preview number typography. The dark artwork needs a light backing on the existing dark surfaces to remain visible.
+**Reason:** The owner supplied light and dark logo variants and requested the horizontal wordmark in both UI locations. The light variant stays legible on dark surfaces without a backing panel or a separate text placeholder.
 
-**Alternatives:** Keep the provisional SVG and plain title, or use the wide wordmark in the narrow header. Both would leave the supplied assets unused or make the header cramped. Keeping Georgia on ten-pixel page labels would leave the requested typography unchanged.
+**Alternatives:** Keep the square mark and separate title in the header, or place the dark wordmark on a light panel. Both retain a placeholder or unwanted light patch. Keeping Georgia on ten-pixel page labels would leave the requested typography unchanged.
 
 **Cross-platform impact:** The same bundled images and CSS display in Fedora WebKitGTK and Windows WebView2. Native icon files are regenerated from the square mark for Linux and Windows packaging. Windows visual validation remains pending on that platform.
 
 **Security impact:** Assets are bundled locally; no network access, storage change, or course-file operation is added.
 
-**Consequences:** The placeholder emblem and provisional badge are removed. The broader visual identity remains open beyond these supplied marks.
+**Consequences:** The header uses one horizontal image instead of an icon and separate title. The landing pad no longer has a light backing on dark surfaces. The broader visual identity remains open beyond these supplied marks.
 
 
 
