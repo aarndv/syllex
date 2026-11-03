@@ -212,7 +212,7 @@ Record decisions that are expensive to reverse or affect multiple parts of the a
 
 **Security impact:** Assets are bundled locally; no network access, storage change, or course-file operation is added.
 
-**Consequences:** The header uses one horizontal image instead of an icon and separate title. The landing pad no longer has a light backing on dark surfaces. Browser and native application icons use the supplied light square mark. The broader visual identity remains open beyond these supplied marks.
+**Consequences:** The header uses one horizontal image instead of an icon and separate title. The landing pad no longer has a light backing on dark surfaces. The browser uses a root favicon.ico and native application icons use the supplied light square mark. The broader visual identity remains open beyond these supplied marks.
 
 
 
