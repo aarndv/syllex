@@ -24,7 +24,8 @@ dist-ssr
 *.sw?
 
 # AI and agent documentation
-.agents/
+.agents/*
+!.agents/skills/
 AGENTS.md
 GEMINI.md
 docs/AI_WORKFLOW.md
