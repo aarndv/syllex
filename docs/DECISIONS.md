@@ -202,7 +202,7 @@ Record decisions that are expensive to reverse or affect multiple parts of the a
 
 **Status:** Accepted
 
-**Decision:** Use the owner-supplied horizontal Syllex wordmark in the application header and landing pad. Use its light variant directly on dark surfaces and its dark variant on the light landing card. Keep the square mark for the favicon and native desktop icons. Use a sans-serif face for the small page-preview number labels.
+**Decision:** Use the owner-supplied horizontal Syllex wordmark in the application header and landing pad. Use its light variant directly on dark surfaces and its dark variant on the light landing card. Use the supplied light square mark for the favicon and native desktop icons. Use a sans-serif face for the small page-preview number labels.
 
 **Reason:** The owner supplied light and dark logo variants and requested the horizontal wordmark in both UI locations. The light variant stays legible on dark surfaces without a backing panel or a separate text placeholder.
 
@@ -212,7 +212,7 @@ Record decisions that are expensive to reverse or affect multiple parts of the a
 
 **Security impact:** Assets are bundled locally; no network access, storage change, or course-file operation is added.
 
-**Consequences:** The header uses one horizontal image instead of an icon and separate title. The landing pad no longer has a light backing on dark surfaces. The broader visual identity remains open beyond these supplied marks.
+**Consequences:** The header uses one horizontal image instead of an icon and separate title. The landing pad no longer has a light backing on dark surfaces. Browser and native application icons use the supplied light square mark. The broader visual identity remains open beyond these supplied marks.
 
 
 
