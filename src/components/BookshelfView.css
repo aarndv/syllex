@@ -624,7 +624,7 @@ html[data-theme="light"] .book-metadata-tooltip {
   padding: 0 0.15rem;
 }
 
-/* File type ribbon wraps the left edge; reading progress stays at the right. */
+/* File type ribbon wraps the left edge. */
 .book-spine-footer {
   display: flex;
   align-items: center;
@@ -679,19 +679,6 @@ html[data-theme="light"] .book-metadata-tooltip {
 .book-type-badge.md {
   --ribbon-bg: #176b4b;
   --ribbon-fold: #0b3c29;
-}
-
-.book-progress-ribbon {
-  font-size: 0.6rem;
-  font-family: monospace;
-  font-weight: 700;
-  color: #e2f0d9;
-  background-color: rgba(255, 255, 255, 0.15);
-  padding: 0.12rem 0.4rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  display: inline-block;
-  white-space: nowrap;
 }
 
 /* Light Theme Botanical Parchment Blueprint Overrides */

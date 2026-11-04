@@ -429,7 +429,6 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
   onRenameItem,
 }) => {
   const ext = getFileExt(node.node_type);
-  const savedPage = localStorage.getItem(`syllex_progress_${node.relative_path}`);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
@@ -472,7 +471,7 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
       visualViewport?.removeEventListener("resize", positionTooltip);
       visualViewport?.removeEventListener("scroll", positionTooltip);
     };
-  }, [isTooltipVisible, node.name, savedPage, positionTooltip]);
+  }, [isTooltipVisible, node.name, positionTooltip]);
 
   useEffect(() => {
     let isMounted = true;
@@ -513,7 +512,7 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
 
       <button type="button" className="book-spine-open"
         onClick={() => onSelectFile(node)}
-        aria-label={`Open ${node.name}, ${ext} module, ${savedPage ? `last read page ${savedPage}` : "unread"}`}>
+        aria-label={`Open ${node.name}, ${ext} module`}>
         <span className="book-spine-content">
           {coverUrl ? (
             <span className="book-cover-snapshot-plate">
@@ -536,7 +535,6 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
           <span className={`book-type-badge ${ext.toLowerCase()}`}>
             {ext}
           </span>
-            {savedPage && <span className="book-progress-ribbon">Page {savedPage}</span>}
         </span>
       </button>
 
@@ -570,7 +568,7 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
             role="tooltip"
           >
             <strong className="book-metadata-tooltip-title">{node.name}</strong>
-            <span>{ext}{savedPage ? ` · Page ${savedPage}` : " · Unread"}</span>
+            <span>{ext}</span>
           </div>,
           document.body,
         )
