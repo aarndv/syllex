@@ -139,7 +139,31 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
   onRenameItem,
 }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
+  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [isColorPickerOpen, setIsColorPickerOpen] = useState<boolean>(false);
+  const actionsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isActionMenuOpen && !isColorPickerOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!actionsRef.current?.contains(event.target as Node)) {
+        setIsActionMenuOpen(false);
+        setIsColorPickerOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsActionMenuOpen(false);
+        setIsColorPickerOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isActionMenuOpen, isColorPickerOpen]);
 
   const currentColorId = folderColors[folder.relative_path];
   const currentColorObj = FOLDER_COLOR_PALETTE.find((c) => c.id === currentColorId);
@@ -161,8 +185,8 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
     : undefined;
 
   return (
-    <div className={`shelf-wrapper ${isColorPickerOpen ? "has-open-picker" : ""}`} style={wrapperStyle}>
-      <header className={`shelf-header-blueprint ${isColorPickerOpen ? "has-open-picker" : ""}`} style={headerStyle}>
+    <div className={`shelf-wrapper ${isActionMenuOpen || isColorPickerOpen ? "has-open-actions" : ""}`} style={wrapperStyle}>
+      <header className={`shelf-header-blueprint ${isActionMenuOpen || isColorPickerOpen ? "has-open-actions" : ""}`} style={headerStyle}>
         <div className="shelf-title-plate" onClick={() => setIsExpanded((prev) => !prev)}>
           <span className="shelf-chevron-badge">{isExpanded ? "▼" : "▶"}</span>
           <div className="folder-icon-emblem">
@@ -175,14 +199,38 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
         </div>
 
         <div className="shelf-actions">
-          <div className="color-picker-wrapper">
+          <div className="shelf-more-wrapper" ref={actionsRef}>
             <button
-              onClick={() => setIsColorPickerOpen((prev) => !prev)}
-              className="shelf-mini-btn pencil-btn"
-              title="Customize Folder Color Palette"
+              type="button"
+              onClick={() => {
+                setIsColorPickerOpen(false);
+                setIsActionMenuOpen((open) => !open);
+              }}
+              className="shelf-mini-btn shelf-more-btn"
+              title="Folder actions"
+              aria-label="Folder actions"
+              aria-haspopup="true"
+              aria-expanded={isActionMenuOpen || isColorPickerOpen}
             >
-              <PencilIcon size={13} />
+              <span aria-hidden="true">⋯</span>
             </button>
+
+            {isActionMenuOpen && (
+              <div className="shelf-actions-menu">
+                <button type="button" onClick={() => {
+                  setIsActionMenuOpen(false);
+                  setIsColorPickerOpen(true);
+                }}>Folder Color</button>
+                <button type="button" onClick={() => {
+                  setIsActionMenuOpen(false);
+                  onRenameItem(folder.relative_path, true, folder.name);
+                }}>Display Name</button>
+                <button type="button" onClick={() => {
+                  setIsActionMenuOpen(false);
+                  onAddFile(folder.relative_path);
+                }}>Add Book</button>
+              </div>
+            )}
 
             {isColorPickerOpen && (
               <div className="color-picker-popover" onClick={(e) => e.stopPropagation()}>
@@ -212,27 +260,14 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
               </div>
             )}
           </div>
-
           <button
-            onClick={() => onRenameItem(folder.relative_path, true, folder.name)}
-            className="shelf-mini-btn"
-            title="Change folder display name"
-          >
-            <PencilIcon size={13} /> Display Name
-          </button>
-          <button
-            onClick={() => onAddFile(folder.relative_path)}
-            className="shelf-mini-btn"
-            title="Add module to shelf"
-          >
-            <PlusIcon size={14} /> Add Book
-          </button>
-          <button
+            type="button"
             onClick={() => onRemoveItem(folder.relative_path, true)}
             className="shelf-mini-btn delete"
             title="Hide shelf folder from library"
+            aria-label="Hide shelf folder from library"
           >
-            <CloseIcon size={14} />
+            <CloseIcon size={11} />
           </button>
         </div>
       </header>
