@@ -1,4 +1,5 @@
 pub mod highlights;
+pub mod metadata;
 pub mod ppt_converter;
 pub mod vault;
 
@@ -50,8 +51,43 @@ fn rename_item(
             .map_err(|_| "Renamed item could not be resolved".to_string())?;
         highlights::move_document(&app, &old_path, &new_path)
             .map_err(|_| "Item was renamed, but its highlights could not be moved".to_string())?;
+        metadata::move_progress(&app, &old_path, &new_path).map_err(|_| {
+            "Item was renamed, but its reading position could not be moved".to_string()
+        })?;
     }
     Ok(new_relative_path)
+}
+
+#[tauri::command]
+fn get_selected_vault(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    metadata::selected_vault(&app)
+}
+
+#[tauri::command]
+fn set_selected_vault(
+    app: tauri::AppHandle,
+    path: Option<String>,
+) -> Result<Option<String>, String> {
+    metadata::set_selected_vault(&app, path)
+}
+
+#[tauri::command]
+fn get_reading_progress(
+    app: tauri::AppHandle,
+    vault_root: String,
+    relative_path: String,
+) -> Result<Option<u32>, String> {
+    metadata::reading_progress(&app, &vault_root, &relative_path)
+}
+
+#[tauri::command]
+fn save_reading_progress(
+    app: tauri::AppHandle,
+    vault_root: String,
+    relative_path: String,
+    page: u32,
+) -> Result<(), String> {
+    metadata::save_reading_progress(&app, &vault_root, &relative_path, page)
 }
 
 #[tauri::command]
@@ -119,6 +155,10 @@ pub fn run() {
             create_folder,
             remove_item,
             rename_item,
+            get_selected_vault,
+            set_selected_vault,
+            get_reading_progress,
+            save_reading_progress,
             list_highlights,
             save_highlight,
             delete_highlight,

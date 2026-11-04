@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::path::Path;
+use std::path::{Component, Path};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ModuleFileType {
@@ -168,37 +168,45 @@ pub fn add_module_to_vault<P: AsRef<Path>>(
         .to_string();
 
     let target_dir = match target_course_rel_path {
-        Some(rel) if !rel.trim().is_empty() => vault_canon.join(rel),
+        Some(rel) if !rel.trim().is_empty() => {
+            let relative = Path::new(&rel);
+            if relative
+                .components()
+                .any(|part| !matches!(part, Component::Normal(_)))
+            {
+                return Err("Invalid course folder path".to_string());
+            }
+            vault_canon.join(relative)
+        }
         _ => vault_canon.clone(),
     };
-
-    if !target_dir.exists() {
-        std::fs::create_dir_all(&target_dir)
-            .map_err(|e| format!("Failed to create course directory: {}", e))?;
-    }
-
-    let dest_file_path = target_dir.join(&file_name);
-    let dest_canon = if dest_file_path.exists() {
-        dest_file_path
-            .canonicalize()
-            .map_err(|e| format!("Failed to resolve destination path: {}", e))?
-    } else {
-        // Safe check path traversal
-        let parent = dest_file_path
-            .parent()
-            .ok_or_else(|| "Invalid destination path".to_string())?;
-        let parent_canon = parent
-            .canonicalize()
-            .map_err(|e| format!("Failed to resolve parent directory: {}", e))?;
-        parent_canon.join(&file_name)
-    };
-
-    if !dest_canon.starts_with(&vault_canon) {
+    let target_dir = target_dir
+        .canonicalize()
+        .map_err(|_| "Course folder is unavailable".to_string())?;
+    if !target_dir.starts_with(&vault_canon) || !target_dir.is_dir() {
         return Err("Target path escapes the vault boundary".to_string());
     }
-
-    std::fs::copy(source, &dest_file_path)
-        .map_err(|e| format!("Failed to copy file into vault: {}", e))?;
+    let dest_file_path = target_dir.join(&file_name);
+    let mut input = std::fs::File::open(source)
+        .map_err(|_| "Could not open the selected module".to_string())?;
+    let mut staged = tempfile::NamedTempFile::new_in(&target_dir)
+        .map_err(|_| "Could not stage module in the selected course".to_string())?;
+    std::io::copy(&mut input, &mut staged)
+        .map_err(|_| "Could not copy the complete module".to_string())?;
+    staged
+        .as_file()
+        .sync_all()
+        .map_err(|_| "Could not finish writing the module".to_string())?;
+    if target_dir.canonicalize().ok().as_deref() != Some(target_dir.as_path()) {
+        return Err("Course folder changed during import".to_string());
+    }
+    staged.persist_noclobber(&dest_file_path).map_err(|err| {
+        if err.error.kind() == std::io::ErrorKind::AlreadyExists {
+            "A module with this name already exists in the course".to_string()
+        } else {
+            "Could not finish adding the module".to_string()
+        }
+    })?;
 
     let metadata = std::fs::metadata(&dest_file_path)
         .map_err(|e| format!("Failed to read metadata of copied file: {}", e))?;
@@ -559,6 +567,29 @@ mod tests {
         assert_eq!(subvaults.len(), 2);
         assert_eq!(subvaults[0].name, "Biology 101");
         assert_eq!(subvaults[1].name, "Course 2026");
+    }
+
+    #[test]
+    fn import_module_never_overwrites_and_rejects_escape() {
+        let dir = tempdir().unwrap();
+        let vault = dir.path().join("vault");
+        let course = vault.join("CS101");
+        fs::create_dir_all(&course).unwrap();
+        let source = dir.path().join("lecture.pdf");
+        fs::write(&source, b"new module").unwrap();
+        let destination = course.join("lecture.pdf");
+        fs::write(&destination, b"original module").unwrap();
+
+        assert!(add_module_to_vault(&vault, Some("CS101".into()), &source).is_err());
+        assert_eq!(fs::read(&destination).unwrap(), b"original module");
+        assert!(add_module_to_vault(&vault, Some("../outside".into()), &source).is_err());
+        assert!(!dir.path().join("outside").exists());
+
+        fs::remove_file(&destination).unwrap();
+        add_module_to_vault(&vault, Some("CS101".into()), &source).unwrap();
+        assert_eq!(fs::read(&destination).unwrap(), b"new module");
+        assert_eq!(fs::read(&source).unwrap(), b"new module");
+        assert_eq!(fs::read_dir(&course).unwrap().count(), 1);
     }
 
     #[test]

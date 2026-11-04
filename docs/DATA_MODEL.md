@@ -18,6 +18,8 @@ SQLite stores application metadata and user-created study data. Original documen
 
 The root path is device-specific and must not be assumed portable.
 
+Issue #31 stores the current selected vault in `metadata.sqlite3` under the platform application-data directory. The first migration (`user_version = 1`) creates `settings` and `reading_progress`. The `selected_vault` setting contains the canonical, device-specific root path. A missing root remains recorded so the user can select a replacement; it is not silently discarded.
+
 ### courses
 
 - `id`
@@ -47,6 +49,8 @@ Prefer paths relative to the vault when referencing module files.
 - `zoom`
 - `scroll_position`
 - `last_opened_at`
+
+The current issue #31 implementation stores only `document_path` (the canonical path within its selected vault) and `last_page`. A canonical path keeps progress for equal relative filenames in separate vaults distinct. Zoom and scroll position remain proposed fields; the app does not yet persist them. On first use, the old webview value is copied into SQLite for a module from the previously selected vault, then removed only after the native save succeeds. The database stays on the device and is not synchronized as a live file.
 
 ### bookmarks
 

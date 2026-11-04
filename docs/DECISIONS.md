@@ -134,6 +134,8 @@ Record decisions that are expensive to reverse or affect multiple parts of the a
 
 **Consequences:** The scanner must recognize `.md` files, and a native file copy command must validate target paths to ensure copied files stay within the selected vault.
 
+Issue #32 makes that copy atomic from the library's perspective: stage in the validated course directory and publish only when the destination name is unused. A collision or failed copy leaves existing modules unchanged. This applies to Fedora and Windows 11 and adds no network access or writes to external source files.
+
 ## D-013 — Evidence-driven technology changes
 
 **Status:** Accepted

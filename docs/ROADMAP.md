@@ -52,6 +52,8 @@ Acceptance criteria:
 
 ## M6 — Flashcards
 
+Complete the GitHub `preM6 issues` reliability and source-file safety milestone before starting M6. Issues #31–#34 cover app-data persistence, safe module import, bounded scans, and source-file action semantics.
+
 Issue #10 (page previews and persistent highlights) was explicitly requested as a focused viewer task before M6. This does not complete the broader bookmark and annotation work in M9.
 
 - [ ] Add SQLite migrations for decks and cards

@@ -79,6 +79,7 @@ const MIN_DRAWER_WIDTH = 220;
 const MAX_DRAWER_WIDTH = 750;
 const DRAWER_WIDTH_STORAGE_KEY = "syllex_pdf_drawer_width";
 const HIGHLIGHT_COLOR_STORAGE_KEY = "syllex_highlight_color";
+const LEGACY_PROGRESS_VAULT_KEY = "syllex_legacy_progress_vault_path";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 5.0;
@@ -132,6 +133,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingMessage, setLoadingMessage] = useState<string>("Loading document...");
   const [error, setError] = useState<string | null>(null);
+  const [progressError, setProgressError] = useState<string | null>(null);
   const [filterToast, setFilterToast] = useState<string | null>(null);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [highlightEnabled, setHighlightEnabled] = useState(false);
@@ -158,6 +160,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const deletingHighlightIdsRef = useRef(new Set<string>());
   const undoPendingRef = useRef(false);
   const documentKeyRef = useRef(`${vaultRoot}\0${node.relative_path}`);
+  const progressWritesRef = useRef<Promise<void>>(Promise.resolve());
   documentKeyRef.current = `${vaultRoot}\0${node.relative_path}`;
   const readingAreaRef = useRef<HTMLElement | null>(null);
   const wheelAccumulatorRef = useRef<number>(0);
@@ -389,20 +392,32 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         const doc = await loadingTask.promise;
 
         if (isMounted) {
-          setPdfDoc(doc);
-          setNumPages(doc.numPages);
-
-          if (!initialPage) {
-            const savedPage = localStorage.getItem(storageKey);
-            let targetPage = 1;
-            if (savedPage) {
-              const parsed = parseInt(savedPage, 10);
-              if (!isNaN(parsed) && parsed > 0) {
-                targetPage = Math.min(parsed, doc.numPages);
+          let targetPage = initialPage || 1;
+          try {
+            const savedPage = await invoke<number | null>("get_reading_progress", {
+              vaultRoot,
+              relativePath: node.relative_path,
+            });
+            if (savedPage && savedPage > 0) {
+              if (!initialPage) targetPage = savedPage;
+            } else if (localStorage.getItem(LEGACY_PROGRESS_VAULT_KEY) === vaultRoot) {
+              const legacyPage = Number(localStorage.getItem(storageKey));
+              if (Number.isSafeInteger(legacyPage) && legacyPage > 0) {
+                if (!initialPage) targetPage = legacyPage;
+                await invoke("save_reading_progress", { vaultRoot, relativePath: node.relative_path, page: legacyPage });
+                localStorage.removeItem(storageKey);
               }
             }
-            setCurrentPage(targetPage);
+            if (savedPage && localStorage.getItem(LEGACY_PROGRESS_VAULT_KEY) === vaultRoot) {
+              localStorage.removeItem(storageKey);
+            }
+          } catch (err: unknown) {
+            if (isMounted) setProgressError(toUserFacingError(err, "restore your reading position"));
           }
+          if (!isMounted) return;
+          setPdfDoc(doc);
+          setNumPages(doc.numPages);
+          setCurrentPage(Math.min(Math.max(targetPage, 1), doc.numPages));
           setLoading(false);
 
           // Asynchronously extract text for instant search
@@ -1120,6 +1135,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             </div>
           )}
           {highlightError && <div className="pdf-highlight-error" role="alert">{highlightError}</div>}
+          {progressError && <div className="pdf-highlight-error" role="alert">{progressError}</div>}
           {highlightToast && (
             <div className="pdf-highlight-toast" role="status" aria-live="polite">
               <span>Highlight {highlightToast.kind === "saved" ? "saved" : "erased"}</span>
@@ -1171,7 +1187,15 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               sidebarDock={settings.pageSidebarDock}
               onPageChange={(pageNumber) => {
                 setCurrentPage(pageNumber);
-                localStorage.setItem(storageKey, pageNumber.toString());
+                progressWritesRef.current = progressWritesRef.current
+                  .catch(() => {})
+                  .then(() => invoke<void>("save_reading_progress", {
+                    vaultRoot,
+                    relativePath: node.relative_path,
+                    page: pageNumber,
+                  }))
+                  .then(() => setProgressError(null))
+                  .catch((err: unknown) => setProgressError(toUserFacingError(err, "save your reading position")));
               }}
               onScaleChange={(scale) => setZoom(scale)}
             />

@@ -35,6 +35,7 @@ import {
 import "./App.css";
 
 const VAULT_STORAGE_KEY = "syllex_selected_vault_path";
+const LEGACY_PROGRESS_VAULT_KEY = "syllex_legacy_progress_vault_path";
 const DEFAULT_VAULTS_ROOT_KEY = "syllex_default_vaults_root_path";
 const SETTINGS_STORAGE_KEY = "syllex_app_settings";
 const SIDEBAR_HIDDEN_STORAGE_KEY = "syllex_sidebar_hidden";
@@ -164,15 +165,37 @@ function App() {
   }, [currentTime]);
 
   useEffect(() => {
-    const savedPath = localStorage.getItem(VAULT_STORAGE_KEY);
-    if (savedPath) {
-      setVaultPath(savedPath);
-      scanVault(savedPath);
+    let mounted = true;
+    async function restoreVault() {
+      const legacyPath = localStorage.getItem(VAULT_STORAGE_KEY);
+      try {
+        const storedPath = await invoke<string | null>("get_selected_vault");
+        if (!mounted) return;
+        if (storedPath) {
+          if (legacyPath === storedPath) {
+            localStorage.setItem(LEGACY_PROGRESS_VAULT_KEY, storedPath);
+            localStorage.removeItem(VAULT_STORAGE_KEY);
+          }
+          setVaultPath(storedPath);
+          void scanVault(storedPath);
+        } else if (legacyPath) {
+          const canonicalPath = await invoke<string>("set_selected_vault", { path: legacyPath });
+          if (!mounted) return;
+          localStorage.setItem(LEGACY_PROGRESS_VAULT_KEY, canonicalPath);
+          localStorage.removeItem(VAULT_STORAGE_KEY);
+          setVaultPath(canonicalPath);
+          void scanVault(canonicalPath);
+        }
+      } catch (err: unknown) {
+        if (mounted) setError(toUserFacingError(err, "restore your vault"));
+      }
     }
+    void restoreVault();
     const savedDefaultRoot = localStorage.getItem(DEFAULT_VAULTS_ROOT_KEY);
     if (savedDefaultRoot) {
       setDefaultVaultsRoot(savedDefaultRoot);
     }
+    return () => { mounted = false; };
   }, []);
 
   async function scanVault(path: string) {
@@ -196,13 +219,18 @@ function App() {
     }
   }
 
-  function handleClearVault() {
-    scanRequestRef.current++;
-    localStorage.removeItem(VAULT_STORAGE_KEY);
-    setVaultPath(null);
-    setScanResult(null);
-    setActiveNode(null);
-    setError(null);
+  async function handleClearVault() {
+    try {
+      await invoke("set_selected_vault", { path: null });
+      scanRequestRef.current++;
+      localStorage.removeItem(VAULT_STORAGE_KEY);
+      setVaultPath(null);
+      setScanResult(null);
+      setActiveNode(null);
+      setError(null);
+    } catch (err: unknown) {
+      setError(toUserFacingError(err, "close this vault"));
+    }
   }
 
   async function handleAddModule(targetFolderRelPath?: string) {
@@ -444,10 +472,16 @@ function App() {
     localStorage.setItem(DEFAULT_VAULTS_ROOT_KEY, path);
   }
 
-  function handleSelectVaultPath(path: string) {
-    setVaultPath(path);
-    localStorage.setItem(VAULT_STORAGE_KEY, path);
-    scanVault(path);
+  async function handleSelectVaultPath(path: string) {
+    try {
+      const canonicalPath = await invoke<string>("set_selected_vault", { path });
+      setVaultPath(canonicalPath);
+      setActiveNode(null);
+      localStorage.removeItem(VAULT_STORAGE_KEY);
+      void scanVault(canonicalPath);
+    } catch (err: unknown) {
+      setError(toUserFacingError(err, "select this vault"));
+    }
   }
 
   function handleWorkspaceWheel(event: WheelEvent<HTMLDivElement>) {

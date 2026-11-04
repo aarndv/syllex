@@ -80,6 +80,8 @@ The viewer sidebar change is React/CSS only and uses the same behavior on Fedora
 
 Issue #10 adds a bundled SQLite dependency and platform application-data database. Rust migration/path tests cover the native boundary; visual highlighting, thumbnail rendering, focus navigation, and filter contrast still need manual validation in both webviews.
 
+Before M6, verify that a selected vault and reading page survive restart, and that a missing vault remains selectable for recovery. Check that the legacy webview page is migrated only for its original vault, and that equal relative PDF names in different vaults retain separate positions. On Fedora and Windows 11, import a module into a course, repeat the same-name import, and confirm the first module bytes remain unchanged; a failed copy must leave no visible partial module.
+
 ## Required fixtures
 
 Create synthetic, legally distributable fixtures containing:
