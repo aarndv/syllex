@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import logoWithText from "../assets/syllex-icon-with-text.png";
 import logoWithTextDark from "../assets/syllex-icon-with-text-dark.png";
 import {
@@ -26,6 +26,9 @@ export const LandingPad: React.FC<LandingPadProps> = ({
   onOpenVaultManager,
   onOpenSettings,
 }) => {
+  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
+  const settingsMenuRef = useRef<HTMLDivElement>(null);
+
   // Extract vault folder name from full path
   const vaultName = useMemo(() => {
     if (!vaultPath) return null;
@@ -33,10 +36,32 @@ export const LandingPad: React.FC<LandingPadProps> = ({
     return parts[parts.length - 1] || vaultPath;
   }, [vaultPath]);
 
+  // Close settings menu on outside click or Escape
+  useEffect(() => {
+    if (!isSettingsMenuOpen) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (settingsMenuRef.current && !settingsMenuRef.current.contains(e.target as Node)) {
+        setIsSettingsMenuOpen(false);
+      }
+    };
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsSettingsMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("keydown", handleEsc);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, [isSettingsMenuOpen]);
+
   // Keyboard shortcut listener for Enter or Space key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept if an input or modal is focused
+      // Don't intercept if an input or modal is focused or settings menu is open
+      if (isSettingsMenuOpen) return;
       const target = e.target as HTMLElement | null;
       if (
         target &&
@@ -56,7 +81,7 @@ export const LandingPad: React.FC<LandingPadProps> = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onEnter]);
+  }, [onEnter, isSettingsMenuOpen]);
 
   // Format clean stats line
   const statsSummary = useMemo(() => {
@@ -136,33 +161,51 @@ export const LandingPad: React.FC<LandingPadProps> = ({
           >
             <span className="enter-btn-text">Enter Syllex</span>
             <ArrowRightIcon size={16} className="enter-btn-icon" />
-            <kbd className="enter-kbd-badge" title="Press Enter to launch">
-              ↵ Enter
-            </kbd>
           </button>
         </div>
 
-        {/* Secondary Navigation Links */}
-        <div className="landing-footer-links">
+        {/* Secondary Settings & Vault Action */}
+        <div className="landing-footer-links" ref={settingsMenuRef}>
           <button
             type="button"
-            className="landing-footer-btn"
-            onClick={onOpenVaultManager}
-            title="Manage or switch course vaults"
+            className={`landing-settings-trigger-btn ${isSettingsMenuOpen ? "active" : ""}`}
+            onClick={() => setIsSettingsMenuOpen((prev) => !prev)}
+            title="Settings & Options"
+            aria-label="Settings and Vault Options"
+            aria-haspopup="true"
+            aria-expanded={isSettingsMenuOpen}
           >
-            <FolderIcon size={14} />
-            <span>Manage Vaults</span>
+            <SettingsIcon size={18} />
           </button>
-          <span className="landing-footer-sep">·</span>
-          <button
-            type="button"
-            className="landing-footer-btn"
-            onClick={onOpenSettings}
-            title="Open application preferences"
-          >
-            <SettingsIcon size={14} />
-            <span>Preferences</span>
-          </button>
+
+          {isSettingsMenuOpen && (
+            <div className="landing-settings-dropdown" role="menu">
+              <button
+                type="button"
+                className="landing-dropdown-item"
+                role="menuitem"
+                onClick={() => {
+                  setIsSettingsMenuOpen(false);
+                  onOpenVaultManager();
+                }}
+              >
+                <FolderIcon size={14} />
+                <span>Manage Vaults</span>
+              </button>
+              <button
+                type="button"
+                className="landing-dropdown-item"
+                role="menuitem"
+                onClick={() => {
+                  setIsSettingsMenuOpen(false);
+                  onOpenSettings();
+                }}
+              >
+                <SettingsIcon size={14} />
+                <span>Preferences</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

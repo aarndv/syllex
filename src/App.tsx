@@ -546,14 +546,16 @@ function App() {
 
       <header className="app-header">
         <div className="header-left-group">
-          <button
-            onClick={() => setIsSidebarHidden((prev) => !prev)}
-            className={`icon-btn sidebar-toggle-btn ${isSidebarHidden ? "is-collapsed" : ""}`}
-            title={isSidebarHidden ? "Show Sidebar" : "Hide Sidebar"}
-            aria-label={isSidebarHidden ? "Show Sidebar" : "Hide Sidebar"}
-          >
-            <SidebarToggleIcon size={18} />
-          </button>
+          {isSidebarHidden && (
+            <button
+              onClick={() => setIsSidebarHidden(false)}
+              className="icon-btn sidebar-toggle-btn is-collapsed"
+              title="Show Sidebar"
+              aria-label="Show Sidebar"
+            >
+              <SidebarToggleIcon size={18} />
+            </button>
+          )}
           <button
             type="button"
             className="header-title-btn"
@@ -681,6 +683,17 @@ function App() {
             <div className="sidebar-content">
               <SidebarCountersWidget />
               <SidebarTodoList />
+            </div>
+            <div className="sidebar-footer">
+              <button
+                type="button"
+                onClick={() => setIsSidebarHidden(true)}
+                className="icon-btn sidebar-toggle-btn"
+                title="Hide Sidebar"
+                aria-label="Hide Sidebar"
+              >
+                <SidebarToggleIcon size={18} />
+              </button>
             </div>
           </aside>
         )}

@@ -42,11 +42,11 @@
   background-size: 24px 24px;
 }
 
-/* Central Sanctuary Folio Card */
+/* Central Sanctuary Folio Card (120% wider) */
 .landing-pad-card {
   position: relative;
   width: 100%;
-  max-width: 420px;
+  max-width: 504px;
   max-height: calc(100vh - 2.5rem);
   background-color: #143722;
   border: 1.5px solid rgba(255, 255, 255, 0.28);
@@ -66,7 +66,7 @@
 /* Logo Section */
 .landing-logo-wrapper {
   width: 100%;
-  max-width: 340px;
+  max-width: 410px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -76,7 +76,7 @@
 /* Header & Title Section */
 .landing-header-section {
   margin-bottom: 1.25rem;
-  max-width: 360px;
+  max-width: 435px;
 }
 
 .landing-app-title {
@@ -278,38 +278,87 @@ html[data-theme="light"] .landing-app-title .landing-wordmark-light {
   margin-left: 0.25rem;
 }
 
-/* Secondary Footer Links */
+/* Secondary Settings & Vault Trigger */
 .landing-footer-links {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.6);
+  margin-top: 0.25rem;
 }
 
-.landing-footer-btn {
+.landing-settings-trigger-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.75);
-  font-family: inherit;
-  font-size: 0.8rem;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
-  padding: 0.2rem 0.45rem;
-  border-radius: 4px;
   transition: all 0.15s ease;
 }
 
-.landing-footer-btn:hover {
+.landing-settings-trigger-btn:hover,
+.landing-settings-trigger-btn.active {
+  background-color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.45);
   color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
 }
 
-.landing-footer-sep {
-  opacity: 0.4;
+.landing-settings-dropdown {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #12301f;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 6px;
+  padding: 0.35rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 165px;
+  z-index: 50;
+  animation: landingMenuPop 0.15s ease-out;
+}
+
+@keyframes landingMenuPop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.landing-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.65rem;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: #e2f0d9;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.landing-dropdown-item:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
 }
 
 /* Light Theme Styling Adaptations */
@@ -387,17 +436,31 @@ html[data-theme="light"] .enter-kbd-badge {
   color: #ffffff;
 }
 
-html[data-theme="light"] .landing-footer-btn {
+html[data-theme="light"] .landing-settings-trigger-btn {
+  background-color: #eee9df;
+  border: 1px solid #143222;
   color: #143222;
 }
 
-html[data-theme="light"] .landing-footer-btn:hover {
-  background-color: #e4ddd0;
-  color: #0b1d14;
+html[data-theme="light"] .landing-settings-trigger-btn:hover,
+html[data-theme="light"] .landing-settings-trigger-btn.active {
+  background-color: #143222;
+  color: #ffffff;
 }
 
-html[data-theme="light"] .landing-footer-links {
-  color: #4a5568;
+html[data-theme="light"] .landing-settings-dropdown {
+  background-color: #fbf9f4;
+  border-color: #143222;
+  box-shadow: 0 10px 25px rgba(20, 50, 34, 0.15);
+}
+
+html[data-theme="light"] .landing-dropdown-item {
+  color: #143222;
+}
+
+html[data-theme="light"] .landing-dropdown-item:hover {
+  background-color: #e4ddd0;
+  color: #0b1d14;
 }
 
 /* Compact Viewport Adaptation */
@@ -408,7 +471,7 @@ html[data-theme="light"] .landing-footer-links {
 
   .landing-pad-card {
     padding: 1.25rem 1.5rem 1.1rem 1.5rem;
-    max-width: 380px;
+    max-width: 456px;
   }
 
   .landing-logo-wrapper {

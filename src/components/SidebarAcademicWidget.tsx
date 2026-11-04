@@ -114,7 +114,7 @@ export const SidebarAcademicWidget: React.FC<SidebarAcademicWidgetProps> = ({ on
         <div className="academic-tracker-item">
           <div className="tracker-label-row">
             <span className="tracker-name">Days to Midterms</span>
-            <span className="tracker-value bold">
+            <span className={`tracker-value ${daysToMidterms !== null ? "bold" : "unconfigured"}`}>
               {daysToMidterms !== null ? `${daysToMidterms} days` : "Configure in Settings"}
             </span>
           </div>
@@ -124,7 +124,7 @@ export const SidebarAcademicWidget: React.FC<SidebarAcademicWidgetProps> = ({ on
         <div className="academic-tracker-item">
           <div className="tracker-label-row">
             <span className="tracker-name">Days to Finals</span>
-            <span className="tracker-value bold">
+            <span className={`tracker-value ${daysToFinals !== null ? "bold" : "unconfigured"}`}>
               {daysToFinals !== null ? `${daysToFinals} days` : "Configure in Settings"}
             </span>
           </div>
@@ -134,7 +134,7 @@ export const SidebarAcademicWidget: React.FC<SidebarAcademicWidgetProps> = ({ on
         <div className="academic-tracker-item">
           <div className="tracker-label-row">
             <span className="tracker-name">Trimester Progress</span>
-            <span className="tracker-value">
+            <span className={`tracker-value ${trimesterPercent !== null ? "" : "unconfigured"}`}>
               {trimesterPercent !== null ? `${trimesterPercent}%` : "Configure in Settings"}
             </span>
           </div>

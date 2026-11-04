@@ -51,7 +51,7 @@ body::before {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1.75rem;
+  padding: 0.2rem 1.75rem;
   background-color: #1b3627;
   border-bottom: 2px solid #264a34;
   color: #fbf9f4;
@@ -174,6 +174,11 @@ html[data-theme="light"] .header-clock-digits {
   gap: 0.65rem;
 }
 
+.header-actions-group > button {
+  box-sizing: border-box;
+  height: 2.3rem;
+}
+
 .search-trigger-btn {
   display: inline-flex;
   align-items: center;
@@ -181,7 +186,7 @@ html[data-theme="light"] .header-clock-digits {
   background-color: #2a4c38;
   color: #fbf9f4;
   border: 1px solid #3d684e;
-  padding: 0.4rem 0.85rem;
+  padding: 0 0.85rem;
   border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 500;
@@ -405,6 +410,16 @@ html[data-theme="light"] .search-shortcut-badge {
   overflow-x: hidden;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-footer {
+  padding: 0.5rem 0.85rem;
+  background-color: #0a1c12;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-shrink: 0;
 }
 
 .app-main-content {
@@ -1091,6 +1106,11 @@ html[data-theme="dark"] .sidebar-header {
   border-bottom-color: #264a34;
 }
 
+html[data-theme="dark"] .sidebar-footer {
+  background-color: #1b3627;
+  border-top-color: #264a34;
+}
+
 html[data-theme="dark"] .sidebar-title {
   color: #fbf9f4;
 }
@@ -1173,6 +1193,11 @@ html[data-theme="light"] .app-sidebar {
 html[data-theme="light"] .sidebar-header {
   background-color: #e4ddd0;
   border-bottom: 1.5px solid #143222;
+}
+
+html[data-theme="light"] .sidebar-footer {
+  background-color: #e4ddd0;
+  border-top: 1.5px solid #143222;
 }
 
 html[data-theme="light"] .tree-explorer-card,

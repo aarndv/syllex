@@ -117,14 +117,14 @@
 .academic-trackers-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.55rem;
 }
 
 .academic-tracker-item {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.35rem 0.5rem;
+  gap: 0.35rem;
+  padding: 0.45rem 0.6rem;
   background-color: rgba(22, 62, 38, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 4px;
@@ -134,23 +134,35 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
   font-size: 0.75rem;
 }
 
 .tracker-name {
   color: #e2f0d9;
   font-weight: 500;
+  flex-shrink: 0;
+  margin-right: 0.5rem;
 }
 
 .tracker-value {
   color: #ffffff;
   font-family: monospace;
   font-size: 0.75rem;
+  margin-left: auto;
+  text-align: right;
 }
 
 .tracker-value.bold {
   font-weight: 700;
   color: #ffffff;
+}
+
+.tracker-value.unconfigured {
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-style: italic;
+  opacity: 0.75;
 }
 
 .tracker-progress-bg {
@@ -169,7 +181,7 @@
 }
 
 .tracker-progress-fill.year {
-  background-color: #0284c7;
+  background-color: #ffffff;
 }
 
 .tracker-progress-bg.year-progress {
@@ -247,6 +259,10 @@ html[data-theme="light"] .tracker-name {
 html[data-theme="light"] .tracker-value,
 html[data-theme="light"] .tracker-value.bold {
   color: #143222;
+}
+
+html[data-theme="light"] .tracker-value.unconfigured {
+  color: #48624e;
 }
 
 html[data-theme="light"] .tracker-progress-bg {

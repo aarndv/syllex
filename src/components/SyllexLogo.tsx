@@ -5,7 +5,7 @@ interface SyllexLogoProps {
   className?: string;
 }
 
-export function SyllexLogo({ width = 135, className = "" }: SyllexLogoProps) {
+export function SyllexLogo({ width = 162, className = "" }: SyllexLogoProps) {
   return (
     <img
       className={`syllex-logo-container ${className}`}

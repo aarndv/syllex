@@ -66,12 +66,12 @@
 .dashboard-time-badge {
   font-size: 0.75rem;
   font-family: monospace;
-  font-weight: 700;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  background-color: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #d4e2d2;
+  border: 1px solid rgba(255, 255, 255, 0.14);
   padding: 0.2rem 0.65rem;
   border-radius: 4px;
 }
@@ -153,9 +153,9 @@ html[data-theme="light"] .spine-foil-bar {
 }
 
 html[data-theme="light"] .dashboard-time-badge {
-  background-color: #143222;
-  color: #ffffff;
-  border-color: #0b1d14;
+  background-color: rgba(20, 50, 34, 0.05);
+  color: #48624e;
+  border-color: rgba(20, 50, 34, 0.18);
 }
 
 html[data-theme="light"] .dashboard-date-text {
