@@ -162,7 +162,7 @@ Issue #32 makes that copy atomic from the library's perspective: stage in the va
 
 ## D-015 — In-vault file and module renaming
 
-**Status:** Accepted
+**Status:** Superseded by D-019
 
 **Decision:** Allow users to rename course module files and directories directly within the application vault through a safe, validated native rename operation.
 
@@ -171,6 +171,8 @@ Issue #32 makes that copy atomic from the library's perspective: stage in the va
 **Alternatives:** Keep source files read-only and implement visual alias metadata only in SQLite/localStorage. While an alias keeps files untouched on disk, external file managers and other tools would not reflect the user's intended names, leading to confusion and broken expectations.
 
 **Consequences:** Rust provides a dedicated `rename_item` command that strictly checks vault boundary constraints, prevents directory traversal (`..`, slashes), enforces extension preservation/validation for supported document types, prevents collisions with existing files, and returns the updated relative path. Frontend state migrates cached progress and theme keys smoothly.
+
+The owner later confirmed that both Remove and Rename must leave original files untouched. D-019 replaces this behavior.
 
 ## D-016 — Application Launch Landing Pad
 
@@ -215,6 +217,22 @@ Issue #32 makes that copy atomic from the library's perspective: stage in the va
 **Security impact:** Assets are bundled locally; no network access, storage change, or course-file operation is added.
 
 **Consequences:** The header uses one horizontal image instead of an icon and separate title. The landing pad no longer has a light backing on dark surfaces. The browser uses a root favicon.ico and native application icons use the supplied light square mark. The broader visual identity remains open beyond these supplied marks.
+
+## D-019 — Hide and display-name actions leave modules untouched
+
+**Status:** Accepted
+
+**Decision:** Remove hides a module or folder from the Syllex library, and Rename changes only its display name. Neither action deletes or renames an original file. Hidden items can be restored from the library.
+
+**Reason:** The owner chose this behavior for issue #34. It makes the README, product invariant, and UI actions consistent, and prevents a short undo window from becoming permanent data loss.
+
+**Alternatives:** Permit native file renaming under D-015; allow permanent deletion after confirmation. Both change the user's source-of-truth directory and conflict with the owner's chosen rule.
+
+**Cross-platform impact:** The same SQLite overrides and vault scan filtering work on Fedora and Windows 11. Paths remain device-specific; a live database is never synchronized.
+
+**Security impact:** Rust validates the selected vault and relative item before changing metadata. The native delete and rename commands are removed from the Tauri command surface. No network or source-file write is added.
+
+**Consequences:** A versioned metadata migration stores hidden flags and display names in platform app data. Reading progress and highlights stay attached to the original path because the path does not change. A hidden folder also hides its descendants in the library until restored.
 
 
 

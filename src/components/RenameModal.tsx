@@ -18,7 +18,6 @@ export const RenameModal: React.FC<RenameModalProps> = ({
   onCancel,
 }) => {
   const [nameInput, setNameInput] = useState<string>("");
-  const [extension, setExtension] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -30,19 +29,7 @@ export const RenameModal: React.FC<RenameModalProps> = ({
       return;
     }
 
-    if (isFolder) {
-      setNameInput(currentName);
-      setExtension("");
-    } else {
-      const lastDot = currentName.lastIndexOf(".");
-      if (lastDot > 0) {
-        setNameInput(currentName.substring(0, lastDot));
-        setExtension(currentName.substring(lastDot));
-      } else {
-        setNameInput(currentName);
-        setExtension("");
-      }
-    }
+    setNameInput(currentName);
     setError(null);
     setIsSubmitting(false);
 
@@ -65,13 +52,12 @@ export const RenameModal: React.FC<RenameModalProps> = ({
       return;
     }
 
-    const invalidChars = ["/", "\\", ":", "*", "?", '"', "<", ">", "|"];
-    if (invalidChars.some((c) => trimmed.includes(c)) || trimmed.includes("..")) {
-      setError("Name contains invalid characters (slashes, colons, or path traversal).");
+    if (trimmed.length > 255 || [...trimmed].some((character) => /\p{Cc}/u.test(character))) {
+      setError("Display name must be at most 255 visible characters.");
       return;
     }
 
-    const finalName = isFolder ? trimmed : `${trimmed}${extension}`;
+    const finalName = trimmed;
     if (finalName === currentName) {
       onCancel();
       return;
@@ -103,7 +89,7 @@ export const RenameModal: React.FC<RenameModalProps> = ({
             </span>
             <div className="modal-title-text">
               <h2 id="rename-modal-title">
-                {isFolder ? "Rename Folder" : "Rename Module"}
+                {isFolder ? "Change Folder Display Name" : "Change Module Display Name"}
               </h2>
               <span className="modal-subtitle">
                 {isFolder ? "COLLECTION DIRECTORY" : "COURSE MATERIAL"}
@@ -133,7 +119,7 @@ export const RenameModal: React.FC<RenameModalProps> = ({
 
             <div className="form-field-group">
               <label htmlFor="rename-input" className="form-field-label">
-                {isFolder ? "New Folder Name" : "New Module Title"}
+                New display name
               </label>
               <div className="rename-input-wrapper">
                 <input
@@ -149,13 +135,10 @@ export const RenameModal: React.FC<RenameModalProps> = ({
                   placeholder={isFolder ? "e.g. Computer Science 101" : "e.g. Lecture 01 - Intro"}
                   disabled={isSubmitting}
                   autoComplete="off"
+                  maxLength={255}
                 />
-                {!isFolder && extension && (
-                  <span className="rename-ext-badge" title={`Preserved extension: ${extension}`}>
-                    {extension}
-                  </span>
-                )}
               </div>
+              <p>The file or folder name on disk will stay the same.</p>
             </div>
 
             {error && (
@@ -179,7 +162,7 @@ export const RenameModal: React.FC<RenameModalProps> = ({
               className="primary-btn"
               disabled={isSubmitting || !nameInput.trim()}
             >
-              {isSubmitting ? "Renaming..." : "Save Changes"}
+              {isSubmitting ? "Saving..." : "Save Display Name"}
             </button>
           </footer>
         </form>

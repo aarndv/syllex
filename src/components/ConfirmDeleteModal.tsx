@@ -23,7 +23,7 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
     <div className="delete-modal-backdrop" onClick={onCancel}>
       <div className="delete-modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="delete-modal-header">
-          <h3>Confirm Removal</h3>
+          <h3>Hide from Library</h3>
           <button className="delete-modal-close-btn" onClick={onCancel}>
             <CloseIcon size={16} />
           </button>
@@ -31,11 +31,11 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
 
         <div className="delete-modal-body">
           <p className="delete-prompt-text">
-            Are you sure you want to remove {isFolder ? "the folder" : "the item"}{" "}
-            <strong>"{itemName}"</strong> from your vault?
+            Hide {isFolder ? "the folder and its modules" : "the module"}{" "}
+            <strong>"{itemName}"</strong> from Syllex?
           </p>
           <span className="delete-modal-note">
-            You will have 6 seconds to Undo this action from the bottom notification bar.
+            The source files stay on disk. You can restore this item from Manage hidden items at any time.
           </span>
         </div>
 
@@ -44,7 +44,7 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
             Cancel
           </button>
           <button className="primary-btn delete-btn" onClick={onConfirm}>
-            Confirm Remove
+            Hide Item
           </button>
         </div>
       </div>
@@ -63,13 +63,13 @@ export const UndoToast: React.FC<UndoToastProps> = ({ itemName, onUndo, onDismis
     <div className="undo-toast-bar">
       <div className="undo-toast-info">
         <span className="undo-toast-text">
-          Removed <strong>"{itemName}"</strong>
+          Hidden <strong>"{itemName}"</strong>
         </span>
         <span className="undo-timer-tag">6s window</span>
       </div>
       <div className="undo-toast-actions">
         <button className="undo-action-btn" onClick={onUndo}>
-          <RefreshIcon size={14} /> Undo Deletion
+          <RefreshIcon size={14} /> Undo Hide
         </button>
         <button className="undo-dismiss-btn" onClick={onDismiss} title="Dismiss">
           <CloseIcon size={14} />

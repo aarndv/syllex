@@ -249,16 +249,16 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = React.memo(({
             onClick={() => onToggleMenu(node.relative_path)}>…</button>
           {openMenuPath === node.relative_path && (
             <div className="tree-menu-panel">
-              <button type="button" aria-label={`Rename ${node.name}`} onClick={() => {
+              <button type="button" aria-label={`Change display name for ${node.name}`} onClick={() => {
                 onCloseMenu(); onRenameItem(node.relative_path, isFolder, node.name);
-              }}><PencilIcon size={13} /> Rename</button>
+              }}><PencilIcon size={13} /> Display name</button>
               {isFolder && <button type="button" aria-label={`Add file to ${node.name}`} onClick={() => {
                 onCloseMenu(); onAddFile(node.relative_path);
               }}><PlusIcon size={13} /> Add file to folder</button>}
               <button type="button" className="tree-menu-delete"
-                aria-label={`Delete ${isFolder ? "folder" : "file"} ${node.name}`} onClick={() => {
+                aria-label={`Hide ${isFolder ? "folder" : "file"} ${node.name} from library`} onClick={() => {
                   onCloseMenu(); onRemoveItem(node.relative_path, isFolder);
-                }}><CloseIcon size={13} /> Delete {isFolder ? "folder" : "file"}</button>
+                }}><CloseIcon size={13} /> Hide {isFolder ? "folder" : "file"}</button>
             </div>
           )}
         </div>

@@ -71,11 +71,12 @@ function App() {
   } | null>(null);
   const [undoStash, setUndoStash] = useState<{
     relativePath: string;
-    isFolder: boolean;
+    vaultRoot: string;
     name: string;
     timerId: number;
   } | null>(null);
   const [activeViewMode, setActiveViewMode] = useState<"bookshelf" | "tree">("bookshelf");
+  const [showHiddenItems, setShowHiddenItems] = useState(false);
   const scanRequestRef = useRef(0);
   const mainContentRef = useRef<HTMLElement>(null);
 
@@ -279,64 +280,67 @@ function App() {
 
   function handleRemoveItem(relativePath: string, isFolder: boolean) {
     if (!vaultPath) return;
-    const name = relativePath.split("/").pop() || relativePath;
+    function findName(nodes: VaultNode[]): string | undefined {
+      for (const node of nodes) {
+        if (node.relative_path === relativePath) return node.name;
+        const child = findName(node.children);
+        if (child) return child;
+      }
+      return undefined;
+    }
+    const name = findName(scanResult?.root_nodes || []) || relativePath.split(/[\\/]/).pop() || relativePath;
     setPendingDelete({ relativePath, isFolder, name });
   }
 
-  function handleConfirmDelete() {
+  async function handleConfirmDelete() {
     if (!pendingDelete || !vaultPath) return;
-
-    const { relativePath, isFolder, name } = pendingDelete;
+    const { relativePath, name } = pendingDelete;
     const currentVault = vaultPath;
-
-    // Clear previous pending undo timer if any and remove immediately
-    if (undoStash) {
-      clearTimeout(undoStash.timerId);
-      invoke("remove_item", { vaultRoot: currentVault, relativePath: undoStash.relativePath }).catch(() => {});
-    }
-
-    if (activeNode?.relative_path === relativePath) {
-      setActiveNode(null);
-    }
-
-    setPendingDelete(null);
-
-    // Schedule final deletion after 6 seconds
-    const timerId = window.setTimeout(async () => {
-      try {
-        await invoke("remove_item", {
-          vaultRoot: currentVault,
-          relativePath,
-        });
-        await scanVault(currentVault);
-      } catch (err: unknown) {
-        setError(toUserFacingError(err, "remove this item"));
-      } finally {
-        setUndoStash(null);
+    try {
+      await invoke("set_item_hidden", { vaultRoot: currentVault, relativePath, hidden: true });
+      setPendingDelete(null);
+      if (activeNode?.relative_path === relativePath || activeNode?.relative_path.startsWith(`${relativePath}/`) || activeNode?.relative_path.startsWith(`${relativePath}\\`)) {
+        setActiveNode(null);
       }
-    }, 6000);
-
-    setUndoStash({ relativePath, isFolder, name, timerId });
+      if (undoStash) window.clearTimeout(undoStash.timerId);
+      await scanVault(currentVault);
+      const timerId = window.setTimeout(() => {
+        setUndoStash((current) => current?.timerId === timerId ? null : current);
+      }, 6000);
+      setUndoStash({ relativePath, vaultRoot: currentVault, name, timerId });
+    } catch (err: unknown) {
+      setPendingDelete(null);
+      setError(toUserFacingError(err, "hide this item"));
+    }
   }
 
-  function handleUndoDelete() {
+  async function handleUndoDelete() {
     if (!undoStash) return;
-    window.clearTimeout(undoStash.timerId);
+    const { relativePath, vaultRoot: originalVault, timerId } = undoStash;
+    window.clearTimeout(timerId);
     setUndoStash(null);
-    if (vaultPath) {
-      scanVault(vaultPath);
+    try {
+      await invoke("set_item_hidden", { vaultRoot: originalVault, relativePath, hidden: false });
+      if (vaultPath === originalVault) await scanVault(originalVault);
+    } catch (err: unknown) {
+      setError(toUserFacingError(err, "restore this item"));
     }
   }
 
   function handleDismissUndoToast() {
-    if (!undoStash || !vaultPath) return;
+    if (!undoStash) return;
     window.clearTimeout(undoStash.timerId);
-    const { relativePath } = undoStash;
-    const currentVault = vaultPath;
     setUndoStash(null);
-    invoke("remove_item", { vaultRoot: currentVault, relativePath })
-      .then(() => scanVault(currentVault))
-      .catch((err: unknown) => setError(toUserFacingError(err, "remove this item")));
+  }
+
+  async function handleRestoreHidden(relativePath: string) {
+    if (!vaultPath) return;
+    try {
+      await invoke("set_item_hidden", { vaultRoot: vaultPath, relativePath, hidden: false });
+      await scanVault(vaultPath);
+    } catch (err: unknown) {
+      setError(toUserFacingError(err, "restore this item"));
+    }
   }
 
   function handleRenameItem(relativePath: string, isFolder: boolean, currentName: string) {
@@ -344,84 +348,19 @@ function App() {
     setPendingRename({ relativePath, isFolder, currentName });
   }
 
-  async function handleConfirmRename(newName: string) {
+  async function handleConfirmRename(displayName: string) {
     if (!pendingRename || !vaultPath) return;
-    const { relativePath, isFolder } = pendingRename;
-    const currentVault = vaultPath;
-
-    const newRelPath = await invoke<string>("rename_item", {
-      vaultRoot: currentVault,
+    const { relativePath } = pendingRename;
+    await invoke("set_item_display_name", {
+      vaultRoot: vaultPath,
       relativePath,
-      newName,
+      displayName,
     });
-
-    if (isFolder) {
-      // Migrate folder custom colors
-      try {
-        const colorsRaw = localStorage.getItem("syllex_folder_custom_colors");
-        if (colorsRaw) {
-          const colors = JSON.parse(colorsRaw);
-          const updatedColors: Record<string, string> = {};
-          for (const [k, v] of Object.entries(colors)) {
-            if (k === relativePath) {
-              updatedColors[newRelPath] = v as string;
-            } else if (k.startsWith(relativePath + "/")) {
-              const suffix = k.substring(relativePath.length);
-              updatedColors[newRelPath + suffix] = v as string;
-            } else {
-              updatedColors[k] = v as string;
-            }
-          }
-          localStorage.setItem("syllex_folder_custom_colors", JSON.stringify(updatedColors));
-        }
-      } catch {}
-
-      // Migrate reading progress keys
-      try {
-        const keysToMigrate: { oldKey: string; newKey: string; val: string }[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith(`syllex_progress_${relativePath}/`)) {
-            const suffix = key.substring(`syllex_progress_${relativePath}/`.length);
-            const val = localStorage.getItem(key);
-            if (val) {
-              keysToMigrate.push({
-                oldKey: key,
-                newKey: `syllex_progress_${newRelPath}/${suffix}`,
-                val,
-              });
-            }
-          }
-        }
-        for (const item of keysToMigrate) {
-          localStorage.removeItem(item.oldKey);
-          localStorage.setItem(item.newKey, item.val);
-        }
-      } catch {}
-
-      // If activeNode was inside this folder, update its relative_path
-      if (activeNode && activeNode.relative_path.startsWith(relativePath + "/")) {
-        const suffix = activeNode.relative_path.substring(relativePath.length);
-        setActiveNode((prev) => (prev ? { ...prev, relative_path: newRelPath + suffix } : null));
-      }
-    } else {
-      // Migrate reading progress for this file
-      const oldProgKey = `syllex_progress_${relativePath}`;
-      const newProgKey = `syllex_progress_${newRelPath}`;
-      const savedProg = localStorage.getItem(oldProgKey);
-      if (savedProg) {
-        localStorage.removeItem(oldProgKey);
-        localStorage.setItem(newProgKey, savedProg);
-      }
-
-      // If activeNode is this file, update activeNode name and relative_path
-      if (activeNode && activeNode.relative_path === relativePath) {
-        setActiveNode((prev) => (prev ? { ...prev, name: newName, relative_path: newRelPath } : null));
-      }
+    if (activeNode?.relative_path === relativePath) {
+      setActiveNode((previous) => previous ? { ...previous, name: displayName } : null);
     }
-
     setPendingRename(null);
-    await scanVault(currentVault);
+    await scanVault(vaultPath);
   }
 
 
@@ -475,7 +414,9 @@ function App() {
   async function handleSelectVaultPath(path: string) {
     try {
       const canonicalPath = await invoke<string>("set_selected_vault", { path });
+      scanRequestRef.current++;
       setVaultPath(canonicalPath);
+      setScanResult(null);
       setActiveNode(null);
       localStorage.removeItem(VAULT_STORAGE_KEY);
       void scanVault(canonicalPath);
@@ -785,6 +726,11 @@ function App() {
 
           {scanResult && !loading && (
             <div className="vault-view">
+              {scanResult.warnings.length > 0 && (
+                <div className="scan-warning" role="status">
+                  <p><strong>{scanResult.warnings.length} {scanResult.warnings.length === 1 ? "entry was" : "entries were"} skipped:</strong> {scanResult.warnings.slice(0, 3).join("; ")}{scanResult.warnings.length > 3 ? `; and ${scanResult.warnings.length - 3} more` : ""}</p>
+                </div>
+              )}
               <DashboardHeader
                 courseCount={vaultStats.courses}
                 fileCount={vaultStats.files}
@@ -816,9 +762,31 @@ function App() {
                 </div>
               </div>
 
+              {scanResult.hidden_items.length > 0 && (
+                <div className="hidden-items-panel">
+                  <button type="button" className="secondary-btn" onClick={() => setShowHiddenItems((shown) => !shown)}
+                    aria-expanded={showHiddenItems}>
+                    {showHiddenItems ? "Hide list" : "Manage hidden items"} ({scanResult.hidden_items.length})
+                  </button>
+                  {showHiddenItems && (
+                    <ul>
+                      {scanResult.hidden_items.map((item) => (
+                        <li key={item.relative_path}>
+                          <span>{item.is_folder ? "Folder" : "Module"}: {item.name} <small>({item.relative_path})</small></span>
+                          <button type="button" className="secondary-btn"
+                            onClick={() => { void handleRestoreHidden(item.relative_path); }}>
+                            Restore
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+
               {scanResult.root_nodes.length === 0 ? (
                 <div className="empty-state">
-                  <p>No files or folders found in this vault.</p>
+                  <p>{scanResult.hidden_items.length > 0 ? "No visible files or folders. Restore a hidden item above or add a module." : "No files or folders found in this vault."}</p>
                   <button onClick={() => handleAddModule()} className="primary-btn">
                     Add First Module
                   </button>

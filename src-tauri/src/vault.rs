@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::path::{Component, Path};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -36,6 +37,15 @@ pub struct VaultNode {
 pub struct VaultScanResult {
     pub root_path: String,
     pub root_nodes: Vec<VaultNode>,
+    pub warnings: Vec<String>,
+    pub hidden_items: Vec<HiddenItem>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HiddenItem {
+    pub relative_path: String,
+    pub name: String,
+    pub is_folder: bool,
 }
 
 /// Recursively scans a selected vault directory.
@@ -53,33 +63,69 @@ pub fn scan_vault<P: AsRef<Path>>(root_path: P) -> Result<VaultScanResult, Strin
         .canonicalize()
         .map_err(|e| format!("Failed to resolve vault path: {}", e))?;
 
-    fn scan_dir(canonical_root: &Path, current_dir: &Path) -> Vec<VaultNode> {
+    fn scan_dir(
+        canonical_root: &Path,
+        current_dir: &Path,
+        visited_dirs: &mut HashSet<std::path::PathBuf>,
+        warnings: &mut Vec<String>,
+    ) -> Vec<VaultNode> {
         let mut nodes = Vec::new();
         let entries = match std::fs::read_dir(current_dir) {
             Ok(e) => e,
-            Err(_) => return nodes,
+            Err(_) => {
+                let relative = current_dir
+                    .strip_prefix(canonical_root)
+                    .unwrap_or(Path::new("."));
+                warnings.push(format!("Could not read folder: {}", relative.display()));
+                return nodes;
+            }
         };
 
-        let mut entries_vec: Vec<_> = entries.filter_map(|e| e.ok()).collect();
+        let mut entries_vec = Vec::new();
+        for entry in entries {
+            match entry {
+                Ok(entry) => entries_vec.push(entry),
+                Err(_) => {
+                    let relative = current_dir
+                        .strip_prefix(canonical_root)
+                        .unwrap_or(Path::new("."));
+                    warnings.push(format!("Could not read an entry in {}", relative.display()));
+                }
+            }
+        }
         entries_vec.sort_by_key(|e| e.file_name());
 
         for entry in entries_vec {
             let path = entry.path();
+            let relative = path.strip_prefix(canonical_root).unwrap_or(Path::new("."));
+            let link_metadata = match path.symlink_metadata() {
+                Ok(metadata) => metadata,
+                Err(_) => {
+                    warnings.push(format!("Could not inspect entry: {}", relative.display()));
+                    continue;
+                }
+            };
+            if link_metadata.file_type().is_symlink() {
+                warnings.push(format!("Skipped linked entry: {}", relative.display()));
+                continue;
+            }
             let canonical_path = match path.canonicalize() {
                 Ok(c) => c,
-                Err(_) => continue,
+                Err(_) => {
+                    warnings.push(format!("Could not resolve entry: {}", relative.display()));
+                    continue;
+                }
             };
 
             if !canonical_path.starts_with(canonical_root) {
+                warnings.push(format!(
+                    "Skipped entry outside vault: {}",
+                    relative.display()
+                ));
                 continue;
             }
 
-            // One metadata lookup is enough to classify a validated entry and capture
-            // its file size. This avoids repeated filesystem probes in large vaults.
-            let metadata = match canonical_path.metadata() {
-                Ok(metadata) => metadata,
-                Err(_) => continue,
-            };
+            let metadata = link_metadata;
 
             let name = entry.file_name().to_string_lossy().to_string();
             let rel_path = match path.strip_prefix(canonical_root) {
@@ -88,7 +134,11 @@ pub fn scan_vault<P: AsRef<Path>>(root_path: P) -> Result<VaultScanResult, Strin
             };
 
             if metadata.is_dir() {
-                let children = scan_dir(canonical_root, &path);
+                if !visited_dirs.insert(canonical_path.clone()) {
+                    warnings.push(format!("Skipped repeated folder: {}", relative.display()));
+                    continue;
+                }
+                let children = scan_dir(canonical_root, &canonical_path, visited_dirs, warnings);
                 nodes.push(VaultNode {
                     name,
                     relative_path: rel_path,
@@ -123,11 +173,20 @@ pub fn scan_vault<P: AsRef<Path>>(root_path: P) -> Result<VaultScanResult, Strin
         nodes
     }
 
-    let root_nodes = scan_dir(&canonical_root, &canonical_root);
+    let mut visited_dirs = HashSet::from([canonical_root.clone()]);
+    let mut warnings = Vec::new();
+    let root_nodes = scan_dir(
+        &canonical_root,
+        &canonical_root,
+        &mut visited_dirs,
+        &mut warnings,
+    );
 
     Ok(VaultScanResult {
         root_path: canonical_root.to_string_lossy().to_string(),
         root_nodes,
+        warnings,
+        hidden_items: Vec::new(),
     })
 }
 
@@ -269,134 +328,6 @@ pub fn create_folder<P: AsRef<Path>>(vault_root: P, relative_path: &str) -> Resu
     }
 
     std::fs::create_dir_all(&target_dir).map_err(|e| format!("Failed to create folder: {}", e))
-}
-
-/// Removes a folder or module file inside the vault.
-pub fn remove_item<P: AsRef<Path>>(vault_root: P, relative_path: &str) -> Result<(), String> {
-    let vault_canon = vault_root
-        .as_ref()
-        .canonicalize()
-        .map_err(|e| format!("Invalid vault path: {}", e))?;
-
-    let target = vault_canon.join(relative_path);
-    let target_canon = target
-        .canonicalize()
-        .map_err(|e| format!("Target item not found: {}", e))?;
-
-    if !target_canon.starts_with(&vault_canon) || target_canon == vault_canon {
-        return Err("Cannot delete items outside or equal to vault root".to_string());
-    }
-
-    if target_canon.is_dir() {
-        std::fs::remove_dir_all(&target_canon)
-            .map_err(|e| format!("Failed to remove folder: {}", e))
-    } else {
-        std::fs::remove_file(&target_canon).map_err(|e| format!("Failed to remove file: {}", e))
-    }
-}
-
-/// Renames a folder or module file inside the vault.
-/// Returns the new relative path from the vault root (using forward slashes).
-pub fn rename_item<P: AsRef<Path>>(
-    vault_root: P,
-    relative_path: &str,
-    new_name: &str,
-) -> Result<String, String> {
-    let vault_canon = vault_root
-        .as_ref()
-        .canonicalize()
-        .map_err(|e| format!("Invalid vault path: {}", e))?;
-
-    let target = vault_canon.join(relative_path);
-    let target_canon = target
-        .canonicalize()
-        .map_err(|e| format!("Target item not found: {}", e))?;
-
-    if !target_canon.starts_with(&vault_canon) || target_canon == vault_canon {
-        return Err("Cannot rename items outside or equal to vault root".to_string());
-    }
-
-    let trimmed_name = new_name.trim();
-    if trimmed_name.is_empty() {
-        return Err("New name cannot be empty".to_string());
-    }
-
-    // Reject path separators, traversal, or invalid filename characters
-    let invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|'];
-    if trimmed_name.contains("..")
-        || trimmed_name
-            .chars()
-            .any(|c| invalid_chars.contains(&c) || c.is_control())
-    {
-        return Err("Name contains invalid characters".to_string());
-    }
-
-    let parent_canon = match target_canon.parent() {
-        Some(p) => p
-            .canonicalize()
-            .map_err(|e| format!("Parent directory error: {}", e))?,
-        None => return Err("Target item has no parent directory".to_string()),
-    };
-
-    if !parent_canon.starts_with(&vault_canon) {
-        return Err("Parent directory escapes vault root".to_string());
-    }
-
-    let final_name = if target_canon.is_file() {
-        let existing_ext = target_canon
-            .extension()
-            .and_then(|s| s.to_str())
-            .map(|s| s.to_lowercase());
-
-        match existing_ext {
-            Some(ext) => {
-                let suffix = format!(".{}", ext);
-                if trimmed_name.to_lowercase().ends_with(&suffix) {
-                    trimmed_name.to_string()
-                } else if trimmed_name.contains('.') {
-                    let user_ext = trimmed_name.rsplit('.').next().unwrap_or("").to_lowercase();
-                    if ["pdf", "ppt", "pptx", "md"].contains(&user_ext.as_str()) {
-                        trimmed_name.to_string()
-                    } else {
-                        format!("{}.{}", trimmed_name, ext)
-                    }
-                } else {
-                    format!("{}.{}", trimmed_name, ext)
-                }
-            }
-            None => trimmed_name.to_string(),
-        }
-    } else {
-        trimmed_name.to_string()
-    };
-
-    let new_dest = parent_canon.join(&final_name);
-
-    if new_dest.exists() {
-        let dest_canon = new_dest.canonicalize().unwrap_or_else(|_| new_dest.clone());
-        if dest_canon != target_canon {
-            return Err("An item with this name already exists in this folder".to_string());
-        }
-    }
-
-    std::fs::rename(&target_canon, &new_dest)
-        .map_err(|e| format!("Failed to rename item: {}", e))?;
-
-    let new_canon = new_dest
-        .canonicalize()
-        .map_err(|e| format!("Failed to resolve renamed path: {}", e))?;
-
-    if !new_canon.starts_with(&vault_canon) {
-        return Err("Renamed item escapes vault boundary".to_string());
-    }
-
-    let rel_path = new_canon
-        .strip_prefix(&vault_canon)
-        .map_err(|e| format!("Failed to compute relative path: {}", e))?
-        .to_string_lossy()
-        .replace('\\', "/");
-
-    Ok(rel_path)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -545,6 +476,25 @@ mod tests {
             initial_pdf_meta.modified().unwrap(),
             post_pdf_meta.modified().unwrap()
         );
+        assert!(res.warnings.is_empty());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn scan_skips_cyclic_and_outside_links_without_losing_readable_modules() {
+        use std::os::unix::fs::symlink;
+        let dir = tempdir().unwrap();
+        let vault = dir.path().join("vault");
+        let course = vault.join("CS101");
+        fs::create_dir_all(&course).unwrap();
+        fs::write(course.join("lecture.pdf"), b"module").unwrap();
+        symlink(&vault, course.join("cycle")).unwrap();
+        symlink(dir.path(), course.join("outside")).unwrap();
+
+        let result = scan_vault(&vault).unwrap();
+        assert_eq!(result.root_nodes[0].children.len(), 1);
+        assert_eq!(result.root_nodes[0].children[0].name, "lecture.pdf");
+        assert_eq!(result.warnings.len(), 2);
     }
 
     #[test]
@@ -590,50 +540,5 @@ mod tests {
         assert_eq!(fs::read(&destination).unwrap(), b"new module");
         assert_eq!(fs::read(&source).unwrap(), b"new module");
         assert_eq!(fs::read_dir(&course).unwrap().count(), 1);
-    }
-
-    #[test]
-    fn test_rename_item_file_and_folder() {
-        let dir = tempdir().unwrap();
-        let root_path = dir.path();
-
-        let course_dir = root_path.join("CS101");
-        fs::create_dir(&course_dir).unwrap();
-
-        let pdf_path = course_dir.join("lecture1.pdf");
-        {
-            let mut pdf_file = File::create(&pdf_path).unwrap();
-            pdf_file.write_all(b"%PDF-1.4 dummy content").unwrap();
-        }
-
-        // 1. Rename file without extension in input -> keeps .pdf
-        let new_rel = rename_item(root_path, "CS101/lecture1.pdf", "Lecture 01 - Intro").unwrap();
-        assert_eq!(new_rel, "CS101/Lecture 01 - Intro.pdf");
-        assert!(!pdf_path.exists());
-        assert!(course_dir.join("Lecture 01 - Intro.pdf").exists());
-
-        // 2. Rename file with explicit extension
-        let new_rel_2 =
-            rename_item(root_path, "CS101/Lecture 01 - Intro.pdf", "lec1_final.pdf").unwrap();
-        assert_eq!(new_rel_2, "CS101/lec1_final.pdf");
-        assert!(course_dir.join("lec1_final.pdf").exists());
-
-        // 3. Rename folder
-        let new_folder_rel = rename_item(root_path, "CS101", "Computer Science 101").unwrap();
-        assert_eq!(new_folder_rel, "Computer Science 101");
-        assert!(!course_dir.exists());
-        let new_course_dir = root_path.join("Computer Science 101");
-        assert!(new_course_dir.exists());
-        assert!(new_course_dir.join("lec1_final.pdf").exists());
-
-        // 4. Test error cases: invalid chars, path traversal, collision
-        assert!(rename_item(root_path, "Computer Science 101", "../escape").is_err());
-        assert!(rename_item(root_path, "Computer Science 101", "invalid/slash").is_err());
-        assert!(rename_item(root_path, "Computer Science 101", "  ").is_err());
-
-        // Create collision target
-        let other_dir = root_path.join("OtherCourse");
-        fs::create_dir(&other_dir).unwrap();
-        assert!(rename_item(root_path, "Computer Science 101", "OtherCourse").is_err());
     }
 }

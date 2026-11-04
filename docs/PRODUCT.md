@@ -29,6 +29,8 @@ A college student using Fedora Linux and Windows 11 who stores course modules lo
 13. Export study data to a user-selected external location to keep the vault pristine.
 14. Operate without an internet connection.
 
+Library organization actions are metadata-only: Remove hides a module or folder from Syllex, Rename changes its display name, and hidden items can be restored. Neither action deletes or renames the source file. A hidden folder also hides its descendants from the library view.
+
 Issue #10 adds a dockable page-preview sidebar and persistent local highlights to the PDF and converted-presentation viewer. Each highlight is a view overlay with a matching page-preview tape; the source document remains unchanged.
 
 ## Later capabilities

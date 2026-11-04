@@ -44,6 +44,7 @@ Application cache -> PDF.js viewer
 
 Stores application-created metadata only. It does not store full module files.
 Issue #10 highlights use a versioned database in platform application data. Rust validates module paths and owns highlight reads and writes; React/PDF.js owns overlay geometry and page-preview rendering.
+Issue #34 library overrides (hidden items and display names) use the versioned metadata database in the same application-data directory. Rust applies them after a read-only vault scan. The scan skips linked entries, tracks visited directories, and returns warnings for entries it cannot inspect; React displays those warnings with the visible library.
 
 ### Application cache
 

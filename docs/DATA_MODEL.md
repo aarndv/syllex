@@ -19,6 +19,7 @@ SQLite stores application metadata and user-created study data. Original documen
 The root path is device-specific and must not be assumed portable.
 
 Issue #31 stores the current selected vault in `metadata.sqlite3` under the platform application-data directory. The first migration (`user_version = 1`) creates `settings` and `reading_progress`. The `selected_vault` setting contains the canonical, device-specific root path. A missing root remains recorded so the user can select a replacement; it is not silently discarded.
+Issue #34 adds `library_overrides` in migration 2. Each row is keyed by canonical vault root and relative item path, with an optional display name and a hidden flag. These settings stay in app data; the original file name and contents remain unchanged. Restoring a hidden folder reveals its scanned descendants again.
 
 ### courses
 

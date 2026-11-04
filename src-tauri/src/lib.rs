@@ -4,8 +4,10 @@ pub mod ppt_converter;
 pub mod vault;
 
 #[tauri::command]
-fn scan_vault(path: String) -> Result<vault::VaultScanResult, String> {
-    vault::scan_vault(path)
+fn scan_vault(app: tauri::AppHandle, path: String) -> Result<vault::VaultScanResult, String> {
+    let mut scan = vault::scan_vault(path)?;
+    metadata::apply_library_overrides(&app, &mut scan)?;
+    Ok(scan)
 }
 
 #[tauri::command]
@@ -28,34 +30,23 @@ fn create_folder(vault_root: String, relative_path: String) -> Result<(), String
 }
 
 #[tauri::command]
-fn remove_item(vault_root: String, relative_path: String) -> Result<(), String> {
-    vault::remove_item(vault_root, &relative_path)
-}
-
-#[tauri::command]
-fn rename_item(
+fn set_item_hidden(
     app: tauri::AppHandle,
     vault_root: String,
     relative_path: String,
-    new_name: String,
-) -> Result<String, String> {
-    let old_path = std::path::Path::new(&vault_root)
-        .join(&relative_path)
-        .canonicalize()
-        .ok();
-    let new_relative_path = vault::rename_item(&vault_root, &relative_path, &new_name)?;
-    if let Some(old_path) = old_path {
-        let new_path = std::path::Path::new(&vault_root)
-            .join(&new_relative_path)
-            .canonicalize()
-            .map_err(|_| "Renamed item could not be resolved".to_string())?;
-        highlights::move_document(&app, &old_path, &new_path)
-            .map_err(|_| "Item was renamed, but its highlights could not be moved".to_string())?;
-        metadata::move_progress(&app, &old_path, &new_path).map_err(|_| {
-            "Item was renamed, but its reading position could not be moved".to_string()
-        })?;
-    }
-    Ok(new_relative_path)
+    hidden: bool,
+) -> Result<(), String> {
+    metadata::set_item_hidden(&app, &vault_root, &relative_path, hidden)
+}
+
+#[tauri::command]
+fn set_item_display_name(
+    app: tauri::AppHandle,
+    vault_root: String,
+    relative_path: String,
+    display_name: String,
+) -> Result<(), String> {
+    metadata::set_item_display_name(&app, &vault_root, &relative_path, &display_name)
 }
 
 #[tauri::command]
@@ -153,8 +144,8 @@ pub fn run() {
             add_module_to_vault,
             read_module_bytes,
             create_folder,
-            remove_item,
-            rename_item,
+            set_item_hidden,
+            set_item_display_name,
             get_selected_vault,
             set_selected_vault,
             get_reading_progress,

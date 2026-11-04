@@ -59,7 +59,7 @@ Run on Fedora KDE and Windows 11 for:
 - The generated PDF from a representative PPT/PPTX in both Syllex and an external viewer
 - Issue #1: hover book covers near each window edge and with a long filename at 800×600 and a narrow window; confirm the tooltip flips or clamps inside the visible viewport and keeps its metadata readable in both themes on Fedora/WebKitGTK and Windows/WebView2.
 - Viewer sidebar in both themes: compact file icons and names, folder rows without selection tint, and accessible ellipsis actions
-- Issue #8: on the bookshelf in both themes, Tab to a book, open it with Enter and Space, then Tab to its visible Rename and Remove actions; confirm their focus rings and screen reader names include the module name, format, and reading state.
+- Issue #8: on the bookshelf in both themes, Tab to a book, open it with Enter and Space, then Tab to its visible Display Name and Hide actions; confirm their focus rings and screen reader names include the module name, format, and reading state.
 - Issue #11: in the full and compact Explorer trees, Tab into one focused row and use Up, Down, Home, End, Left, Right, Enter, and Space across nested and empty folders and files. Confirm collapsed descendants are skipped, focus and selection are distinct, and Shift+F10 or the context-menu key opens the focused row's actions; Escape restores tree focus. Check screen reader tree, group, expanded, and selected announcements.
 - Issue #12: at 800×600 with the reader drawer open and closed, confirm the title, page navigation, view mode toggle, and Reader Tools button stay visible. Open Reader Tools by pointer and keyboard, reach Pages, Highlight, Find, Filter, Fit Width, and Zoom, check focus and pressed states in both themes, then resize narrower and wider without losing canvas access or clipping controls. Confirm search remains reachable below the toolbar.
 - Collapse each ancestor of the open PDF and confirm the Current file link remains visible; selecting another file should reveal its tree path
@@ -74,13 +74,14 @@ Run on Fedora KDE and Windows 11 for:
 - Issue #10: choose each highlight color from the visible swatches, draw on text and non-text areas, reopen the document, and confirm its color and tape persist; use H, Escape, Done, and the six-second Undo action
 - Issue #10: choose Erase beside the color swatches, click a highlighted region to remove only that highlight, and verify its tape disappears and Undo restores both the region and tape; click unhighlighted page space to confirm nothing is removed, then choose a color and draw again
 - Issue #10: add more than ten highlights to one page, verify the later tapes layer behind the first column without expanding the row, and use keyboard focus to reach every tape
-- Issue #10: rename a highlighted module or containing folder and verify that its highlights follow the renamed path; repeat on Fedora/WebKitGTK and Windows 11/WebView2
+- Issue #34: change a highlighted module's display name and hide/restore it or its containing folder; verify highlights and reading position remain intact and the source path and bytes stay unchanged on Fedora/WebKitGTK and Windows 11/WebView2
 
 The viewer sidebar change is React/CSS only and uses the same behavior on Fedora/WebKitGTK and Windows/WebView2. Validate menu positioning, keyboard focus, and the sticky Current file link on both targets during the PDF smoke test.
 
 Issue #10 adds a bundled SQLite dependency and platform application-data database. Rust migration/path tests cover the native boundary; visual highlighting, thumbnail rendering, focus navigation, and filter contrast still need manual validation in both webviews.
 
 Before M6, verify that a selected vault and reading page survive restart, and that a missing vault remains selectable for recovery. Check that the legacy webview page is migrated only for its original vault, and that equal relative PDF names in different vaults retain separate positions. On Fedora and Windows 11, import a module into a course, repeat the same-name import, and confirm the first module bytes remain unchanged; a failed copy must leave no visible partial module.
+For issue #33, scan a nested vault with an ancestor link, an outside-vault link or junction, and an unreadable folder. The scan must finish, show reachable modules once, and surface warnings for skipped entries. For issue #34, hide and restore a module and a nonempty folder, change a display name, restart, and confirm the metadata persists without any source-file operation. Native checks cover database migrations and path validation; both webviews still need manual UI validation.
 
 ## Required fixtures
 

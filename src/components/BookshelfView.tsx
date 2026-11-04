@@ -220,9 +220,9 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
           <button
             onClick={() => onRenameItem(folder.relative_path, true, folder.name)}
             className="shelf-mini-btn"
-            title="Rename folder"
+            title="Change folder display name"
           >
-            <PencilIcon size={13} /> Rename
+            <PencilIcon size={13} /> Display Name
           </button>
           <button
             onClick={() => onAddFile(folder.relative_path)}
@@ -234,7 +234,7 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
           <button
             onClick={() => onRemoveItem(folder.relative_path, true)}
             className="shelf-mini-btn delete"
-            title="Remove shelf folder"
+            title="Hide shelf folder from library"
           >
             <CloseIcon size={14} />
           </button>
@@ -522,14 +522,14 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
         <button type="button"
           onClick={() => onRenameItem(node.relative_path, false, node.name)}
           className="book-rename-btn"
-          aria-label={`Rename ${node.name}`} title="Rename module"
+          aria-label={`Change display name for ${node.name}`} title="Change module display name"
         >
           <PencilIcon size={11} />
         </button>
         <button type="button"
           onClick={() => onRemoveItem(node.relative_path, false)}
           className="book-delete-btn"
-          aria-label={`Remove ${node.name} from shelf`} title="Remove from shelf"
+          aria-label={`Hide ${node.name} from library`} title="Hide from library"
         >
           <CloseIcon size={12} />
         </button>

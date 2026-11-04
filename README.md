@@ -11,6 +11,7 @@ The name combines *syllabus* and *index*.
 ## Key features
 
 - **Course vault:** Choose an existing folder and browse your modules by course.
+- **Library-only organization:** Hide a module or change its display name in Syllex without deleting or renaming the file on disk.
 - **Document reading:** Read PDFs and preview presentation slides when available. Navigate pages, zoom, search, and resume where you left off.
 - **Page previews and highlights:** Jump between pages, mark text or page areas in multiple colors, and return to saved highlights. An eraser lets you remove marks you no longer need.
 - **Reading filters:** Switch between original, dark, and other viewing modes without changing the source document.

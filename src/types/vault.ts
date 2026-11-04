@@ -13,6 +13,8 @@ export interface VaultNode {
 export interface VaultScanResult {
   root_path: string;
   root_nodes: VaultNode[];
+  warnings: string[];
+  hidden_items: { relative_path: string; name: string; is_folder: boolean }[];
 }
 
 export interface VaultSummary {
