@@ -804,8 +804,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         }}
       >
         <div className="drawer-header">
-          <h3>
-            <FolderIcon size={16} /> <span>Vault Explorer</span>
+          <h3 aria-label="Vault files">
+            <FolderIcon size={16} />
           </h3>
           <div className="drawer-header-actions">
             {onRefreshVault && (
@@ -876,7 +876,6 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                 aria-label={`Reading filter: ${VIEW_MODE_LABELS[viewMode]}. Press D to cycle filters`}
                 aria-keyshortcuts="D"
               >
-                <span className="reader-filter-dot" aria-hidden="true" />
                 <span>{VIEW_MODE_SHORT_LABELS[viewMode]}</span>
               </button>
             )}
