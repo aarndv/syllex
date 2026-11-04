@@ -1,11 +1,6 @@
 import React, { useMemo } from "react";
 import "./DashboardHeader.css";
 
-interface DashboardHeaderProps {
-  courseCount?: number;
-  fileCount?: number;
-}
-
 const MORNING_GREETINGS = [
   "Good morning! Ready for a productive study session?",
   "Rise and shine! Time to conquer your course modules.",
@@ -66,7 +61,7 @@ function getRandomItem<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
 }
 
-export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ courseCount, fileCount }) => {
+export const DashboardHeader: React.FC = () => {
   const { greeting, motivationalSentence, formattedDate } = useMemo(() => {
     const now = new Date();
     const hour = now.getHours();
@@ -120,22 +115,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ courseCount, f
         <p className="dashboard-motivational-subtitle">{motivationalSentence}</p>
       </div>
 
-      {(courseCount !== undefined || fileCount !== undefined) && (
-        <div className="dashboard-stats-strip">
-          {courseCount !== undefined && (
-            <div className="stat-item">
-              <span className="stat-value">{courseCount}</span>
-              <span className="stat-label">{courseCount === 1 ? "Course" : "Courses"}</span>
-            </div>
-          )}
-          {fileCount !== undefined && (
-            <div className="stat-item">
-              <span className="stat-value">{fileCount}</span>
-              <span className="stat-label">{fileCount === 1 ? "Module" : "Modules"}</span>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 };

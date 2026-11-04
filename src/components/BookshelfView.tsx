@@ -170,12 +170,8 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
           </div>
           <div className="shelf-title-wrapper">
             <h3 className="shelf-title">{folder.name}</h3>
-            <span className="shelf-title-sub">COLLECTION ARCHIVE</span>
+            <span className="shelf-title-sub">{folder.children.length} {folder.children.length === 1 ? "ITEM" : "ITEMS"}</span>
           </div>
-          <span className="shelf-count-badge">
-            <span className="count-num">{folder.children.length}</span>
-            <span className="count-label">{folder.children.length === 1 ? "ITEM" : "ITEMS"}</span>
-          </span>
         </div>
 
         <div className="shelf-actions">
@@ -329,12 +325,8 @@ const ShelfSection: React.FC<ShelfSectionProps> = ({
           </div>
           <div className="shelf-title-wrapper">
             <h3 className="shelf-title">{title}</h3>
-            <span className="shelf-title-sub">GENERAL VAULT MODULES</span>
+            <span className="shelf-title-sub">{files.length} {files.length === 1 ? "MODULE" : "MODULES"}</span>
           </div>
-          <span className="shelf-count-badge">
-            <span className="count-num">{files.length}</span>
-            <span className="count-label">{files.length === 1 ? "MODULE" : "MODULES"}</span>
-          </span>
         </div>
 
         <div className="shelf-actions">
@@ -507,14 +499,9 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
 
         <span className="book-spine-footer">
           <span className={`book-type-badge ${ext.toLowerCase()}`}>
-            <span className="badge-dot" />
             {ext}
           </span>
-          {savedPage ? (
-            <span className="book-progress-ribbon">Page {savedPage}</span>
-          ) : (
-            <span className="book-unread-tag">Unread</span>
-          )}
+            {savedPage && <span className="book-progress-ribbon">Page {savedPage}</span>}
         </span>
       </button>
 

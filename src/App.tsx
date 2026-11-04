@@ -754,10 +754,7 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
                   <p><strong>{scanResult.warnings.length} {scanResult.warnings.length === 1 ? "entry was" : "entries were"} skipped:</strong> {scanResult.warnings.slice(0, 3).join("; ")}{scanResult.warnings.length > 3 ? `; and ${scanResult.warnings.length - 3} more` : ""}</p>
                 </div>
               )}
-              <DashboardHeader
-                courseCount={vaultStats.courses}
-                fileCount={vaultStats.files}
-              />
+              <DashboardHeader />
 
               <div className="view-mode-toolbar-blueprint">
                 <span className="tree-card-vault-path" title={scanResult.root_path}>

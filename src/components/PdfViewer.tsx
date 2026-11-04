@@ -795,7 +795,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       >
         <div className="drawer-header">
           <h3>
-            <FolderIcon size={16} /> Vault Explorer
+            <FolderIcon size={16} /> <span>Vault Explorer</span>
           </h3>
           <div className="drawer-header-actions">
             {onRefreshVault && (
@@ -921,9 +921,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               title="Toggle highlight tool (H)" aria-label={erasingHighlights ? "Highlight eraser (H)" : `Highlight with ${highlightColor} (H)`}
               aria-keyshortcuts="H" aria-pressed={highlightEnabled} disabled={loading || !!error || !pdfDoc}
               onClick={() => { setIsSearchOpen(false); setHighlightEnabled((current) => !current); }}>
+              <span>{erasingHighlights ? "Eraser" : "Highlight"}</span>
               {!erasingHighlights && <span className="highlighter-color-chip" aria-hidden="true"
                 style={{ backgroundColor: HIGHLIGHT_COLORS.find((color) => color.id === highlightColor)?.swatch }} />}
-              <span>{erasingHighlights ? "Eraser" : "Highlight"}</span>
             </button>
             {selectedHighlightId && <button type="button" className="toolbar-btn" onClick={() => { void handleDeleteHighlight(selectedHighlightId); }}>Remove highlight</button>}
             {/* Find in Document Button */}
@@ -933,7 +933,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               title="Find in document (Ctrl+F)"
               aria-pressed={isSearchOpen}
             >
-              <SearchIcon size={14} /> <span>Find</span>
+              <span>Find</span> <SearchIcon size={14} />
             </button>
 
             <div className="filter-dropdown-group" title="Select Dark Mode Reading Filter (Shortcut: Press 'D' to cycle)">
@@ -963,7 +963,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               title="Fit to width (Ctrl+0)"
               aria-pressed={isFitWidth}
             >
-              <FitWidthIcon size={14} /> <span>Fit Width</span>
+              <span>Fit Width</span> <FitWidthIcon size={14} />
             </button>
 
             <div className="toolbar-control-group zoom-controls">

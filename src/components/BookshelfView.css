@@ -72,8 +72,10 @@
   color: rgba(255, 255, 255, 0.85);
   background-color: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.25);
-  width: 1.4rem;
-  height: 1.4rem;
+  width: 2.1rem;
+  height: 2.1rem;
+  box-sizing: border-box;
+  flex-shrink: 0;
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -118,29 +120,6 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   color: rgba(255, 255, 255, 0.6);
-}
-
-.shelf-count-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.72rem;
-  font-family: monospace;
-  background-color: rgba(0, 0, 0, 0.25);
-  color: #e2f0d9;
-  padding: 0.2rem 0.65rem;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  margin-left: 0.4rem;
-}
-
-.count-num {
-  font-weight: 800;
-  color: #ffffff;
-}
-
-.count-label {
-  opacity: 0.8;
 }
 
 .shelf-actions {
@@ -279,7 +258,7 @@
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 1.25rem;
-  padding: 0.5rem 0.5rem 0.75rem 0.25rem;
+  padding: 0.5rem 0.5rem 0.75rem;
   max-height: 450px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -381,7 +360,7 @@
   position: relative;
   transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease, box-shadow 0.2s ease;
   user-select: none;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .book-spine-ridge-left {
@@ -609,11 +588,11 @@ html[data-theme="light"] .book-metadata-tooltip {
   padding: 0 0.15rem;
 }
 
-/* Footer: File type badge + progress / unread side-by-side */
+/* File type ribbon wraps the left edge; reading progress stays at the right. */
 .book-spine-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 0.25rem;
   width: 100%;
   margin-top: 0.2rem;
@@ -621,45 +600,49 @@ html[data-theme="light"] .book-metadata-tooltip {
 }
 
 .book-type-badge {
+  --ribbon-bg: #365c48;
+  --ribbon-fold: #173623;
+  position: absolute;
+  left: -0.35rem;
+  bottom: 0.45rem;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
   font-size: 0.6rem;
   font-family: monospace;
   font-weight: 700;
-  padding: 0.12rem 0.35rem;
-  border-radius: 3px;
-  background-color: rgba(255, 255, 255, 0.15);
+  padding: 0.18rem 0.6rem 0.18rem 0.7rem;
+  border-radius: 0 3px 3px 0;
+  background-color: var(--ribbon-bg);
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.25);
   text-transform: uppercase;
   white-space: nowrap;
 }
 
-.badge-dot {
-  width: 3.5px;
-  height: 3.5px;
-  border-radius: 50%;
-  background-color: currentColor;
+.book-type-badge::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -0.35rem;
+  border-top: 0.35rem solid var(--ribbon-fold);
+  border-left: 0.35rem solid transparent;
 }
 
 .book-type-badge.pdf {
-  border-color: rgba(252, 165, 165, 0.6);
-  color: #fca5a5;
-  background-color: rgba(153, 27, 27, 0.3);
+  --ribbon-bg: #9b3737;
+  --ribbon-fold: #5a1c1c;
 }
 
 .book-type-badge.ppt,
 .book-type-badge.pptx {
-  border-color: rgba(147, 197, 253, 0.6);
-  color: #93c5fd;
-  background-color: rgba(30, 58, 138, 0.3);
+  --ribbon-bg: #2e568c;
+  --ribbon-fold: #1a3256;
 }
 
 .book-type-badge.md {
-  border-color: rgba(110, 231, 183, 0.6);
-  color: #6ee7b7;
-  background-color: rgba(6, 95, 70, 0.3);
+  --ribbon-bg: #176b4b;
+  --ribbon-fold: #0b3c29;
 }
 
 .book-progress-ribbon {
@@ -674,15 +657,6 @@ html[data-theme="light"] .book-metadata-tooltip {
   display: inline-block;
   white-space: nowrap;
 }
-
-.book-unread-tag {
-  font-size: 0.6rem;
-  font-family: monospace;
-  color: rgba(255, 255, 255, 0.5);
-  font-style: italic;
-  white-space: nowrap;
-}
-
 
 /* Light Theme Botanical Parchment Blueprint Overrides */
 html[data-theme="light"] .empty-bookshelf-notice {
@@ -714,16 +688,6 @@ html[data-theme="light"] .shelf-chevron-badge,
 html[data-theme="light"] .folder-icon-emblem {
   background-color: #e4ddd0;
   border-color: #143222;
-  color: #143222;
-}
-
-html[data-theme="light"] .shelf-count-badge {
-  background-color: #e4ddd0;
-  color: #143222;
-  border-color: #143222;
-}
-
-html[data-theme="light"] .count-num {
   color: #143222;
 }
 
