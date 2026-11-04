@@ -732,7 +732,7 @@ function App() {
           {!vaultPath && !loading && (
             <>
               <DashboardHeader />
-              <div className="empty-state">
+              <div className="empty-state no-vault-empty-state">
                 <h2>No Vault Selected</h2>
                 <p>Create a new vault or select an existing local course folder to get started.</p>
                 <button onClick={() => setIsVaultManagerOpen(true)} className="primary-btn large">

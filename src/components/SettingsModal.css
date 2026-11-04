@@ -214,6 +214,41 @@ html[data-theme="light"] .settings-path-box {
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.academic-visibility-options {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.academic-visibility-options > .sub-label {
+  width: 100%;
+}
+
+.academic-visibility-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #e2f0d9;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.academic-visibility-option input {
+  accent-color: #059669;
+}
+
+html[data-theme="light"] .academic-visibility-options {
+  border-bottom-color: #143222;
+}
+
+html[data-theme="light"] .academic-visibility-option {
+  color: #143222;
+}
+
 html[data-theme="light"] .academic-settings-grid {
   background-color: #eee9df;
   border: 1px solid #143222;

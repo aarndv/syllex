@@ -20,6 +20,28 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.sidebar-todo-card:not(.is-expanded) .todo-header {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.todo-drawer-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.todo-drawer-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
 .todo-title {
   font-size: 0.8rem;
   font-weight: 700;
@@ -204,6 +226,10 @@ html[data-theme="light"] .todo-header {
 }
 
 html[data-theme="light"] .todo-title {
+  color: #143222;
+}
+
+html[data-theme="light"] .todo-drawer-toggle {
   color: #143222;
 }
 

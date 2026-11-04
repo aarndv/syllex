@@ -7,10 +7,18 @@
   position: relative;
 }
 
+.sidebar-clock-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
 .sidebar-clock-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex: 1;
+  min-width: 0;
   background-color: rgba(10, 28, 18, 0.9);
   padding: 0.4rem 0.65rem;
   border-radius: 4px;
@@ -32,15 +40,9 @@
   color: #ffffff;
 }
 
-.sidebar-clock-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.sidebar-clock-actions .sidebar-toggle-btn {
-  width: 1.6rem;
-  height: 1.6rem;
+.sidebar-clock-row .sidebar-toggle-btn {
+  width: 2rem;
+  flex-shrink: 0;
   padding: 0;
   display: inline-flex;
   align-items: center;
@@ -54,7 +56,7 @@
   transition: all 0.2s ease;
 }
 
-.sidebar-clock-actions .sidebar-toggle-btn:hover {
+.sidebar-clock-row .sidebar-toggle-btn:hover {
   background-color: rgba(255, 255, 255, 0.2);
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.5);
@@ -214,6 +216,7 @@
 
 .tracker-progress-bg.year-progress {
   position: relative;
+  background-color: rgba(255, 255, 255, 0.55);
 }
 
 .year-progress-ticks {
@@ -225,9 +228,9 @@
 .year-progress-tick {
   position: absolute;
   top: 0;
-  width: 1px;
+  width: 2px;
   height: 100%;
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: #143222;
 }
 
 /* Light Theme Botanical Parchment Blueprint Overrides */
@@ -298,17 +301,13 @@ html[data-theme="light"] .tracker-progress-bg {
   border-color: #143222;
 }
 
-html[data-theme="light"] .year-progress-tick {
-  background-color: rgba(20, 50, 34, 0.7);
-}
-
-html[data-theme="light"] .sidebar-clock-actions .sidebar-toggle-btn {
+html[data-theme="light"] .sidebar-clock-row .sidebar-toggle-btn {
   background-color: transparent;
   border-color: #143222;
   color: #143222;
 }
 
-html[data-theme="light"] .sidebar-clock-actions .sidebar-toggle-btn:hover {
+html[data-theme="light"] .sidebar-clock-row .sidebar-toggle-btn:hover {
   background-color: #143222;
   color: #ffffff;
 }

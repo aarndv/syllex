@@ -9,6 +9,9 @@ interface AcademicData {
   trimesterStartDate: string;
   trimesterEndDate: string;
   manualTrimesterPercent: number | null;
+  showMidterms: boolean;
+  showFinals: boolean;
+  showTrimester: boolean;
 }
 
 const DEFAULT_ACADEMIC_DATA: AcademicData = {
@@ -17,6 +20,9 @@ const DEFAULT_ACADEMIC_DATA: AcademicData = {
   trimesterStartDate: "",
   trimesterEndDate: "",
   manualTrimesterPercent: null,
+  showMidterms: false,
+  showFinals: false,
+  showTrimester: false,
 };
 
 const STORAGE_KEY = "syllex_academic_tracker_data";
@@ -96,12 +102,12 @@ export const SidebarAcademicWidget: React.FC<SidebarAcademicWidgetProps> = ({
   return (
     <div className="academic-sidebar-widget">
       {/* Clock Display Header */}
-      <div className="sidebar-clock-header">
-        <div className="clock-time-display">
-          <ClockIcon size={16} />
-          <span className="clock-digits">{timeString}</span>
-        </div>
-        <div className="sidebar-clock-actions">
+      <div className="sidebar-clock-row">
+        <div className="sidebar-clock-header">
+          <div className="clock-time-display">
+            <ClockIcon size={16} />
+            <span className="clock-digits">{timeString}</span>
+          </div>
           {onOpenSettings && (
             <button
               onClick={onOpenSettings}
@@ -112,57 +118,63 @@ export const SidebarAcademicWidget: React.FC<SidebarAcademicWidgetProps> = ({
               <SettingsIcon size={13} />
             </button>
           )}
-          {onToggleSidebar && (
-            <button
-              type="button"
-              onClick={onToggleSidebar}
-              className="icon-btn sidebar-toggle-btn"
-              title="Hide Sidebar"
-              aria-label="Hide Sidebar"
-            >
-              <SidebarToggleIcon size={16} />
-            </button>
-          )}
         </div>
+        {onToggleSidebar && (
+          <button
+            type="button"
+            onClick={onToggleSidebar}
+            className="icon-btn sidebar-toggle-btn"
+            title="Hide Sidebar"
+            aria-label="Hide Sidebar"
+          >
+            <SidebarToggleIcon size={16} />
+          </button>
+        )}
       </div>
 
       {/* Academic Trackers List */}
       <div className="academic-trackers-list">
         {/* Days until Midterms */}
-        <div className="academic-tracker-item">
-          <div className="tracker-label-row">
-            <span className="tracker-name">Days to Midterms</span>
-            <span className={`tracker-value ${daysToMidterms !== null ? "bold" : "unconfigured"}`}>
-              {daysToMidterms !== null ? `${daysToMidterms} days` : "Configure in Settings"}
-            </span>
+        {data.showMidterms && (
+          <div className="academic-tracker-item">
+            <div className="tracker-label-row">
+              <span className="tracker-name">Days to Midterms</span>
+              <span className={`tracker-value ${daysToMidterms !== null ? "bold" : "unconfigured"}`}>
+                {daysToMidterms !== null ? `${daysToMidterms} days` : "Configure in Settings"}
+              </span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Days until Finals */}
-        <div className="academic-tracker-item">
-          <div className="tracker-label-row">
-            <span className="tracker-name">Days to Finals</span>
-            <span className={`tracker-value ${daysToFinals !== null ? "bold" : "unconfigured"}`}>
-              {daysToFinals !== null ? `${daysToFinals} days` : "Configure in Settings"}
-            </span>
+        {data.showFinals && (
+          <div className="academic-tracker-item">
+            <div className="tracker-label-row">
+              <span className="tracker-name">Days to Finals</span>
+              <span className={`tracker-value ${daysToFinals !== null ? "bold" : "unconfigured"}`}>
+                {daysToFinals !== null ? `${daysToFinals} days` : "Configure in Settings"}
+              </span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Trimester Progress */}
-        <div className="academic-tracker-item">
-          <div className="tracker-label-row">
-            <span className="tracker-name">Trimester Progress</span>
-            <span className={`tracker-value ${trimesterPercent !== null ? "" : "unconfigured"}`}>
-              {trimesterPercent !== null ? `${trimesterPercent}%` : "Configure in Settings"}
-            </span>
+        {data.showTrimester && (
+          <div className="academic-tracker-item">
+            <div className="tracker-label-row">
+              <span className="tracker-name">Trimester Progress</span>
+              <span className={`tracker-value ${trimesterPercent !== null ? "" : "unconfigured"}`}>
+                {trimesterPercent !== null ? `${trimesterPercent}%` : "Configure in Settings"}
+              </span>
+            </div>
+            <div className="tracker-progress-bg">
+              <div
+                className="tracker-progress-fill"
+                style={{ width: `${trimesterPercent ?? 0}%` }}
+              />
+            </div>
           </div>
-          <div className="tracker-progress-bg">
-            <div
-              className="tracker-progress-fill"
-              style={{ width: `${trimesterPercent ?? 0}%` }}
-            />
-          </div>
-        </div>
+        )}
 
         {/* Year Progress */}
         <div className="academic-tracker-item">

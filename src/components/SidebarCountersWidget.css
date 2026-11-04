@@ -20,6 +20,28 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.sidebar-counters-card:not(.is-expanded) .counters-header {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.counters-drawer-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.counters-drawer-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .counters-title-row {
   display: flex;
   align-items: center;
@@ -318,6 +340,10 @@ html[data-theme="light"] .counters-header {
 
 html[data-theme="light"] .counters-title-row,
 html[data-theme="light"] .counters-title {
+  color: #143222;
+}
+
+html[data-theme="light"] .counters-drawer-toggle {
   color: #143222;
 }
 

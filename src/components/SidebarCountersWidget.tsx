@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { PlusIcon, CloseIcon, ResetIcon, MinusIcon, CounterIcon } from "./Icons";
+import { PlusIcon, CloseIcon, ResetIcon, MinusIcon, CounterIcon, ChevronDownIcon, ChevronRightIcon } from "./Icons";
 import "./SidebarCountersWidget.css";
 
 export interface CounterItem {
@@ -33,6 +33,7 @@ export const SidebarCountersWidget: React.FC = () => {
   const [isAdding, setIsAdding] = useState<boolean>(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState<string>("");
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(COUNTERS_STORAGE_KEY, JSON.stringify(counters));
@@ -91,24 +92,33 @@ export const SidebarCountersWidget: React.FC = () => {
   }
 
   return (
-    <div className="sidebar-counters-card">
+    <div className={`sidebar-counters-card ${isExpanded ? "is-expanded" : ""}`}>
       <header className="counters-header">
-        <div className="counters-title-row">
+        <button
+          type="button"
+          className="counters-drawer-toggle"
+          onClick={() => setIsExpanded((prev) => !prev)}
+          aria-expanded={isExpanded}
+        >
+          {isExpanded ? <ChevronDownIcon size={14} /> : <ChevronRightIcon size={14} />}
           <CounterIcon size={13} />
           <span className="counters-title">Counters</span>
-        </div>
-        <div className="counters-header-actions">
-          <button
-            type="button"
-            className={`counters-add-toggle-btn ${isAdding ? "active" : ""}`}
-            onClick={() => setIsAdding((prev) => !prev)}
-            title={isAdding ? "Cancel adding" : "Add new counter"}
-          >
-            {isAdding ? <CloseIcon size={11} /> : <PlusIcon size={11} />}
-          </button>
-        </div>
+        </button>
+        {isExpanded && (
+          <div className="counters-header-actions">
+            <button
+              type="button"
+              className={`counters-add-toggle-btn ${isAdding ? "active" : ""}`}
+              onClick={() => setIsAdding((prev) => !prev)}
+              title={isAdding ? "Cancel adding" : "Add new counter"}
+            >
+              {isAdding ? <CloseIcon size={11} /> : <PlusIcon size={11} />}
+            </button>
+          </div>
+        )}
       </header>
 
+      {isExpanded && <div className="counters-drawer-content">
       {/* Compact Add Counter Form */}
       {isAdding && (
         <form
@@ -219,6 +229,7 @@ export const SidebarCountersWidget: React.FC = () => {
           })
         )}
       </div>
+      </div>}
     </div>
   );
 };

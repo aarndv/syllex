@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { PlusIcon, CloseIcon, CheckIcon } from "./Icons";
+import { PlusIcon, CloseIcon, CheckIcon, ChevronDownIcon, ChevronRightIcon } from "./Icons";
 import "./SidebarTodoList.css";
 
 export interface TodoItem {
@@ -29,6 +29,7 @@ export const SidebarTodoList: React.FC = () => {
   const [newText, setNewText] = useState<string>("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState<string>("");
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(todos));
@@ -76,14 +77,23 @@ export const SidebarTodoList: React.FC = () => {
   const completedCount = todos.filter((t) => t.completed).length;
 
   return (
-    <div className="sidebar-todo-card">
+    <div className={`sidebar-todo-card ${isExpanded ? "is-expanded" : ""}`}>
       <header className="todo-header">
-        <span className="todo-title">To-Do List</span>
+        <button
+          type="button"
+          className="todo-drawer-toggle"
+          onClick={() => setIsExpanded((prev) => !prev)}
+          aria-expanded={isExpanded}
+        >
+          {isExpanded ? <ChevronDownIcon size={14} /> : <ChevronRightIcon size={14} />}
+          <span className="todo-title">To-Do List</span>
+        </button>
         <span className="todo-badge">
           {completedCount}/{todos.length} done
         </span>
       </header>
 
+      {isExpanded && <div className="todo-drawer-content">
       {/* Add Task Input Row */}
       <form
         className="todo-input-row"
@@ -168,6 +178,7 @@ export const SidebarTodoList: React.FC = () => {
           })
         )}
       </div>
+      </div>}
     </div>
   );
 };

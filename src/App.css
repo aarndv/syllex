@@ -499,6 +499,10 @@ html[data-theme="light"] .sidebar-content::-webkit-scrollbar-thumb:hover {
   box-shadow: 0 4px 12px rgba(27, 54, 39, 0.04);
 }
 
+.no-vault-empty-state {
+  opacity: 0.6;
+}
+
 .empty-state h2 {
   color: #1b3627;
   font-family: inherit;

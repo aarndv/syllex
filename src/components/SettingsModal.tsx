@@ -73,7 +73,21 @@ interface AcademicData {
   trimesterStartDate: string;
   trimesterEndDate: string;
   manualTrimesterPercent: number | null;
+  showMidterms: boolean;
+  showFinals: boolean;
+  showTrimester: boolean;
 }
+
+const DEFAULT_ACADEMIC_DATA: AcademicData = {
+  midtermDate: "",
+  finalsDate: "",
+  trimesterStartDate: "",
+  trimesterEndDate: "",
+  manualTrimesterPercent: null,
+  showMidterms: false,
+  showFinals: false,
+  showTrimester: false,
+};
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   settings,
@@ -87,18 +101,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const saved = localStorage.getItem(ACADEMIC_STORAGE_KEY);
     if (saved) {
       try {
-        return JSON.parse(saved);
+        return { ...DEFAULT_ACADEMIC_DATA, ...JSON.parse(saved) };
       } catch {
         // Fallback
       }
     }
-    return {
-      midtermDate: "",
-      finalsDate: "",
-      trimesterStartDate: "",
-      trimesterEndDate: "",
-      manualTrimesterPercent: null,
-    };
+    return DEFAULT_ACADEMIC_DATA;
   });
 
   function handleChange<K extends keyof AppSettings>(key: K, value: AppSettings[K]) {
@@ -145,6 +153,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <section className="settings-section">
             <label className="setting-label">Academic Milestones & Calendar</label>
             <div className="academic-settings-grid">
+              <div className="academic-visibility-options" aria-label="Sidebar academic trackers">
+                <span className="sub-label">Show in Sidebar</span>
+                <label className="academic-visibility-option">
+                  <input
+                    type="checkbox"
+                    checked={academicData.showMidterms}
+                    onChange={(e) => handleAcademicChange("showMidterms", e.target.checked)}
+                  />
+                  Days to Midterms
+                </label>
+                <label className="academic-visibility-option">
+                  <input
+                    type="checkbox"
+                    checked={academicData.showFinals}
+                    onChange={(e) => handleAcademicChange("showFinals", e.target.checked)}
+                  />
+                  Days to Finals
+                </label>
+                <label className="academic-visibility-option">
+                  <input
+                    type="checkbox"
+                    checked={academicData.showTrimester}
+                    onChange={(e) => handleAcademicChange("showTrimester", e.target.checked)}
+                  />
+                  Trimester Progress
+                </label>
+              </div>
               <div className="setting-input-group">
                 <label className="sub-label">Midterms Date (or Days Left)</label>
                 <input
