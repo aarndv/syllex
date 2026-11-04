@@ -1045,19 +1045,25 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
 
         {highlightEnabled && !loading && !error && pdfDoc && (
           <div className="pdf-highlight-palette" role="group" aria-label="Highlighter controls">
-            <span className="pdf-highlight-palette-title">Highlight tool</span>
+            <div className="pdf-highlight-palette-copy">
+              <span className="pdf-highlight-palette-title">Highlight</span>
+              <span className="pdf-highlight-palette-hint">
+                {erasingHighlights ? "Click a highlight to erase it" : "Drag over text or any page area"} · Esc to finish
+              </span>
+            </div>
             <div className="pdf-highlight-swatches" role="group" aria-label="Choose highlight color or eraser">
               {HIGHLIGHT_COLORS.map((color) => (
                 <button key={color.id} type="button" className="pdf-highlight-swatch"
-                  style={{ backgroundColor: color.swatch }} title={color.label}
+                  title={color.label}
                   aria-label={`${color.label} highlight`} aria-pressed={!erasingHighlights && highlightColor === color.id}
-                  onClick={() => handleChooseHighlightColor(color.id)} />
+                  onClick={() => handleChooseHighlightColor(color.id)}>
+                  <span className="pdf-highlight-swatch-color" style={{ backgroundColor: color.swatch }} aria-hidden="true" />
+                </button>
               ))}
               <button type="button" className="pdf-highlight-eraser" title="Erase a highlight"
                 aria-label="Erase highlights" aria-pressed={erasingHighlights}
                 onClick={() => setErasingHighlights(true)}>Erase</button>
             </div>
-            <span className="pdf-highlight-palette-hint">{erasingHighlights ? "Click a highlight to erase it" : "Drag over text or any page area"} · Esc to finish</span>
             <button type="button" className="pdf-highlight-done" onClick={() => setHighlightEnabled(false)}>Done</button>
           </div>
         )}
