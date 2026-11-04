@@ -1,6 +1,6 @@
 # Syllex 
 
-<img width="3750" height="1250" alt="Syllex Logo (6000 x 2000 px)" src="https://github.com/user-attachments/assets/871c7bc8-ab83-4b7e-9e7a-4874548a328e" />
+<img width="4500" height="1500" alt="syllex-icon-with-text-dark" src="https://github.com/user-attachments/assets/b1ddbfed-8086-42cd-bc6d-cb616c085860" />
 
 ---
 
