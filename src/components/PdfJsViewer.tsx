@@ -137,6 +137,12 @@ export function PdfJsViewer({
   const renderOverlays = () => {
     const element = viewerElementRef.current;
     if (!element) return;
+    const highlightsByPage = new Map<number, Highlight[]>();
+    for (const highlight of highlightsRef.current) {
+      const pageHighlights = highlightsByPage.get(highlight.page_number);
+      if (pageHighlights) pageHighlights.push(highlight);
+      else highlightsByPage.set(highlight.page_number, [highlight]);
+    }
     for (const page of element.querySelectorAll<HTMLElement>(".page[data-page-number]")) {
       let layer = page.querySelector<HTMLElement>(".syllex-highlight-layer");
       if (!layer) {
@@ -145,8 +151,7 @@ export function PdfJsViewer({
         page.appendChild(layer);
       }
       const pageNumber = Number(page.dataset.pageNumber);
-      const fragments = highlightsRef.current
-        .filter((item) => item.page_number === pageNumber)
+      const fragments = (highlightsByPage.get(pageNumber) ?? [])
         .flatMap((item) => item.rects.map((rect) => {
           const mark = document.createElement("span");
           mark.className = `syllex-highlight color-${item.color}${focusHighlightRef.current?.id === item.id ? " focused" : ""}`;

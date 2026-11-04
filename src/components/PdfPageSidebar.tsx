@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { pdfjsLib } from "../utils/pdfInit";
 import type { Highlight, HighlightFocus } from "../types/highlight";
 import type { DocumentViewMode } from "./PdfViewer";
@@ -16,7 +16,7 @@ interface SidebarProps {
   onHighlightSelect: (focus: HighlightFocus) => void;
 }
 
-function PageThumbnail({ pdfDoc, pageNumber, scale, scrollRoot }: {
+const PageThumbnail = memo(function PageThumbnail({ pdfDoc, pageNumber, scale, scrollRoot }: {
   pdfDoc: pdfjsLib.PDFDocumentProxy;
   pageNumber: number;
   scale: number;
@@ -72,7 +72,7 @@ function PageThumbnail({ pdfDoc, pageNumber, scale, scrollRoot }: {
       {failed ? <span className="pdf-thumbnail-fallback">Preview unavailable</span> : <canvas ref={canvasRef} aria-hidden="true" />}
     </div>
   );
-}
+});
 
 export function PdfPageSidebar({
   pdfDoc, currentPage, highlights, width, scale, dock, viewMode, selectedHighlightId,
@@ -80,6 +80,15 @@ export function PdfPageSidebar({
 }: SidebarProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const focusSequence = useRef(0);
+  const highlightsByPage = useMemo(() => {
+    const byPage = new Map<number, Highlight[]>();
+    for (const highlight of highlights) {
+      const pageHighlights = byPage.get(highlight.page_number);
+      if (pageHighlights) pageHighlights.push(highlight);
+      else byPage.set(highlight.page_number, [highlight]);
+    }
+    return byPage;
+  }, [highlights]);
 
   useEffect(() => {
     const current = scrollRef.current?.querySelector(`[data-thumbnail-page="${currentPage}"]`);
@@ -96,7 +105,7 @@ export function PdfPageSidebar({
       <div className="pdf-page-sidebar-scroll" ref={scrollRef}>
         {Array.from({ length: pdfDoc.numPages }, (_, index) => {
           const pageNumber = index + 1;
-          const pageHighlights = highlights.filter((item) => item.page_number === pageNumber);
+          const pageHighlights = highlightsByPage.get(pageNumber) ?? [];
           return (
             <div className={`pdf-thumbnail-row ${currentPage === pageNumber ? "current" : ""}`} key={pageNumber} data-thumbnail-page={pageNumber}>
               <button type="button" className="pdf-thumbnail-page-button" onClick={(event) => {

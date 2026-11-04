@@ -5,39 +5,29 @@ const memoryCache = new Map<string, string>();
 const SESSION_CACHE_PREFIX = "syllex_thumb_";
 
 interface QueueTask {
-  key: string;
   vaultRoot: string;
   relativePath: string;
   fileType: string;
   resolve: (url: string | null) => void;
-  reject: (err: any) => void;
 }
 
 const taskQueue: QueueTask[] = [];
+const pendingTasks = new Map<string, Promise<string | null>>();
 let activeWorkers = 0;
 const MAX_CONCURRENT_WORKERS = 3;
 
 function processQueue() {
-  if (activeWorkers >= MAX_CONCURRENT_WORKERS || taskQueue.length === 0) {
-    return;
+  while (activeWorkers < MAX_CONCURRENT_WORKERS && taskQueue.length > 0) {
+    const task = taskQueue.shift()!;
+    activeWorkers++;
+
+    generateThumbnail(task.vaultRoot, task.relativePath, task.fileType)
+      .then(task.resolve, () => task.resolve(null))
+      .finally(() => {
+        activeWorkers--;
+        processQueue();
+      });
   }
-
-  const task = taskQueue.shift();
-  if (!task) return;
-
-  activeWorkers++;
-
-  generateThumbnail(task.vaultRoot, task.relativePath, task.fileType)
-    .then((url) => {
-      task.resolve(url);
-    })
-    .catch(() => {
-      task.resolve(null);
-    })
-    .finally(() => {
-      activeWorkers--;
-      processQueue();
-    });
 }
 
 async function generateThumbnail(
@@ -164,15 +154,19 @@ export function getModuleCoverThumbnail(
     return Promise.resolve(memoryCache.get(key) || null);
   }
 
-  return new Promise<string | null>((resolve, reject) => {
+  const pending = pendingTasks.get(key);
+  if (pending) return pending;
+
+  const task = new Promise<string | null>((resolve) => {
     taskQueue.push({
-      key,
       vaultRoot,
       relativePath,
       fileType,
       resolve,
-      reject,
     });
-    processQueue();
   });
+  pendingTasks.set(key, task);
+  void task.then(() => pendingTasks.delete(key));
+  processQueue();
+  return task;
 }

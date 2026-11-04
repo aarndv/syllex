@@ -235,10 +235,10 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     if (highlightToastTimerRef.current) window.clearTimeout(highlightToastTimerRef.current);
     invoke<Highlight[]>("list_highlights", { vaultRoot, relativePath: node.relative_path })
       .then((items) => {
-        if (active) setHighlights((current) => [
-          ...items,
-          ...current.filter((item) => !items.some((loaded) => loaded.id === item.id)),
-        ]);
+        if (active) setHighlights((current) => {
+          const loadedIds = new Set(items.map((item) => item.id));
+          return [...items, ...current.filter((item) => !loadedIds.has(item.id))];
+        });
       })
       .catch((error: unknown) => { if (active) setHighlightError(toUserFacingError(error, "load highlights")); });
     return () => { active = false; };

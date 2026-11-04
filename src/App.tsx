@@ -57,7 +57,6 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
   const [isSidebarHidden, setIsSidebarHidden] = useState<boolean>(() => {
     return localStorage.getItem(SIDEBAR_HIDDEN_STORAGE_KEY) === "true";
   });
-  const [currentTime, setCurrentTime] = useState<Date>(new Date());
 
   const [pendingDelete, setPendingDelete] = useState<{
     relativePath: string;
@@ -174,17 +173,6 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
   useEffect(() => {
     localStorage.setItem(SIDEBAR_HIDDEN_STORAGE_KEY, String(isSidebarHidden));
   }, [isSidebarHidden]);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const headerTimeString = useMemo(() => {
-    return currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  }, [currentTime]);
 
   useEffect(() => {
     let mounted = true;
@@ -589,12 +577,7 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
         </div>
 
 
-        {isSidebarHidden && (
-          <div className="header-clock-pill" title="Current Time">
-            <ClockIcon size={15} />
-            <span className="header-clock-digits">{headerTimeString}</span>
-          </div>
-        )}
+        {isSidebarHidden && <HeaderClock />}
 
         <div className="header-actions-group">
           <button
@@ -838,6 +821,24 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
           )}
         </main>
       </div>
+    </div>
+  );
+}
+
+function HeaderClock() {
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setCurrentTime(new Date()), 5000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="header-clock-pill" title="Current Time">
+      <ClockIcon size={15} />
+      <span className="header-clock-digits">
+        {currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+      </span>
     </div>
   );
 }
