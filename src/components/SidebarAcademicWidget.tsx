@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { ClockIcon, SettingsIcon } from "./Icons";
+import { ClockIcon, SettingsIcon, SidebarToggleIcon } from "./Icons";
 import { getDaysUntil, getTrimesterPercent } from "../utils/academicDates";
 import "./SidebarAcademicWidget.css";
 
@@ -23,9 +23,13 @@ const STORAGE_KEY = "syllex_academic_tracker_data";
 
 interface SidebarAcademicWidgetProps {
   onOpenSettings?: () => void;
+  onToggleSidebar?: () => void;
 }
 
-export const SidebarAcademicWidget: React.FC<SidebarAcademicWidgetProps> = ({ onOpenSettings }) => {
+export const SidebarAcademicWidget: React.FC<SidebarAcademicWidgetProps> = ({
+  onOpenSettings,
+  onToggleSidebar,
+}) => {
   const [now, setNow] = useState<Date>(new Date());
   const [data, setData] = useState<AcademicData>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -97,15 +101,29 @@ export const SidebarAcademicWidget: React.FC<SidebarAcademicWidgetProps> = ({ on
           <ClockIcon size={16} />
           <span className="clock-digits">{timeString}</span>
         </div>
-        {onOpenSettings && (
-          <button
-            onClick={onOpenSettings}
-            className="widget-edit-btn"
-            title="Configure Academic Milestones in Settings"
-          >
-            <SettingsIcon size={13} />
-          </button>
-        )}
+        <div className="sidebar-clock-actions">
+          {onOpenSettings && (
+            <button
+              onClick={onOpenSettings}
+              className="widget-edit-btn"
+              title="Configure Academic Milestones in Settings"
+              aria-label="Configure Academic Milestones in Settings"
+            >
+              <SettingsIcon size={13} />
+            </button>
+          )}
+          {onToggleSidebar && (
+            <button
+              type="button"
+              onClick={onToggleSidebar}
+              className="icon-btn sidebar-toggle-btn"
+              title="Hide Sidebar"
+              aria-label="Hide Sidebar"
+            >
+              <SidebarToggleIcon size={16} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Academic Trackers List */}

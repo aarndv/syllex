@@ -29,13 +29,13 @@
 }
 
 .todo-badge {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-family: monospace;
-  background-color: rgba(255, 255, 255, 0.15);
   color: #e2f0d9;
-  padding: 0.1rem 0.45rem;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: none;
+  border: none;
+  padding: 0;
+  opacity: 0.85;
 }
 
 .todo-input-row {
@@ -208,9 +208,11 @@ html[data-theme="light"] .todo-title {
 }
 
 html[data-theme="light"] .todo-badge {
-  background-color: #e4ddd0;
+  background: none;
+  border: none;
+  padding: 0;
   color: #143222;
-  border-color: #143222;
+  opacity: 0.8;
 }
 
 html[data-theme="light"] .todo-input {

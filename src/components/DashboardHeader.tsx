@@ -67,7 +67,7 @@ function getRandomItem<T>(items: T[]): T {
 }
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ courseCount, fileCount }) => {
-  const { greeting, motivationalSentence, formattedDate, timeLabel } = useMemo(() => {
+  const { greeting, motivationalSentence, formattedDate } = useMemo(() => {
     const now = new Date();
     const hour = now.getHours();
     const timeOfDay = getTimeOfDay(hour);
@@ -98,16 +98,10 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ courseCount, f
     };
     const dateStr = now.toLocaleDateString(undefined, dateOptions);
 
-    let periodLabel = "Morning";
-    if (timeOfDay === "afternoon") periodLabel = "Afternoon";
-    if (timeOfDay === "evening") periodLabel = "Evening";
-    if (timeOfDay === "night") periodLabel = "Night";
-
     return {
       greeting: greetingStr,
       motivationalSentence: mottoStr,
       formattedDate: dateStr,
-      timeLabel: periodLabel,
     };
   }, []);
 
@@ -119,7 +113,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ courseCount, f
 
       <div className="dashboard-header-main">
         <div className="dashboard-badge-row">
-          <span className="dashboard-time-badge">{timeLabel} Session</span>
           <span className="dashboard-date-text">{formattedDate}</span>
         </div>
         <h2 className="dashboard-greeting-title">{greeting}</h2>

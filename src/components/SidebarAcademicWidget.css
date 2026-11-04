@@ -32,6 +32,34 @@
   color: #ffffff;
 }
 
+.sidebar-clock-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.sidebar-clock-actions .sidebar-toggle-btn {
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  box-shadow: none;
+  transition: all 0.2s ease;
+}
+
+.sidebar-clock-actions .sidebar-toggle-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
 .widget-edit-btn {
   background: none;
   border: 1px solid rgba(255, 255, 255, 0.25);
@@ -272,5 +300,16 @@ html[data-theme="light"] .tracker-progress-bg {
 
 html[data-theme="light"] .year-progress-tick {
   background-color: rgba(20, 50, 34, 0.7);
+}
+
+html[data-theme="light"] .sidebar-clock-actions .sidebar-toggle-btn {
+  background-color: transparent;
+  border-color: #143222;
+  color: #143222;
+}
+
+html[data-theme="light"] .sidebar-clock-actions .sidebar-toggle-btn:hover {
+  background-color: #143222;
+  color: #ffffff;
 }
 

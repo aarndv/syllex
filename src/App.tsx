@@ -79,6 +79,27 @@ function App() {
   const [showHiddenItems, setShowHiddenItems] = useState(false);
   const scanRequestRef = useRef(0);
   const mainContentRef = useRef<HTMLElement>(null);
+  const plusMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isPlusMenuOpen) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (plusMenuRef.current && !plusMenuRef.current.contains(e.target as Node)) {
+        setIsPlusMenuOpen(false);
+      }
+    };
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsPlusMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("keydown", handleEsc);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, [isPlusMenuOpen]);
 
 
   useEffect(() => {
@@ -601,13 +622,19 @@ function App() {
         {!isSidebarHidden && (
           <aside className="app-sidebar">
             <div className="sidebar-header">
-              <SidebarAcademicWidget onOpenSettings={() => setIsSettingsOpen(true)} />
+              <SidebarAcademicWidget
+                onOpenSettings={() => setIsSettingsOpen(true)}
+                onToggleSidebar={() => setIsSidebarHidden(true)}
+              />
               <div className="vault-actions">
-                <div className="plus-menu-wrapper">
+                <div className="plus-menu-wrapper" ref={plusMenuRef}>
                   <button
                     onClick={() => setIsPlusMenuOpen((prev) => !prev)}
                     className="icon-btn primary-icon-btn"
-                    title="Create vault, new folder, or add module"
+                    title={isPlusMenuOpen ? undefined : "Create vault, new folder, or add module"}
+                    aria-label="Create vault, new folder, or add module"
+                    aria-haspopup="true"
+                    aria-expanded={isPlusMenuOpen}
                   >
                     <PlusIcon size={16} />
                   </button>
@@ -655,17 +682,13 @@ function App() {
                   </button>
                 )}
 
-                {vaultPath ? (
+                {vaultPath && (
                   <button
                     onClick={() => setIsVaultManagerOpen(true)}
                     className="icon-btn secondary-icon-btn"
                     title="Switch / Manage Vaults"
                   >
                     <SwitchIcon size={16} />
-                  </button>
-                ) : (
-                  <button onClick={() => setIsVaultManagerOpen(true)} className="primary-btn">
-                    Select Vault
                   </button>
                 )}
 
@@ -684,17 +707,6 @@ function App() {
               <SidebarCountersWidget />
               <SidebarTodoList />
             </div>
-            <div className="sidebar-footer">
-              <button
-                type="button"
-                onClick={() => setIsSidebarHidden(true)}
-                className="icon-btn sidebar-toggle-btn"
-                title="Hide Sidebar"
-                aria-label="Hide Sidebar"
-              >
-                <SidebarToggleIcon size={18} />
-              </button>
-            </div>
           </aside>
         )}
 
@@ -712,7 +724,7 @@ function App() {
                 aria-label="Dismiss error"
                 title="Dismiss error"
               >
-                <CloseIcon size={14} />
+                <CloseIcon size={12} />
               </button>
             </div>
           )}

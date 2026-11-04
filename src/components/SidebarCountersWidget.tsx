@@ -90,8 +90,6 @@ export const SidebarCountersWidget: React.FC = () => {
     setEditingId(null);
   }
 
-  const totalTicks = counters.reduce((sum, c) => sum + (c.count || 0), 0);
-
   return (
     <div className="sidebar-counters-card">
       <header className="counters-header">
@@ -100,9 +98,6 @@ export const SidebarCountersWidget: React.FC = () => {
           <span className="counters-title">Counters</span>
         </div>
         <div className="counters-header-actions">
-          <span className="counters-badge" title="Total ticks across all counters">
-            {totalTicks} {totalTicks === 1 ? "tick" : "ticks"}
-          </span>
           <button
             type="button"
             className={`counters-add-toggle-btn ${isAdding ? "active" : ""}`}
