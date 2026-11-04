@@ -220,7 +220,7 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
                 <button type="button" onClick={() => {
                   setIsActionMenuOpen(false);
                   setIsColorPickerOpen(true);
-                }}>Folder Color</button>
+                }}>Folder color</button>
                 <button type="button" onClick={() => {
                   setIsActionMenuOpen(false);
                   onRenameItem(folder.relative_path, true, folder.name);
@@ -235,26 +235,34 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
             {isColorPickerOpen && (
               <div className="color-picker-popover" onClick={(e) => e.stopPropagation()}>
                 <div className="color-picker-header">
-                  <span>Folder Colors (16 Options)</span>
+                  <div>
+                    <strong>Folder color</strong>
+                    <span>Choose a color for this shelf</span>
+                  </div>
                   <button
+                    type="button"
                     onClick={() => setIsColorPickerOpen(false)}
                     className="popover-close-btn"
+                    aria-label="Close folder color picker"
                   >
                     <CloseIcon size={12} />
                   </button>
                 </div>
-                <div className="color-palette-grid">
+                <div className="color-palette-grid" role="group" aria-label="Folder colors">
                   {FOLDER_COLOR_PALETTE.map((color) => (
                     <button
                       key={color.id}
-                      className={`color-dot-btn ${currentColorId === color.id ? "selected" : ""}`}
-                      style={{ backgroundColor: color.primary }}
-                      title={color.name}
+                      type="button"
+                      className="color-option-btn"
+                      aria-pressed={(currentColorId ?? "emerald") === color.id}
                       onClick={() => {
                         onSetFolderColor(folder.relative_path, color.id);
                         setIsColorPickerOpen(false);
                       }}
-                    />
+                    >
+                      <span className="color-option-swatch" style={{ backgroundColor: color.primary }} aria-hidden="true" />
+                      <span>{color.name}</span>
+                    </button>
                   ))}
                 </div>
               </div>
