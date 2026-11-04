@@ -217,36 +217,47 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
     <div className="quick-search-backdrop" onClick={onClose}>
       <div
         className="quick-search-modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quick-search-title"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        <div className="quick-search-header">
+        <header className="quick-search-header">
+          <div className="quick-search-heading-row">
+            <div>
+              <h2 id="quick-search-title">Search your vault</h2>
+              <p>Find files, folders, and text inside your documents.</p>
+            </div>
+            <button type="button" className="quick-search-close-btn" onClick={onClose} title="Close (Esc)" aria-label="Close search">
+              <CloseIcon size={16} />
+            </button>
+          </div>
           <div className="search-input-wrapper">
             <SearchIcon className="search-input-icon" size={18} />
             <input
               ref={inputRef}
               type="text"
               className="quick-search-input"
-              placeholder="Search file names, folders, or text inside multiple PDFs... (Ctrl+K)"
+              placeholder="Search files, folders, or PDF text..."
+              aria-label="Search your vault"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
             {query && (
-              <button className="clear-query-btn" onClick={() => setQuery("")}>
+              <button type="button" className="clear-query-btn" onClick={() => setQuery("")} aria-label="Clear search">
                 <CloseIcon size={14} />
               </button>
             )}
           </div>
-          <button className="quick-search-close-btn" onClick={onClose} title="Close (Esc)">
-            <CloseIcon size={18} />
-          </button>
-        </div>
+        </header>
 
         {/* Scope Filter Tabs */}
-        <div className="search-scope-tabs">
+        <nav className="search-scope-tabs" aria-label="Search scope">
           <button
             type="button"
             className={`scope-tab-btn ${scope === "all" ? "active" : ""}`}
+            aria-current={scope === "all" ? "page" : undefined}
             onClick={() => setScope("all")}
           >
             All Results
@@ -254,6 +265,7 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
           <button
             type="button"
             className={`scope-tab-btn ${scope === "titles" ? "active" : ""}`}
+            aria-current={scope === "titles" ? "page" : undefined}
             onClick={() => setScope("titles")}
           >
             File & Folder Titles
@@ -261,6 +273,7 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
           <button
             type="button"
             className={`scope-tab-btn ${scope === "pdf-content" ? "active" : ""}`}
+            aria-current={scope === "pdf-content" ? "page" : undefined}
             onClick={() => setScope("pdf-content")}
           >
             PDF Full-Text Search
@@ -272,7 +285,7 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
               <span>Scanning vault PDFs...</span>
             </div>
           )}
-        </div>
+        </nav>
 
         {/* Results List */}
         <div className="quick-search-results-list">
