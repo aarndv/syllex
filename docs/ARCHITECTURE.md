@@ -10,11 +10,12 @@ React + TypeScript UI
 Typed Tauri commands/events
         |
 Rust native layer
-   |         |          |
-Vault      SQLite    LibreOffice
-(read)    metadata    conversion
-        |
-Application cache -> PDF.js viewer
+   |              |             |
+Course vault   App-data SQLite  LibreOffice
+(read-only     (device-local)    conversion
+ modules;       |                  |
+ managed       preferences     App cache -> PDF.js
+ study data)
 ```
 
 ## Responsibility boundaries
@@ -24,7 +25,8 @@ Application cache -> PDF.js viewer
 - Navigation and presentation
 - Course and module lists
 - PDF.js viewer integration
-- Flashcard import preview and review interface
+- Flashcard editor, import preview, tag selection, and session-only review
+- Rendered Markdown companion-note editor and raw Markdown mode
 - Calling typed Tauri commands
 - Displaying recoverable errors
 
@@ -39,12 +41,15 @@ Application cache -> PDF.js viewer
 - Cache management
 - Opening files in system applications
 - SQLite access when native ownership improves safety
+- Atomic, scoped writes to Syllex-owned portable study files inside the selected vault
 
 ### SQLite
 
-Stores application-created metadata only. It does not store full module files.
-Issue #10 highlights use a versioned database in platform application data. Rust validates module paths and owns highlight reads and writes; React/PDF.js owns overlay geometry and page-preview rendering.
-Issue #34 library overrides (hidden items and display names) use the versioned metadata database in the same application-data directory. Rust applies them after a read-only vault scan. The scan skips linked entries, tracks visited directories, and returns warnings for entries it cannot inspect; React displays those warnings with the visible library.
+Live SQLite databases stay in platform application data and never enter the vault. The current issue #10 highlights and issue #34 library overrides use versioned app-data databases; M6 migrates those records to portable vault files. Selected vault path and reading position remain device-local. React/PDF.js owns highlight overlay geometry and page-preview rendering. The scan skips linked entries, tracks visited directories, and returns warnings for entries it cannot inspect; React displays those warnings with the visible library.
+
+### Managed vault data
+
+An identifiable, collision-safe Syllex directory at the selected vault root stores versioned portable flashcards, highlights, library overrides, and one Markdown companion note per module. It is excluded from normal module scans. Original course modules remain read-only to Syllex; writes are restricted to app-created study data and explicit safe module-copy/folder-creation operations. Rust validates paths and module references, detects external edits, and writes portable files atomically. Manual folder copies move study data between Fedora and Windows without syncing a live SQLite database. Exact schema and identity rules are M6 design work.
 
 ### Application cache
 
@@ -81,7 +86,7 @@ Do not create empty directories merely to match this proposal. Add a boundary wh
 - Windows 11 remains a required runtime, native CI build, packaging, and manual validation target.
 - Linux uses WebKitGTK; Windows uses WebView2.
 - Build Linux packages on Linux and Windows packages on Windows or native CI runners.
-- Store per-device vault paths in platform application data.
+- Store per-device vault paths, reading progress, and live databases in platform application data; use vault-relative identities in portable study files.
 - Do not assume path separators, case sensitivity, drive letters, or executable locations.
 
 ## Presentation conversion
@@ -101,6 +106,10 @@ Do not create empty directories merely to match this proposal. Add a boundary wh
 - Smart Dark, later: WebGL pixel processing with user-adjustable contrast.
 
 The original document bytes are never rewritten.
+
+## File watching
+
+The first personal release watches only the selected vault and refreshes the visible library after external changes. Validate watcher paths, debounce bursts, and keep manual Refresh available when watching fails. An open document that changes on disk shows a reload notice; Syllex does not replace the reader contents without the user's action. Notes use separate external-change conflict handling before autosave.
 
 ## Error model
 

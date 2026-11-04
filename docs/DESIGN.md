@@ -35,14 +35,14 @@ Syllex uses a **Warm Academic Library** aesthetic—a cozy, focused study sanctu
 - **User Directory is Source of Truth:** A user-selected folder (Vault) remains under full user ownership. The application **never** modifies, renames, moves, deletes, or overwrites original course modules (`.pdf`, `.ppt`, `.pptx`, `.md`).
 - **Strict Storage Separation:**
   - Derivative files (e.g., PowerPoint to PDF conversion previews, render caches) live exclusively in the OS application cache directory.
-  - User settings, reading progress, and flashcards live exclusively in the platform application data SQLite database.
+  - Selected vault path, reading progress, preferences, and live SQLite databases stay device-local; portable flashcards, companion notes, highlights, and library overrides live in Syllex's managed vault-root directory and travel with manual vault copies. Live databases stay in platform application data.
 
 ### Document-Centric & Implicit Reading Progress
 - **Uncluttered Focus:** The document viewing canvas takes primary hierarchy. Navigation controls recede during active reading.
 - **Implicit Resume:** Reading progress is tracked implicitly by remembering the last opened page number per document. Syllex avoids artificial completion percentage bars or forced "Mark as Complete" interactions.
 
 ### Graceful Degradation & Non-Intrusive Fallbacks
-- **Optional Dependencies:** PowerPoint presentation conversion via headless LibreOffice is an optional preview feature. If LibreOffice is not installed, PDF viewing, Markdown note viewing, and flashcard workflows function normally, and an "Open Original in System App" action is always provided.
+- **Optional Dependencies:** PowerPoint presentation conversion via headless LibreOffice is an optional preview feature. If LibreOffice is not installed, PDF viewing, Markdown note viewing, and flashcard workflows function normally. The personal release must provide an "Open Original in System App" fallback.
 - **Clear Explanations:** When external utilities or file conversions are required, explain what is occurring without blocking unrelated application capabilities.
 
 ---
@@ -54,8 +54,10 @@ Syllex uses a **Warm Academic Library** aesthetic—a cozy, focused study sanctu
 - **Highlight Placement:** Begin text selection only when the drag starts on a rendered text character. Drags from images, whitespace, or open page areas create a free-area highlight.
 - **Current Page Preview:** Mark the active page with a translucent green overlay and a full-edge frame, while keeping its page label and highlight tapes legible.
 - **Defensive Confirmation & Feedback:**
-  - Destructive or state-changing UI actions (e.g., deleting decks or modules) must provide clear visual confirmation modals accompanied by non-blocking undo toasts (e.g., 6-second undo window).
-  - Bulk data operations (such as CSV flashcard imports) require pre-validation previews displaying valid rows alongside row-specific errors before writing to SQLite.
+  - Destructive or state-changing UI actions (e.g., deleting a deck or hiding a module) must make their effect clear. A module Remove action hides it from Syllex and never deletes its source file.
+  - Flashcard imports require a user-chosen question/answer separator, a preview of parsed cards and errors, and confirmation before changing portable card data. The default separator between cards is a newline; multiline content remains an open format decision.
+- **Flashcard Sessions:** A separate Flashcards tab supports independent decks, tag-based selection, optional shuffle, and session-only Known/Unknown. End, Restart all, and Retake missed are the end-of-session choices.
+- **Companion Notes:** Each module has at most one app-created note. Opening its Notes pane creates the note in the managed vault directory. Show the rendered, directly editable note beside the document by default, with either pane alone and raw Markdown mode available. Autosave visibly and preserve externally changed notes for conflict recovery.
 - **System App Handoff:** Always provide an explicit fallback option to launch any module in its default OS desktop application.
 
 ---
@@ -73,7 +75,8 @@ Application Architecture
     ├── Vault Directory Scanning & File System Access
     ├── Canonical Path Validation & Security Scope Enforcer
     ├── Headless Subprocess Execution (LibreOffice CLI)
-    └── Local Metadata Storage & SQLite Migrations
+    ├── Device-Local SQLite & Migrations
+    └── Portable Vault Study Data (Scoped, Atomic Writes)
 ```
 
 ### Architectural Boundaries

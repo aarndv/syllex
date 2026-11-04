@@ -1,137 +1,85 @@
 # Data Model
 
-This is an initial logical model, not a final migration. All schema changes must use versioned migrations.
+This document distinguishes the current implementation from the approved personal-release model. It is not a final portable-file schema. Database changes still require versioned migrations.
 
-## Ownership rule
+## Ownership
 
-SQLite stores application metadata and user-created study data. Original documents remain external files referenced by validated paths and file identity metadata.
+| Data | Current implementation | Personal-release owner |
+| --- | --- | --- |
+| Original PDF, PPT/PPTX, and course `.md` modules | User-selected vault | User-selected vault; Syllex never rewrites them |
+| Selected vault path and last-read page | Platform app-data SQLite (`metadata.sqlite3`) | Platform app data, per device |
+| Display and viewer preferences | Webview local storage | Per-device storage; migration to app-data SQLite remains separate work |
+| Highlights | Platform app-data SQLite (`highlights.sqlite3`) | Versioned portable files in the managed vault-root directory |
+| Hidden items and display-name overrides | Platform app-data SQLite (`metadata.sqlite3`) | Versioned portable files in the managed vault-root directory |
+| Flashcard decks and cards | Not implemented | Versioned portable files in the managed vault-root directory |
+| Companion notes | Not implemented | One Markdown file per module in the managed vault-root directory |
+| Converted presentations and thumbnails | Application cache | Application cache; disposable and never transferred as study data |
 
-## Proposed entities
+The managed directory uses `.syllex` when that name is free or already identifiable as Syllex-owned. An unrelated collision must be left untouched and a discoverable alternate chosen. Its exact marker, schema, layout, and migration protocol are M6 design work. Do not put a live SQLite database in the vault or treat copied portable files as trusted. Manual copying of the vault is the supported first-release transfer path.
 
-### vaults
+## Device-local records
 
-- `id`
-- `root_path`
-- `display_name`
-- `created_at`
-- `last_opened_at`
+### selected_vault
 
-The root path is device-specific and must not be assumed portable.
-
-Issue #31 stores the current selected vault in `metadata.sqlite3` under the platform application-data directory. The first migration (`user_version = 1`) creates `settings` and `reading_progress`. The `selected_vault` setting contains the canonical, device-specific root path. A missing root remains recorded so the user can select a replacement; it is not silently discarded.
-Issue #34 adds `library_overrides` in migration 2. Each row is keyed by canonical vault root and relative item path, with an optional display name and a hidden flag. These settings stay in app data; the original file name and contents remain unchanged. Restoring a hidden folder reveals its scanned descendants again.
-
-### courses
-
-- `id`
-- `vault_id`
-- `relative_path`
-- `display_name`
-- `created_at`
-- `updated_at`
-
-### modules
-
-- `id`
-- `course_id`
-- `relative_path`
-- `file_type`
-- `size_bytes`
-- `modified_at`
-- `content_fingerprint`
-- `last_seen_at`
-
-Prefer paths relative to the vault when referencing module files.
+The canonical root path is device-specific. Issue #31 stores it in `metadata.sqlite3` under platform app data; a missing root remains recorded for recovery. A copied vault on another device is selected through the normal directory picker.
 
 ### reading_progress
 
-- `module_id`
-- `last_page`
-- `zoom`
-- `scroll_position`
-- `last_opened_at`
+The current versioned migration stores a validated canonical `document_path` and `last_page` in platform app data. Progress for equal relative filenames in different vaults stays separate. Zoom and scroll position are not currently persisted. Reading position is intentionally not part of the portable vault data.
 
-The current issue #31 implementation stores only `document_path` (the canonical path within its selected vault) and `last_page`. A canonical path keeps progress for equal relative filenames in separate vaults distinct. Zoom and scroll position remain proposed fields; the app does not yet persist them. On first use, the old webview value is copied into SQLite for a module from the previously selected vault, then removed only after the native save succeeds. The database stays on the device and is not synchronized as a live file.
+### preferences
 
-### bookmarks
+The current webview settings include `pageSidebarVisible`, `pageSidebarDock`, `pageSidebarWidth`, `thumbnailScale`, and `pageSidebarLayoutVersion`; `syllex_highlight_color` stores the last selected color. These are device-local preferences. Their later migration to app-data SQLite is separate from portable study data.
 
-- `id`
-- `module_id`
-- `page_number`
-- `label`
-- `created_at`
+## Portable vault records
 
-Bookmarks are post-MVP unless reprioritized.
+All module references in portable records must be vault-relative, validated on use, and portable between Fedora and Windows. Do not serialize a source device's absolute path. A missing or changed module must not cause a note or highlight to attach silently to another file. The exact identity and recovery format will be specified in M6 before implementation.
 
-### highlights (issue #10)
+### library_overrides
 
-Stored in a versioned `highlights.sqlite3` database under platform application data.
+For a vault-relative module or folder path:
 
-- `id` — unique highlight action
-- `document_path` — canonical path of the validated module (updated on in-app rename)
-- `page_number`
-- `color` — one of the supported palette values
-- `rects_json` — one or more normalized page rectangles; wrapped text remains one action
-- `created_at`
+- optional display name
+- hidden flag
 
-This metadata contains no PDF bytes or selected text. The first migration uses SQLite `user_version = 1`. Generated thumbnails are disposable viewer renderings and are never stored in this table.
+The current migration 2 stores these in SQLite keyed by canonical vault root and relative item path. M6 must migrate them safely to portable vault data, retaining the originals until verified. Hiding a folder hides its descendants in the library view; no disk file is removed.
 
-### flashcard_decks
+### highlights
 
-- `id`
-- `course_id`
-- `name`
-- `created_at`
-- `updated_at`
+For a validated module:
 
-### flashcards
+- unique highlight action ID
+- vault-relative module reference
+- page number
+- color from the supported palette
+- one or more normalized page rectangles
+- creation time
 
-- `id`
-- `deck_id`
-- `front`
-- `back`
-- `tags`
-- `ease_factor`
-- `interval`
-- `next_review_at`
-- `created_at`
-- `updated_at`
+The current versioned `highlights.sqlite3` database uses canonical `document_path` and `rects_json`. M6 must migrate these records safely without losing geometry or colors. Highlights remain view overlays; no source PDF or converted presentation is edited. Thumbnails remain disposable cache content.
 
-### review_history
+### flashcard_decks and cards
 
-- `id`
-- `flashcard_id`
-- `rating`
-- `reviewed_at`
-- `next_review_at`
-- `algorithm_version`
+Decks are independent of courses and modules. A card belongs to one deck and contains:
 
-### conversion_cache
+- stable card ID
+- plain-text question/front and answer/back
+- zero or one optional plain-text tag
+- creation and update timestamps as needed for safe edits
 
-- `module_id`
-- `source_fingerprint`
-- `cached_relative_path`
-- `created_at`
-- `converter_version`
+Tags may be suggested from course and module names or typed by the user. They are not path links and do not automatically change on a course or module rename. Review may select one deck or one or more tags across decks. Known/Unknown, order, and shuffle state exist only during the current session; no ease factor, interval, due date, or durable review history is required for the personal release.
 
-Cached files are disposable even when their metadata is recorded.
+### companion_notes
 
-### settings
+Each module can have one app-created Markdown note under the managed directory. Associate it with a validated vault-relative module identity; keep its content as a separate `.md` file. Create it on first opening the module's Notes pane. If the module disappears, preserve the note and expose it in Unlinked Notes for recovery and relinking. Autosave must detect external edits and preserve the last good version on failure.
 
-- `key`
-- `value`
-- `updated_at`
+## Later entities
 
-Settings keys and value formats must be documented before use.
-
-The current webview settings object includes `pageSidebarVisible` (boolean), `pageSidebarDock` (`left` or `right`), `pageSidebarWidth` (100–220 pixels), `thumbnailScale` (0.7–1.4), and `pageSidebarLayoutVersion` (2). On first load of this compact layout, the earlier default widths of 170 or 220 pixels become 110 pixels; other saved widths are clamped to the new range. These viewer preferences follow the existing settings object until the planned SQLite settings migration.
-
-The `syllex_highlight_color` webview setting stores the last selected highlight color ID. Individual highlight colors remain in SQLite with their geometry.
+Page bookmarks, note page anchors, multiple card tags, and review history remain possible later features. Full-vault ZIP export may include the portable managed directory and original course hierarchy, but is not a personal-release gate.
 
 ## Migration rules
 
-- Every schema change receives a new forward migration.
-- Migrations must run transactionally when supported.
-- Test upgrades from the previous released schema.
-- Never edit a released migration to change history.
-- Back up or recover gracefully when a migration cannot complete.
+- Never edit a released SQLite migration. Add a versioned forward migration for database changes.
+- Specify and version the portable file schema before writing it. Validate copied data and reject unsupported versions safely.
+- Migrate existing highlight and library-override records without deleting their source until the portable copy has been verified.
+- Use atomic writes for app-owned vault data and preserve the last good version on failure or conflict.
+- Test upgrade and manual vault-copy roundtrips on Fedora and Windows with missing, changed, and colliding paths.

@@ -15,11 +15,11 @@ The name combines *syllabus* and *index*.
 - **Document reading:** Read PDFs and preview presentation slides when available. Navigate pages, zoom, search, and resume where you left off.
 - **Page previews and highlights:** Jump between pages, mark text or page areas in multiple colors, and return to saved highlights. An eraser lets you remove marks you no longer need.
 - **Reading filters:** Switch between original, dark, and other viewing modes without changing the source document.
-- **Local control:** Work offline, keep your original files untouched, and open them in your system application whenever you prefer.
+- **Local control:** Work offline and keep original course files untouched.
 
 ## Project status
 
-Syllex is in active MVP development. Flashcards and release hardening are planned; see the [roadmap](docs/ROADMAP.md) for the current scope.
+Syllex is in active development toward a personal Fedora/Windows release. Next are portable vault study data and a separate flashcards tab, followed by module notes and automatic library updates. Open Original, packaging, and cross-platform validation remain release work. See the [roadmap](docs/ROADMAP.md).
 
 ## Run locally
 
@@ -63,7 +63,6 @@ Syllex uses Tauri 2, React, TypeScript, Vite, Rust, SQLite, and PDF.js. The [arc
 | [docs/TESTING.md](docs/TESTING.md) | Test strategy and platform matrix |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Ordered delivery milestones |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Architecture decision log |
-| [docs/PDF_VIEWER_BUG_REPORT.md](docs/PDF_VIEWER_BUG_REPORT.md) | PDF rendering regression record |
 
 ## License
 

@@ -1,98 +1,85 @@
 # Roadmap
 
-Only one milestone should be active at a time. Each milestone should be reviewed and committed before the next begins.
+Work on one milestone or focused issue at a time. The next release is for the owner's Fedora and Windows 11 devices. Checked items describe implemented work; unchecked items still require implementation and verification.
 
 ## M0 — Repository baseline
 
 - [x] Establish product and architecture documentation
 - [x] Establish agent, security, and testing rules
-- [ ] Review unresolved questions with the owner
-- [ ] Initialize Git and commit the documentation baseline
+- [ ] Review remaining unresolved questions with the owner
+- [x] Initialize Git and commit the documentation baseline
 
 ## M1 — Application scaffold
 
-Acceptance criteria:
+- [x] Start Tauri 2, React, TypeScript, and Vite on Fedora
+- [x] Configure formatting, linting, type-checking, and basic tests
+- [x] Configure Rust formatting, Clippy, and tests
+- [x] Compile on a Windows CI runner
 
-- [x] Tauri 2, React, TypeScript, and Vite application starts on Fedora
-- [x] Formatting, linting, type-checking, and basic tests are configured
-- [x] Rust formatting, Clippy, and tests are configured
-- [x] No product feature or permanent visual theme is added
-- [x] Initial application also compiles on a Windows CI runner
+## M2 — Vault selection and safe scan
 
-## M2 — Read-only vault selection and scan
-
-- [x] Select a directory through a native dialog
-- [x] Persist the selected vault in platform app data
-- [x] Recursively discover supported modules
-- [x] Group first-level folders as courses
+- [x] Select and persist a vault in platform app data
+- [x] Discover supported modules and group first-level folders as courses
 - [x] Handle missing, inaccessible, and empty vaults
-- [x] Prove through tests that source modules are never modified
+- [x] Bound scans and avoid linked cycles and outside-vault traversal
+- [x] Keep original modules unchanged during scans and metadata-only library actions
 
-## M3 — Basic PDF viewer
+## M3 — PDF viewer
 
-- [x] Open PDFs through PDF.js
-- [x] Navigate pages and zoom (granular steps, fit-to-width, and Ctrl+/- / Ctrl+wheel shortcuts)
-- [x] Render pages lazily
-- [x] Remember the last page locally
-- [x] Handle malformed or protected PDFs
+- [x] Open PDFs through PDF.js with lazy rendering, page navigation, zoom, and search
+- [x] Remember the last page locally and handle malformed/protected PDFs
 
-## M4 — Fast document dark mode
+## M4 — Document viewing filters
 
-- [x] Add Original and Fast Dark modes
-- [x] Keep the operation reversible and view-only
-- [x] Test text-heavy, illustrated, and already-dark documents
+- [x] Provide reversible Original and Fast Dark modes
+- [x] Test representative document styles
 
-## M5 — PowerPoint conversion
+## M5 — PowerPoint conversion and reader fallback
 
 - [x] Detect LibreOffice on Fedora and Windows
-- [x] Convert PPT/PPTX into the application cache
-- [x] Reuse valid cached conversions
-- [x] Provide Open Original and useful failure states
-- [x] Test shell-injection-resistant argument handling
+- [x] Convert PPT/PPTX into the application cache and reuse valid conversions
+- [x] Show conversion failure states and pass subprocess arguments without a shell
+- [ ] Wire Open Original into the reader and validate the fallback on both platforms
 
-## M6 — Flashcards
+## M6 — Portable vault study data and flashcards
 
-Complete the GitHub `preM6 issues` reliability and source-file safety milestone before starting M6. Issues #31–#34 cover app-data persistence, safe module import, bounded scans, and source-file action semantics.
+Complete the `preM6 issues` safety work before implementation. The current SQLite highlight and library-override data must be migrated without loss.
 
-Issue #10 (page previews and persistent highlights) was explicitly requested as a focused viewer task before M6. This does not complete the broader bookmark and annotation work in M9.
+- [ ] Establish a collision-safe, identifiable Syllex-managed directory at the vault root; exclude it from course scans. Use versioned portable files and atomic writes, not a live SQLite database in the vault.
+- [ ] Move or mirror highlights and library hidden/display-name choices into portable vault data with safe migration from existing app-data databases. Keep last page, selected vault path, and UI preferences per device.
+- [ ] Add a separate Flashcards tab with independent decks and plain-text card add/edit/delete.
+- [ ] Support one optional plain-text tag per card, suggested from vault course/module names or typed manually; leave tags unchanged when those names change.
+- [ ] Review a deck or a selection of tags with optional shuffle and session-only Known/Unknown. Finish with End, Restart all, or Retake missed; do not implement spaced repetition.
+- [ ] Import/export flashcards with a chosen question/answer separator and newline default between cards; preview validation and duplicates before import. Resolve the intentionally open multiline-record rule before parser implementation.
+- [ ] Verify manual vault-copy portability between Fedora and Windows, including missing and changed module references, collisions, and interrupted writes.
 
-- [ ] Add SQLite migrations for decks and cards
-- [ ] Import the documented CSV format
-- [ ] Preview valid rows, duplicates, and errors
-- [ ] Require confirmation before saving
-- [ ] Provide a basic review flow
+## M7 — Markdown reading and companion notes
 
-## M7 — Vault portability and archive management
+- [ ] Render existing `.md` course modules safely and read-only inside the library.
+- [ ] Create one Markdown companion note for a module on first opening its Notes pane, inside the managed vault directory.
+- [ ] Default to a side-by-side document and rendered, directly editable note; offer document-only, note-only, and raw Markdown modes.
+- [ ] Autosave text-focused notes with status, atomic writes, and external-conflict handling.
+- [ ] Keep notes discoverable through their module and provide an Unlinked Notes recovery/relink view when a target disappears.
+- [ ] Verify source immutability and note portability across Fedora and Windows.
 
-- [ ] Export portable `.syllex` study bundle containing SQLite metadata (decks, cards, review history, bookmarks, reading progress)
-- [ ] Export standalone `.syllex.zip` full vault archive containing both course documents and study bundle
-- [ ] Provide guided import flow (link existing course folder for study-only bundle, or choose extraction folder for full archive)
-- [ ] Pre-import visual diff and conflict resolution preview (merge, overwrite, retain existing)
-- [ ] Test roundtrip export and import across Linux and Windows without SQLite corruption
+## M8 — Personal release hardening and packaging
 
-## M8 — Release hardening and packaging
+- [ ] Watch the selected vault for external changes and refresh the library automatically, retaining manual Refresh as fallback.
+- [ ] Show a reload notice when an open document changes on disk.
+- [ ] Complete disposable cache management and presentation cleanup.
+- [ ] Build and smoke-test Fedora RPM/AppImage and a native Windows 11 installer.
+- [ ] Complete a manual cross-platform checklist for offline use, portability, accessibility, and source-file safety.
 
-- [ ] File watching and index refresh
-- [ ] Cache management and presentation conversion cleanup
-- [ ] Fedora RPM and AppImage packaging
-- [ ] Windows 11 installer packaging
-- [ ] Manual cross-platform test checklist
-- [ ] Release validation against non-destructive invariants
+## M9 — Later vault archive and reading enhancements
 
-## M9 — Markdown notes and side-by-side reading
+- [ ] Export a full-vault ZIP to a user-selected external location without changing course files; define guided restore and collision handling separately.
+- [ ] Add page bookmarks, note page links, and richer annotations after their requirements are settled.
 
-- [ ] Render `.md` self-notes directly inside the library
-- [ ] Side-by-side split pane for simultaneous document reading and companion note-taking
-- [ ] Page-level bookmarks and note anchors linking to specific PDF/module pages
-- [ ] Safe local note editing with atomic writes
+## M10 — Later search improvements
 
-## M10 — In-document and vault search
+- [ ] Index PDF text locally and navigate to precise visible hits.
+- [ ] Add fuzzy catalog search and search across Markdown notes and flashcards.
 
-- [ ] Local full-text indexing across PDF text layers, Markdown notes, and flashcard content
-- [ ] Fast fuzzy search across course catalog and modules
-- [ ] Visual hit navigation with direct jumping to matched page coordinates
+## M11 — Additional platforms (future)
 
-## M11 — Mobile version (future)
-
-A mobile version is planned after the desktop milestones. Supported mobile platforms, feature scope, and local file access will be decided before implementation. Fedora Linux and Windows 11 remain the current desktop targets.
-
+Mobile and other platforms remain possible. Supported platforms, feature scope, and local file access require decisions before implementation. Fedora and Windows 11 remain the personal-release targets.

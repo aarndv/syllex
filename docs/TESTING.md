@@ -8,7 +8,7 @@ Cover pure frontend logic such as:
 
 - Library grouping and sorting
 - Viewer state reducers
-- Flashcard CSV validation
+- Configurable-separator flashcard import validation (after the multiline rule is decided)
 - Import preview summaries
 - Error mapping
 
@@ -37,7 +37,9 @@ Cover critical workflows:
 - First launch and vault selection
 - Opening and navigating a PDF
 - Restoring reading progress
-- Importing valid and invalid flashcard CSV files
+- Creating, editing, deleting, importing, exporting, and reviewing flashcards
+- Copying a vault with portable cards, notes, highlights, and library overrides between Fedora and Windows
+- Editing and recovering a companion note beside a module
 - Missing LibreOffice behavior
 - Cached presentation reopening
 
@@ -48,6 +50,7 @@ Run on Fedora KDE and Windows 11 for:
 - Native dialogs
 - WebKitGTK versus WebView2 rendering
 - File watching
+- Reload notice for an externally changed open document
 - Keyboard shortcuts
 - System file opening
 - LibreOffice detection and conversion
@@ -78,7 +81,9 @@ Run on Fedora KDE and Windows 11 for:
 
 The viewer sidebar change is React/CSS only and uses the same behavior on Fedora/WebKitGTK and Windows/WebView2. Validate menu positioning, keyboard focus, and the sticky Current file link on both targets during the PDF smoke test.
 
-Issue #10 adds a bundled SQLite dependency and platform application-data database. Rust migration/path tests cover the native boundary; visual highlighting, thumbnail rendering, focus navigation, and filter contrast still need manual validation in both webviews.
+Issue #10 currently uses a bundled SQLite database in platform application data. M6 must test migration to versioned portable vault data before changing the storage owner; visual highlighting, thumbnail rendering, focus navigation, and filter contrast still need manual validation in both webviews.
+
+For the personal release, test collision-safe managed-directory creation, identification after a manual vault copy, refusal to adopt an unrelated `.syllex` directory, atomic portable writes, and recovery from interrupted or externally conflicting edits. Copy the vault Fedora-to-Windows and Windows-to-Fedora and verify cards, notes, highlights, hidden flags, and display names without absolute path leakage or misattached data. Confirm selected vault path, last-read page, and display preferences remain per device. Verify one-deck and multi-tag review, optional shuffle, session-only Known/Unknown, and each end-of-session choice. Check formatted and raw note editing, document-only and note-only modes, and Unlinked Notes recovery.
 
 Before M6, verify that a selected vault and reading page survive restart, and that a missing vault remains selectable for recovery. Check that the legacy webview page is migrated only for its original vault, and that equal relative PDF names in different vaults retain separate positions. On Fedora and Windows 11, import a module into a course, repeat the same-name import, and confirm the first module bytes remain unchanged; a failed copy must leave no visible partial module.
 For issue #33, scan a nested vault with an ancestor link, an outside-vault link or junction, and an unreadable folder. The scan must finish, show reachable modules once, and surface warnings for skipped entries. For issue #34, hide and restore a module and a nonempty folder, change a display name, restart, and confirm the metadata persists without any source-file operation. Native checks cover database migrations and path validation; both webviews still need manual UI validation.
@@ -93,7 +98,7 @@ Create synthetic, legally distributable fixtures containing:
 - Filenames with spaces and Unicode
 - Nested directories
 - Symlink/path-escape scenarios
-- Valid, invalid, duplicate, and multiline CSV records
+- Valid, invalid, and duplicate flashcard import records with non-comma question/answer separators; add multiline cases only after the format rule is decided
 
 Never commit real student modules or personal flashcard data as fixtures.
 

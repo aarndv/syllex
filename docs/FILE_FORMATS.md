@@ -1,63 +1,23 @@
 # File Formats
 
-## Supported module formats
+## Course modules
 
-### MVP
+- `.pdf`: displayed through PDF.js
+- `.ppt` and `.pptx`: converted to a cached PDF when LibreOffice is available
+- `.md`: existing course Markdown modules are rendered read-only inside Syllex
 
-- `.pdf`: displayed directly through PDF.js
-- `.ppt` and `.pptx`: converted to a cached PDF through LibreOffice when available
-- `.md`: rendered directly in the app as self-notes
+App-created companion notes are separate `.md` files in Syllex's managed vault-root directory. They are edited only through the note workflow and do not appear as ordinary course modules. Extension checks are only an initial filter; all file content remains untrusted.
 
-Extension checks are only an initial filter. Inputs remain untrusted and failures must be handled safely.
+## Managed vault data
 
-## Flashcard CSV
+The personal release uses an identifiable, collision-safe `.syllex` directory at the vault root, or a discoverable alternate if that name is occupied by unrelated content. It contains versioned portable flashcard, highlight, and library-override data plus individual Markdown companion notes. Copying the vault transfers these files. The exact marker, file layout, schema version, and module identity rules must be specified in M6 before implementation. No live SQLite database, generated preview, or converted document belongs here.
 
-The file must be UTF-8 encoded and contain a header row.
+## Flashcard import and export
 
-Required columns:
+Flashcards are plain-text question/answer pairs. An import must ask the user for the separator between question and answer; separate cards default to newline separation. The format must not assume comma-only CSV. Syllex previews parsed cards, errors, and duplicates before any confirmed write. Blank questions or answers and malformed or unsupported input must produce actionable explanations. Cancel or validation failure writes nothing.
 
-- `front`
-- `back`
+The owner intentionally deferred the rule for a newline *inside* a question or answer. Escaping, quoting, alternate record separators, and import mapping for deck/tag metadata remain open design details. Do not silently choose a parser rule or claim arbitrary multiline input is supported. Export should be compatible with the finalized import format and use a user-selected destination outside the vault.
 
-Optional columns:
+## Later full-vault archive
 
-- `tags`
-- `deck`
-
-Example:
-
-```csv
-front,back,tags,deck
-"What is encapsulation?","Restricting direct access to an object's internal state.","oop,module-1","OOP Fundamentals"
-"What does SQL mean?","Structured Query Language","database,module-2","Database Basics"
-```
-
-## Import behavior
-
-- Column order may vary, but required headers must exist exactly once.
-- Blank `front` or `back` values are errors.
-- Quoted commas and line breaks must follow normal CSV parsing rules.
-- Unknown columns should be reported and ignored only after confirmation.
-- Duplicate handling must be shown in the preview; do not silently remove cards.
-- Report errors with row numbers.
-- Do not partially import before the user confirms the preview.
-
-## Portable export formats
- 
-### 1. Study Bundle (`.syllex` / JSON package)
- 
-An explicit versioned JSON file carrying user-generated study metadata relative to the vault root:
-- Decks, cards, tags, and ease/interval scheduling stats
-- Review history logs
-- Reading bookmarks and page positions
-- Module reading state
- 
-Do not use a synchronized live SQLite file as an interchange format.
- 
-### 2. Full Vault Archive (`.syllex.zip`)
- 
-A standard zip archive containing:
-- The complete folder hierarchy of course documents (`.pdf`, `.ppt`, `.pptx`, `.md`)
-- A root `manifest.syllex` study bundle containing all associated study metadata and progress
-- Cross-platform path normalizations to guarantee clean extraction across Linux and Windows
-
+A full-vault ZIP export is planned after the personal release. It should include original course files and the managed Syllex directory, omit live databases and disposable caches, and be written to a user-selected external location. Restore, collision handling, and cross-platform path normalization require their own reviewed design before implementation.
