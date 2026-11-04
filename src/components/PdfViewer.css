@@ -816,8 +816,9 @@ html[data-theme="light"] .pdf-highlight-done:hover, html[data-theme="light"] .pd
 }
 .pdf-page-sidebar.dock-left { left: 0; }
 .pdf-page-sidebar.dock-right { right: 0; }
-.pdf-page-sidebar-heading { display: flex; justify-content: space-between; padding: 0.3rem 0.35rem; border-bottom: 1px solid #42634d; font-size: 0.75rem; font-weight: 700; }
-.pdf-page-sidebar-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain; padding: 0 0.5rem; opacity: 0.55; }
+.pdf-page-sidebar-scroll { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain; padding: 0.3rem 0.5rem 0.5rem; opacity: 0.55; scrollbar-width: none; -ms-overflow-style: none; }
+.pdf-page-sidebar-scroll::-webkit-scrollbar { display: none; }
+.pdf-page-sidebar-scroll:focus-visible { outline: 1px solid #8ebc95; outline-offset: -1px; }
 .pdf-thumbnail-row { position: relative; display: flex; width: max-content; margin: 0 auto; max-width: 100%; }
 .pdf-thumbnail-page-button { position: relative; display: block; max-width: 100%; padding: 0; border: 0; border-radius: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
 .pdf-thumbnail-row.current .pdf-thumbnail-page-button::after { content: ""; position: absolute; inset: 0; z-index: 1; background: rgb(97 133 104 / 0.16); pointer-events: none; }

@@ -101,8 +101,7 @@ export function PdfPageSidebar({
 
   return (
     <aside className={`pdf-page-sidebar dock-${dock} mode-${viewMode}`} style={{ width }} aria-label="Page previews">
-      <div className="pdf-page-sidebar-heading">Pages <span>{pdfDoc.numPages}</span></div>
-      <div className="pdf-page-sidebar-scroll" ref={scrollRef}>
+      <div className="pdf-page-sidebar-scroll" ref={scrollRef} tabIndex={0} aria-label="Scroll page previews">
         {Array.from({ length: pdfDoc.numPages }, (_, index) => {
           const pageNumber = index + 1;
           const pageHighlights = highlightsByPage.get(pageNumber) ?? [];
