@@ -108,6 +108,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ courseCount, f
   return (
     <div className="dashboard-header-card book-spine-header-card">
       <div className="spine-book-ridge-left" />
+      <div className="spine-book-ridge-right" />
       <div className="spine-foil-bar top" />
       <div className="spine-foil-bar bottom" />
 

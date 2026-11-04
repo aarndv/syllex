@@ -115,7 +115,7 @@ export const SidebarAcademicWidget: React.FC<SidebarAcademicWidgetProps> = ({
             title="Hide Sidebar"
             aria-label="Hide Sidebar"
           >
-            <SidebarToggleIcon size={16} />
+            <SidebarToggleIcon size={20} />
           </button>
         )}
       </div>
@@ -167,7 +167,7 @@ export const SidebarAcademicWidget: React.FC<SidebarAcademicWidgetProps> = ({
         {/* Year Progress */}
         <div className="academic-tracker-item">
           <div className="tracker-label-row">
-            <span className="tracker-name">Year Progress</span>
+            <span className="tracker-name">{now.getFullYear()} Progress</span>
             <span className="tracker-value">{yearPercent}%</span>
           </div>
           <div className="tracker-progress-bg year-progress">

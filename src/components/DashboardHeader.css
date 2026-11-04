@@ -4,7 +4,7 @@
   background-color: #143722;
   border: 1.5px solid rgba(255, 255, 255, 0.4);
   border-radius: 8px;
-  padding: 1.6rem 1.85rem 1.6rem 2.2rem;
+  padding: 1.6rem 2.2rem;
   margin-bottom: 1.75rem;
   opacity: 0.85;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
@@ -22,15 +22,24 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
-.spine-book-ridge-left {
+.spine-book-ridge-left,
+.spine-book-ridge-right {
   position: absolute;
   top: 0;
-  left: 0;
   width: 10px;
   height: 100%;
   background-color: rgba(255, 255, 255, 0.08);
-  border-right: 1px solid rgba(0, 0, 0, 0.4);
   pointer-events: none;
+}
+
+.spine-book-ridge-left {
+  left: 0;
+  border-right: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.spine-book-ridge-right {
+  right: 0;
+  border-left: 1px solid rgba(0, 0, 0, 0.4);
 }
 
 .spine-foil-bar {

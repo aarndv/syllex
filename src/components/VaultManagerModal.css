@@ -108,16 +108,49 @@
   font-family: monospace;
 }
 
-.primary-btn.full-width,
-.secondary-btn.full-width {
-  width: 100%;
-  text-align: center;
-  padding: 0.65rem 1rem;
+.create-section,
+.external-section {
+  display: flex;
+  justify-content: center;
 }
 
-.secondary-btn.small {
-  padding: 0.25rem 0.65rem;
+.vault-manager-card .vault-manager-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  box-sizing: border-box;
+  width: min(100%, 18rem);
+  padding: 0.65rem 1rem;
+  text-align: center;
+}
+
+.vault-manager-action-btn .inline-icon {
+  display: block;
+  flex-shrink: 0;
+}
+
+.default-folder-text-btn {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: #1b3627;
+  font-family: inherit;
   font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+  cursor: pointer;
+}
+
+.default-folder-text-btn:hover {
+  color: #3d684e;
+}
+
+.default-folder-text-btn:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
 }
 
 .subvaults-list {
@@ -210,6 +243,14 @@
   .manager-section h3,
   .subvault-name {
     color: #fbf9f4;
+  }
+
+  .default-folder-text-btn {
+    color: #e2f0d9;
+  }
+
+  .default-folder-text-btn:hover {
+    color: #ffffff;
   }
 
   .default-path-box {

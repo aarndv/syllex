@@ -135,7 +135,7 @@ export const VaultManagerModal: React.FC<VaultManagerModalProps> = ({
           <section className="manager-section default-root-section">
             <div className="section-title-row">
               <h3>Default Vaults Folder</h3>
-              <button onClick={handleSetDefaultFolder} className="secondary-btn small">
+              <button onClick={handleSetDefaultFolder} className="default-folder-text-btn">
                 {defaultVaultsRoot ? "Change Folder" : "Select Default Folder"}
               </button>
             </div>
@@ -151,8 +151,9 @@ export const VaultManagerModal: React.FC<VaultManagerModalProps> = ({
 
           {/* Create New Vault Button */}
           <section className="manager-section create-section">
-            <button onClick={handleCreateNewVault} className="primary-btn full-width">
-              <PlusIcon size={16} /> Create New Vault
+            <button onClick={handleCreateNewVault} className="primary-btn vault-manager-action-btn">
+              <PlusIcon size={16} />
+              <span>Create New Vault</span>
             </button>
           </section>
 
@@ -206,7 +207,7 @@ export const VaultManagerModal: React.FC<VaultManagerModalProps> = ({
 
           {/* Open External Vault */}
           <section className="manager-section external-section">
-            <button onClick={handleOpenExternalFolder} className="secondary-btn full-width">
+            <button onClick={handleOpenExternalFolder} className="secondary-btn vault-manager-action-btn">
               Open Other Folder Directory...
             </button>
           </section>
