@@ -412,6 +412,7 @@ html[data-theme="light"] .search-trigger-btn:hover {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
+  scrollbar-gutter: stable;
   padding: 2.5rem 1.5rem;
   max-width: 1000px;
   margin: 0 auto;
@@ -420,6 +421,10 @@ html[data-theme="light"] .search-trigger-btn:hover {
   transition: max-width 0.2s ease;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.25) rgba(0, 0, 0, 0.15);
+}
+
+@supports not (scrollbar-gutter: stable) {
+  .app-main-content { overflow-y: scroll; }
 }
 
 .app-main-content::-webkit-scrollbar,
