@@ -216,73 +216,98 @@
 }
 
 .color-picker-popover {
+  --picker-surface: #16271c;
+  --picker-field: #20382a;
+  --picker-border: #36513c;
+  --picker-text: #dce6d9;
+  --picker-muted: #a9b9a8;
+  --picker-accent: #8ebc95;
+  --picker-selected: #294b35;
   position: absolute;
   top: calc(100% + 0.5rem);
   right: 0;
-  background-color: #0d2217;
-  border: 1.5px solid rgba(255, 255, 255, 0.45);
-  border-radius: 8px;
-  padding: 0.75rem;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65);
+  background: var(--picker-surface);
+  border: 1px solid var(--picker-border);
+  border-radius: 10px;
+  padding: 0.9rem;
+  box-shadow: 0 12px 32px rgba(4, 18, 10, 0.3);
   z-index: 200;
-  width: 210px;
+  width: min(320px, calc(100vw - 2rem));
+  max-height: min(70vh, 480px);
+  overflow-y: auto;
+  color: var(--picker-text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 .color-picker-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #e2f0d9;
-  margin-bottom: 0.65rem;
-  padding-bottom: 0.4rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
 }
+.color-picker-header > div { display: flex; flex-direction: column; gap: 0.15rem; }
+.color-picker-header strong { font-size: 0.86rem; font-weight: 650; line-height: 1.3; }
+.color-picker-header span { color: var(--picker-muted); font-size: 0.73rem; line-height: 1.3; }
 
 .popover-close-btn {
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.6);
+  background: transparent;
+  border: 0;
+  color: var(--picker-muted);
   cursor: pointer;
-  padding: 0.1rem;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 3px;
+  border-radius: 6px;
 }
 
 .popover-close-btn:hover {
-  color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.15);
+  color: var(--picker-text);
+  background: var(--picker-field);
 }
 
 .color-palette-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
 }
 
-.color-dot-btn {
-  width: 2.2rem;
-  height: 2.2rem;
-  border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.4);
+.color-option-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0.5rem 0.55rem;
+  border: 1px solid var(--picker-border);
+  border-radius: 7px;
+  background: var(--picker-field);
+  color: var(--picker-text);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: left;
   cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
-
-.color-dot-btn:hover {
-  transform: scale(1.15);
-  border-color: #ffffff;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+.color-option-swatch {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px rgba(20, 50, 34, 0.16);
 }
-
-.color-dot-btn.selected {
-  border-color: #ffffff;
-  box-shadow: 0 0 0 2px #0d2217, 0 0 0 4px #ffffff;
-  transform: scale(1.1);
+.color-option-btn:hover,
+.color-option-btn[aria-pressed="true"] {
+  border-color: var(--picker-accent);
+  background: var(--picker-selected);
 }
+.color-option-btn[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--picker-accent); font-weight: 650; }
+.color-picker-popover button:focus-visible { outline: 2px solid var(--picker-accent); outline-offset: 2px; }
 
 /* Shelf Body & Books Row */
 .shelf-body {
@@ -753,23 +778,13 @@ html[data-theme="light"] .shelf-actions-menu button:focus-visible {
 }
 
 html[data-theme="light"] .color-picker-popover {
-  background-color: #fbf9f4;
-  border-color: #143222;
-  box-shadow: 0 8px 24px rgba(20, 50, 34, 0.15);
-}
-
-html[data-theme="light"] .color-picker-header {
-  color: #143222;
-  border-bottom-color: #143222;
-}
-
-html[data-theme="light"] .popover-close-btn {
-  color: #143222;
-}
-
-html[data-theme="light"] .popover-close-btn:hover {
-  background-color: #eee9df;
-  color: #143222;
+  --picker-surface: #fbf9f4;
+  --picker-field: #fffdf9;
+  --picker-border: #ded7c9;
+  --picker-text: #27382c;
+  --picker-muted: #6e766b;
+  --picker-accent: #24543a;
+  --picker-selected: #e5ede4;
 }
 
 html[data-theme="light"] .blueprint-shelf-bar {

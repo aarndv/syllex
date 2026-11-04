@@ -23,6 +23,20 @@ Syllex uses a **Warm Academic Library** aesthetic—a cozy, focused study sanctu
 - **Strict Iconography Directive:** **Never use emojis** for UI icons, buttons, labels, badges, or tree elements. Always use clean vector SVG icons, CSS glyphs, or explicit typography labels.
 - **Density & Layout:** Generous Library Desk spacing, avoiding cramped utility toolbars, while keeping the document reading area centered and uncluttered.
 
+### Practical UI Direction
+
+Use the Warm Academic Library palette as the foundation, with the settings interface as the reference for day-to-day controls. The visual language should feel calm and considered, not ornamental. Prefer soft surfaces, fine uniform borders, modest corner radii, clear spacing, and restrained shadows. Use gradients or textures only when they clarify a specific library or bookshelf metaphor; ordinary controls and toolbars should stay clean and quiet.
+
+- **Typography has roles:** Use the application system sans-serif for controls, instructions, labels, navigation, and dense utility information. Reserve Georgia or another academic serif for page titles and selected editorial headings. Do not force serif typography onto every button, badge, tree row, or tool.
+- **Controls should feel related:** Use consistent heights, padding, border weights, and focus treatment. Selectable options should resemble compact settings option cards: a soft surface, a fine border, a small radius, and a clear accent border or inset ring when selected. Primary actions should be obvious without being oversized; secondary actions should remain quiet.
+- **Color choices should be legible:** Keep color swatches compact and aligned with their surrounding controls. Prefer restrained rectangular chips inside a bordered control over oversized decorative circles. Selection must be distinguishable by border, outline, or another shape treatment, not color alone.
+- **Toolbars should scan quickly:** Group related actions, keep labels short, and use muted helper text for instructions. Make room through compact controls and deliberate wrapping instead of squeezing text together. Keep toolbars visually lighter than the document or workspace they serve.
+- **Theme consistency matters:** Define corresponding surface, field, border, text, muted-text, accent, and selected-state colors for both light and dark themes. Reuse these roles across components instead of introducing one-off colors. Check contrast and focus visibility in both themes.
+- **Prefer restraint over decoration:** Avoid gratuitous pills, thick outlines, prominent shadows, oversized icons, and motion that does not communicate state. Hover feedback should be subtle; selected and pressed states should be clear and persistent.
+- **Make compact layouts intentional:** Let controls wrap at narrow widths without clipping. Keep labels and instructions readable, preserve practical click targets, and avoid fixed widths that assume a desktop-sized reader.
+
+When an older visual rule conflicts with these practical patterns, preserve the warm palette and library character while following the cleaner, role-based treatment above. A specific physical metaphor should support the content; it should not be applied indiscriminately to every interface element.
+
 ---
 
 ## 2. Product & UX Philosophy
