@@ -66,6 +66,7 @@ export const READING_FILTER_OPTIONS = [
 ];
 
 const ACADEMIC_STORAGE_KEY = "syllex_academic_tracker_data";
+type SettingsCategory = "appearance" | "reading" | "academic" | "storage";
 
 interface AcademicData {
   midtermDate: string;
@@ -89,6 +90,18 @@ const DEFAULT_ACADEMIC_DATA: AcademicData = {
   showTrimester: false,
 };
 
+function loadAcademicData(): AcademicData {
+  const saved = localStorage.getItem(ACADEMIC_STORAGE_KEY);
+  if (saved) {
+    try {
+      return { ...DEFAULT_ACADEMIC_DATA, ...JSON.parse(saved) };
+    } catch {
+      // Ignore invalid saved data.
+    }
+  }
+  return DEFAULT_ACADEMIC_DATA;
+}
+
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   settings,
   defaultVaultsRoot,
@@ -97,29 +110,47 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
 }) => {
   const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
-  const [academicData, setAcademicData] = useState<AcademicData>(() => {
-    const saved = localStorage.getItem(ACADEMIC_STORAGE_KEY);
-    if (saved) {
-      try {
-        return { ...DEFAULT_ACADEMIC_DATA, ...JSON.parse(saved) };
-      } catch {
-        // Fallback
-      }
-    }
-    return DEFAULT_ACADEMIC_DATA;
-  });
+  const [savedSettings, setSavedSettings] = useState<AppSettings>(settings);
+  const [academicData, setAcademicData] = useState<AcademicData>(loadAcademicData);
+  const [savedAcademicData, setSavedAcademicData] = useState<AcademicData>(academicData);
+  const [localVaultsRoot, setLocalVaultsRoot] = useState(defaultVaultsRoot);
+  const [savedVaultsRoot, setSavedVaultsRoot] = useState(defaultVaultsRoot);
+  const [activeCategory, setActiveCategory] = useState<SettingsCategory>("appearance");
+
+  const settingsChanged = JSON.stringify(localSettings) !== JSON.stringify(savedSettings);
+  const academicChanged = JSON.stringify(academicData) !== JSON.stringify(savedAcademicData);
+  const rootChanged = localVaultsRoot !== savedVaultsRoot;
+  const hasChanges = settingsChanged || academicChanged || rootChanged;
 
   function handleChange<K extends keyof AppSettings>(key: K, value: AppSettings[K]) {
     const updated = { ...localSettings, [key]: value };
     setLocalSettings(updated);
-    onUpdateSettings(updated);
   }
 
   function handleAcademicChange<K extends keyof AcademicData>(key: K, value: AcademicData[K]) {
     const updated = { ...academicData, [key]: value };
     setAcademicData(updated);
-    localStorage.setItem(ACADEMIC_STORAGE_KEY, JSON.stringify(updated));
-    window.dispatchEvent(new Event("syllex_academic_update"));
+  }
+
+  function applyChanges() {
+    if (settingsChanged) {
+      onUpdateSettings(localSettings);
+      setSavedSettings(localSettings);
+    }
+    if (academicChanged) {
+      localStorage.setItem(ACADEMIC_STORAGE_KEY, JSON.stringify(academicData));
+      window.dispatchEvent(new Event("syllex_academic_update"));
+      setSavedAcademicData(academicData);
+    }
+    if (rootChanged && localVaultsRoot) {
+      onSetDefaultVaultsRoot(localVaultsRoot);
+      setSavedVaultsRoot(localVaultsRoot);
+    }
+  }
+
+  function handleOkay() {
+    applyChanges();
+    onClose();
   }
 
   async function handleSelectDefaultFolder() {
@@ -131,7 +162,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       });
 
       if (selected && typeof selected === "string") {
-        onSetDefaultVaultsRoot(selected);
+        setLocalVaultsRoot(selected);
       }
     } catch (err) {
       console.error("Failed to select default folder:", err);
@@ -140,18 +171,37 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="settings-modal-card" onClick={(e) => e.stopPropagation()}>
+      <div className="settings-modal-card" role="dialog" aria-modal="true" aria-labelledby="settings-title" onClick={(e) => e.stopPropagation()}>
         <header className="settings-modal-header">
-          <h2>Application Settings</h2>
-          <button onClick={onClose} className="modal-close-btn" title="Close settings">
+          <div>
+            <h2 id="settings-title">Application Settings</h2>
+            <p>Make Syllex feel right for your study space.</p>
+          </div>
+          <button type="button" onClick={onClose} className="modal-close-btn" title="Close settings" aria-label="Close settings">
             <CloseIcon size={16} />
           </button>
         </header>
-
+        <div className="settings-modal-content">
+          <nav className="settings-navigation" aria-label="Settings categories">
+            {([
+              ["appearance", "Appearance", "Theme & type"],
+              ["reading", "Reading", "Documents & previews"],
+              ["academic", "Academic", "Milestones & dates"],
+              ["storage", "Storage", "Vault location"],
+            ] as const).map(([category, label, description]) => (
+              <button type="button" key={category} className={`settings-nav-item ${activeCategory === category ? "active" : ""}`}
+                aria-current={activeCategory === category ? "page" : undefined}
+                onClick={() => setActiveCategory(category)}>
+                <span>{label}</span><small>{description}</small>
+              </button>
+            ))}
+          </nav>
         <div className="settings-modal-body">
+          {activeCategory === "academic" && <>
+            <div className="settings-page-heading"><h3>Academic milestones</h3><p>Choose which deadlines appear in your sidebar.</p></div>
           {/* Academic Milestones & Calendar Section */}
           <section className="settings-section">
-            <label className="setting-label">Academic Milestones & Calendar</label>
+            <h4 className="setting-label">Calendar & progress</h4>
             <div className="academic-settings-grid">
               <div className="academic-visibility-options" aria-label="Sidebar academic trackers">
                 <span className="sub-label">Show in Sidebar</span>
@@ -181,8 +231,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </label>
               </div>
               <div className="setting-input-group">
-                <label className="sub-label">Midterms Date (or Days Left)</label>
+                <label htmlFor="setting-midterms-date" className="sub-label">Midterms Date (or Days Left)</label>
                 <input
+                  id="setting-midterms-date"
                   type="text"
                   placeholder="YYYY-MM-DD or e.g. 24"
                   value={academicData.midtermDate}
@@ -192,8 +243,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
 
               <div className="setting-input-group">
-                <label className="sub-label">Finals Date (or Days Left)</label>
+                <label htmlFor="setting-finals-date" className="sub-label">Finals Date (or Days Left)</label>
                 <input
+                  id="setting-finals-date"
                   type="text"
                   placeholder="YYYY-MM-DD or e.g. 68"
                   value={academicData.finalsDate}
@@ -203,8 +255,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
 
               <div className="setting-input-group">
-                <label className="sub-label">Trimester Start Date</label>
+                <label htmlFor="setting-trimester-start" className="sub-label">Trimester Start Date</label>
                 <input
+                  id="setting-trimester-start"
                   type="date"
                   value={academicData.trimesterStartDate}
                   onChange={(e) => handleAcademicChange("trimesterStartDate", e.target.value)}
@@ -213,8 +266,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
 
               <div className="setting-input-group">
-                <label className="sub-label">Trimester End Date</label>
+                <label htmlFor="setting-trimester-end" className="sub-label">Trimester End Date</label>
                 <input
+                  id="setting-trimester-end"
                   type="date"
                   value={academicData.trimesterEndDate}
                   onChange={(e) => handleAcademicChange("trimesterEndDate", e.target.value)}
@@ -223,8 +277,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
 
               <div className="setting-input-group">
-                <label className="sub-label">Manual Trimester Progress % (Optional)</label>
+                <label htmlFor="setting-trimester-progress" className="sub-label">Manual Trimester Progress % (Optional)</label>
                 <input
+                  id="setting-trimester-progress"
                   type="number"
                   min="0"
                   max="100"
@@ -239,13 +294,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
             </div>
           </section>
+          </>}
 
+          {activeCategory === "appearance" && <>
+            <div className="settings-page-heading"><h3>Appearance</h3><p>Set the tone and typography for your workspace.</p></div>
           {/* Theme / Appearance Section */}
           <section className="settings-section">
-            <label className="setting-label">Interface Theme</label>
+            <h4 className="setting-label">Interface theme</h4>
             <div className="setting-options-grid">
               <button
                 className={`option-card ${localSettings.theme === "light" ? "selected" : ""}`}
+                aria-pressed={localSettings.theme === "light"}
                 onClick={() => handleChange("theme", "light")}
               >
                 <span>Light Parchment</span>
@@ -253,6 +312,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </button>
               <button
                 className={`option-card ${localSettings.theme === "dark" ? "selected" : ""}`}
+                aria-pressed={localSettings.theme === "dark"}
                 onClick={() => handleChange("theme", "dark")}
               >
                 <span>Midnight Forest (Dark)</span>
@@ -260,6 +320,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </button>
               <button
                 className={`option-card ${localSettings.theme === "system" ? "selected" : ""}`}
+                aria-pressed={localSettings.theme === "system"}
                 onClick={() => handleChange("theme", "system")}
               >
                 <span>System Preference</span>
@@ -270,10 +331,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {/* Font Style Section */}
           <section className="settings-section">
-            <label className="setting-label">Typography Style</label>
+            <h4 className="setting-label">Typography style</h4>
             <div className="setting-options-grid">
               <button
                 className={`option-card ${localSettings.fontStyle === "serif" ? "selected" : ""}`}
+                aria-pressed={localSettings.fontStyle === "serif"}
                 onClick={() => handleChange("fontStyle", "serif")}
               >
                 <span style={{ fontFamily: "Georgia, serif" }}>Academic Serif</span>
@@ -281,6 +343,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </button>
               <button
                 className={`option-card ${localSettings.fontStyle === "sans" ? "selected" : ""}`}
+                aria-pressed={localSettings.fontStyle === "sans"}
                 onClick={() => handleChange("fontStyle", "sans")}
               >
                 <span style={{ fontFamily: "system-ui, sans-serif" }}>Modern Sans-Serif</span>
@@ -288,6 +351,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </button>
               <button
                 className={`option-card ${localSettings.fontStyle === "mono" ? "selected" : ""}`}
+                aria-pressed={localSettings.fontStyle === "mono"}
                 onClick={() => handleChange("fontStyle", "mono")}
               >
                 <span style={{ fontFamily: "monospace" }}>Monospace Study</span>
@@ -298,10 +362,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {/* Font Size Section */}
           <section className="settings-section">
-            <label className="setting-label">Font Size</label>
+            <h4 className="setting-label">Font size</h4>
             <div className="setting-options-grid">
               <button
                 className={`option-card ${localSettings.fontSize === "small" ? "selected" : ""}`}
+                aria-pressed={localSettings.fontSize === "small"}
                 onClick={() => handleChange("fontSize", "small")}
               >
                 <span style={{ fontSize: "0.8rem" }}>Small (14px)</span>
@@ -309,6 +374,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </button>
               <button
                 className={`option-card ${localSettings.fontSize === "medium" ? "selected" : ""}`}
+                aria-pressed={localSettings.fontSize === "medium"}
                 onClick={() => handleChange("fontSize", "medium")}
               >
                 <span style={{ fontSize: "0.9rem" }}>Medium (16px)</span>
@@ -316,6 +382,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </button>
               <button
                 className={`option-card ${localSettings.fontSize === "large" ? "selected" : ""}`}
+                aria-pressed={localSettings.fontSize === "large"}
                 onClick={() => handleChange("fontSize", "large")}
               >
                 <span style={{ fontSize: "1rem" }}>Large (18px)</span>
@@ -323,7 +390,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </button>
             </div>
           </section>
+          </>}
 
+          {activeCategory === "reading" && <>
+            <div className="settings-page-heading"><h3>Reading</h3><p>Adjust document defaults and page previews.</p></div>
           {/* Time Zone Section */}
           <section className="settings-section">
             <label htmlFor="setting-timezone" className="setting-label">
@@ -363,16 +433,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </section>
 
           <section className="settings-section">
-            <label className="setting-label">Page Preview Sidebar</label>
+            <h4 className="setting-label">Page preview sidebar</h4>
             <div className="setting-options-grid">
               <button type="button" className={`option-card ${localSettings.pageSidebarVisible ? "selected" : ""}`}
+                aria-pressed={localSettings.pageSidebarVisible}
                 onClick={() => handleChange("pageSidebarVisible", !localSettings.pageSidebarVisible)}>
                 <span>{localSettings.pageSidebarVisible ? "Shown" : "Hidden"}</span>
                 {localSettings.pageSidebarVisible && <CheckIcon size={14} />}
               </button>
               <button type="button" className={`option-card ${localSettings.pageSidebarDock === "left" ? "selected" : ""}`}
+                aria-pressed={localSettings.pageSidebarDock === "left"}
                 onClick={() => handleChange("pageSidebarDock", "left")}>Dock Left</button>
               <button type="button" className={`option-card ${localSettings.pageSidebarDock === "right" ? "selected" : ""}`}
+                aria-pressed={localSettings.pageSidebarDock === "right"}
                 onClick={() => handleChange("pageSidebarDock", "right")}>Dock Right</button>
             </div>
             <div className="setting-slider-row">
@@ -388,23 +461,36 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 onChange={(e) => handleChange("thumbnailScale", Number(e.target.value))} />
             </div>
           </section>
+          </>}
 
+          {activeCategory === "storage" && <>
+            <div className="settings-page-heading"><h3>Storage</h3><p>Choose where new vaults are stored by default.</p></div>
           {/* Default Storage Directory Section */}
           <section className="settings-section">
             <div className="section-title-row">
-              <label className="setting-label">Default Vaults Folder</label>
-              <button onClick={handleSelectDefaultFolder} className="secondary-btn small">
-                {defaultVaultsRoot ? "Change Directory" : "Select Directory"}
+              <h4 className="setting-label">Default vaults folder</h4>
+              <button type="button" onClick={handleSelectDefaultFolder} className="settings-choose-btn">
+                {localVaultsRoot ? "Change folder" : "Select folder"}
               </button>
             </div>
             <div className="settings-path-box">
               <FolderIcon size={14} />
               <span className="path-text">
-                {defaultVaultsRoot ? defaultVaultsRoot : "No default directory configured"}
+                {localVaultsRoot ? localVaultsRoot : "No default folder selected"}
               </span>
             </div>
           </section>
+          </>}
         </div>
+        </div>
+        <footer className="settings-modal-footer">
+          <span className="settings-change-status" aria-live="polite">{hasChanges ? "Unsaved changes" : "All changes saved"}</span>
+          <div className="settings-footer-actions">
+            <button type="button" className="settings-cancel-btn" onClick={onClose}>Cancel</button>
+            <button type="button" className="settings-apply-btn" onClick={applyChanges} disabled={!hasChanges}>Apply changes</button>
+            <button type="button" className="settings-okay-btn" onClick={handleOkay}>OK</button>
+          </div>
+        </footer>
       </div>
     </div>
   );
