@@ -40,8 +40,8 @@ const DEFAULT_VAULTS_ROOT_KEY = "syllex_default_vaults_root_path";
 const SETTINGS_STORAGE_KEY = "syllex_app_settings";
 const SIDEBAR_HIDDEN_STORAGE_KEY = "syllex_sidebar_hidden";
 
-function App() {
-  const [hasEntered, setHasEntered] = useState<boolean>(false);
+function App({ startInVault = false }: { startInVault?: boolean }) {
+  const [hasEntered, setHasEntered] = useState<boolean>(startInVault);
   const [vaultPath, setVaultPath] = useState<string | null>(null);
   const [defaultVaultsRoot, setDefaultVaultsRoot] = useState<string | null>(null);
 
