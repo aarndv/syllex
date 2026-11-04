@@ -182,11 +182,12 @@ html[data-theme="light"] .header-clock-digits {
 .search-trigger-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
   background-color: #2a4c38;
   color: #fbf9f4;
   border: 1px solid #3d684e;
-  padding: 0 0.85rem;
+  width: 2.3rem;
+  padding: 0;
   border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 500;
@@ -199,22 +200,6 @@ html[data-theme="light"] .header-clock-digits {
   border-color: rgba(255, 255, 255, 0.4);
 }
 
-.search-shortcut-badge {
-  display: none;
-  font-size: 0.68rem;
-  font-family: monospace;
-  background-color: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 0.1rem 0.35rem;
-  border-radius: 3px;
-  color: #ffffff;
-}
-
-.search-trigger-btn:hover .search-shortcut-badge,
-.search-trigger-btn:focus-visible .search-shortcut-badge {
-  display: inline-block;
-}
-
 html[data-theme="light"] .search-trigger-btn {
   background-color: #eee9df;
   color: #143222;
@@ -225,13 +210,6 @@ html[data-theme="light"] .search-trigger-btn:hover {
   background-color: #143222;
   color: #ffffff;
 }
-
-html[data-theme="light"] .search-shortcut-badge {
-  background-color: #ffffff;
-  border-color: #143222;
-  color: #143222;
-}
-
 
 .vault-actions {
   display: flex;
@@ -412,6 +390,7 @@ html[data-theme="light"] .search-shortcut-badge {
 .sidebar-content {
   flex: 1;
   padding: 0.75rem 0.5rem;
+  opacity: 0.7;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
@@ -500,7 +479,9 @@ html[data-theme="light"] .sidebar-content::-webkit-scrollbar-thumb:hover {
 }
 
 .no-vault-empty-state {
-  opacity: 0.6;
+  background-color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(226, 217, 200, 0.6);
+  box-shadow: 0 4px 12px rgba(27, 54, 39, 0.024);
 }
 
 .empty-state h2 {

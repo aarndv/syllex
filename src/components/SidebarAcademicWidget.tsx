@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { ClockIcon, SettingsIcon, SidebarToggleIcon } from "./Icons";
+import { ClockIcon, SidebarToggleIcon } from "./Icons";
 import { getDaysUntil, getTrimesterPercent } from "../utils/academicDates";
 import "./SidebarAcademicWidget.css";
 
@@ -28,12 +28,10 @@ const DEFAULT_ACADEMIC_DATA: AcademicData = {
 const STORAGE_KEY = "syllex_academic_tracker_data";
 
 interface SidebarAcademicWidgetProps {
-  onOpenSettings?: () => void;
   onToggleSidebar?: () => void;
 }
 
 export const SidebarAcademicWidget: React.FC<SidebarAcademicWidgetProps> = ({
-  onOpenSettings,
   onToggleSidebar,
 }) => {
   const [now, setNow] = useState<Date>(new Date());
@@ -108,16 +106,6 @@ export const SidebarAcademicWidget: React.FC<SidebarAcademicWidgetProps> = ({
             <ClockIcon size={16} />
             <span className="clock-digits">{timeString}</span>
           </div>
-          {onOpenSettings && (
-            <button
-              onClick={onOpenSettings}
-              className="widget-edit-btn"
-              title="Configure Academic Milestones in Settings"
-              aria-label="Configure Academic Milestones in Settings"
-            >
-              <SettingsIcon size={13} />
-            </button>
-          )}
         </div>
         {onToggleSidebar && (
           <button

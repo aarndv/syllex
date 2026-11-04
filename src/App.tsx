@@ -600,11 +600,10 @@ function App() {
           <button
             onClick={() => setIsSearchOpen(true)}
             className="search-trigger-btn"
-            title="Quick Search across vaults (Ctrl+K)"
+            title="Quick Search (Ctrl+K)"
+            aria-label="Quick Search (Ctrl+K)"
           >
             <SearchIcon size={16} />
-            <span className="search-btn-label">Quick Search</span>
-            <kbd className="search-shortcut-badge">Ctrl+K</kbd>
           </button>
 
           <button
@@ -623,7 +622,6 @@ function App() {
           <aside className="app-sidebar">
             <div className="sidebar-header">
               <SidebarAcademicWidget
-                onOpenSettings={() => setIsSettingsOpen(true)}
                 onToggleSidebar={() => setIsSidebarHidden(true)}
               />
               <div className="vault-actions">

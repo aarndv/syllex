@@ -8,12 +8,15 @@
 }
 
 .sidebar-clock-row {
+  --sidebar-clock-height: 2.5rem;
   display: flex;
   align-items: stretch;
   gap: 0.5rem;
 }
 
 .sidebar-clock-header {
+  box-sizing: border-box;
+  height: var(--sidebar-clock-height);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -41,8 +44,10 @@
 }
 
 .sidebar-clock-row .sidebar-toggle-btn {
-  width: 2rem;
-  flex-shrink: 0;
+  box-sizing: border-box;
+  width: var(--sidebar-clock-height);
+  height: var(--sidebar-clock-height);
+  flex: 0 0 var(--sidebar-clock-height);
   padding: 0;
   display: inline-flex;
   align-items: center;
@@ -60,24 +65,6 @@
   background-color: rgba(255, 255, 255, 0.2);
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.5);
-}
-
-.widget-edit-btn {
-  background: none;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: rgba(255, 255, 255, 0.7);
-  border-radius: 3px;
-  padding: 0.2rem 0.4rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  transition: all 0.2s ease;
-}
-
-.widget-edit-btn:hover {
-  color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.15);
-  border-color: #ffffff;
 }
 
 /* Edit Form Popover */
@@ -230,7 +217,7 @@
   top: 0;
   width: 2px;
   height: 100%;
-  background-color: #143222;
+  background-color: #0b1d14;
 }
 
 /* Light Theme Botanical Parchment Blueprint Overrides */
@@ -245,16 +232,6 @@ html[data-theme="light"] .clock-time-display {
 
 html[data-theme="light"] .clock-digits {
   color: #143222;
-}
-
-html[data-theme="light"] .widget-edit-btn {
-  border-color: #143222;
-  color: #143222;
-}
-
-html[data-theme="light"] .widget-edit-btn:hover {
-  background-color: #143222;
-  color: #ffffff;
 }
 
 html[data-theme="light"] .academic-edit-popover {
