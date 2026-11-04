@@ -74,6 +74,16 @@ export const VIEW_MODE_LABELS: Record<DocumentViewMode, string> = {
   "ocean-dark": "Ocean Dark Blue",
 };
 
+const VIEW_MODE_SHORT_LABELS: Record<DocumentViewMode, string> = {
+  "original": "Original",
+  "fast-dark": "Fast dark",
+  "sepia": "Sepia",
+  "dark-sepia": "Midnight",
+  "grayscale": "Grayscale",
+  "high-contrast-dark": "High contrast",
+  "ocean-dark": "Ocean blue",
+};
+
 const DEFAULT_DRAWER_WIDTH = 320;
 const MIN_DRAWER_WIDTH = 220;
 const MAX_DRAWER_WIDTH = 750;
@@ -857,6 +867,19 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               <CloseIcon size={14} /> <span>Back</span>
             </button>
             <span className="doc-title" title={node.name}>{node.name}</span>
+            {settings.showReadingFilterIndicator && (
+              <button
+                type="button"
+                className={`reader-filter-indicator mode-${viewMode}`}
+                onClick={cycleViewMode}
+                title={`${VIEW_MODE_LABELS[viewMode]} · Press D to cycle reading filters`}
+                aria-label={`Reading filter: ${VIEW_MODE_LABELS[viewMode]}. Press D to cycle filters`}
+                aria-keyshortcuts="D"
+              >
+                <span className="reader-filter-dot" aria-hidden="true" />
+                <span>{VIEW_MODE_SHORT_LABELS[viewMode]}</span>
+              </button>
+            )}
           </div>
 
           <div className="toolbar-main-controls">

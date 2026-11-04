@@ -177,6 +177,22 @@ html[data-theme="light"] .settings-modal-card {
   font-size: 0.81rem;
 }
 .settings-modal-card .setting-text-input::placeholder { color: var(--settings-muted); opacity: 0.75; }
+.settings-toggle-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  margin-top: 0.25rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--settings-border);
+  border-radius: 7px;
+  background: var(--settings-panel);
+  color: var(--settings-text);
+  cursor: pointer;
+}
+.settings-toggle-row input { flex: none; margin: 0.2rem 0 0; accent-color: var(--settings-accent); }
+.settings-toggle-row span { display: flex; flex-direction: column; gap: 0.15rem; }
+.settings-toggle-row strong { font-size: 0.78rem; font-weight: 600; line-height: 1.35; }
+.settings-toggle-row small { color: var(--settings-muted); font-size: 0.72rem; line-height: 1.35; }
 .settings-modal-card :is(button, input, select):focus-visible {
   outline: 2px solid var(--settings-accent);
   outline-offset: 2px;

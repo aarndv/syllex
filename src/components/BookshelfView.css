@@ -294,7 +294,9 @@
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 1.25rem;
-  padding: 0.5rem 0.5rem 0.75rem;
+  /* Leave room inside the scroll area for a book to lift on hover. */
+  padding: 1.25rem 0.5rem 0.75rem;
+  margin-top: -0.75rem;
   max-height: 450px;
   overflow-y: auto;
   overflow-x: hidden;
