@@ -13,7 +13,7 @@
   overflow: hidden;
   width: min(100%, 760px);
   max-width: 760px;
-  max-height: min(88vh, 760px);
+  height: min(88vh, 760px);
   background: var(--settings-surface);
   color: var(--settings-text);
   border: 1px solid var(--settings-border);
@@ -73,6 +73,7 @@ html[data-theme="light"] .settings-modal-card {
   grid-template-columns: 176px minmax(0, 1fr);
   min-height: 0;
   flex: 1;
+  overflow: hidden;
 }
 .settings-navigation {
   display: flex;
@@ -111,6 +112,7 @@ html[data-theme="light"] .settings-modal-card {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  min-height: 0;
   gap: 1.4rem;
   min-width: 0;
   padding: 1.4rem 1.6rem 1.7rem;
@@ -269,12 +271,12 @@ html[data-theme="light"] .settings-modal-card {
 .settings-okay-btn { min-width: 54px; background: #24543a; border-color: #24543a; color: #f7f8f1; }
 .settings-okay-btn:hover { background: #326b49; }
 @media (max-width: 620px) {
-  .settings-modal-card { max-height: calc(100vh - 1.5rem); }
+  .settings-modal-card { height: calc(100vh - 1.5rem); }
   .settings-modal-content { display: flex; flex-direction: column; }
-  .settings-navigation { flex-direction: row; overflow-x: auto; padding: 0.55rem; border-right: 0; border-bottom: 1px solid var(--settings-border); }
+  .settings-navigation { flex: none; flex-direction: row; overflow-x: auto; padding: 0.55rem; border-right: 0; border-bottom: 1px solid var(--settings-border); }
   .settings-nav-item { flex: 0 0 auto; width: auto; padding: 0.5rem 0.65rem; }
   .settings-nav-item small { display: none; }
-  .settings-modal-card .settings-modal-body { padding: 1.1rem; }
+  .settings-modal-card .settings-modal-body { flex: 1; padding: 1.1rem; }
   .settings-modal-footer { flex-wrap: wrap; justify-content: flex-end; }
   .settings-change-status { margin-right: auto; }
 }
