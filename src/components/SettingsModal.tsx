@@ -13,6 +13,7 @@ export interface AppSettings {
   fontSize: FontSizeSetting;
   timeZone: string;
   defaultReadingFilter: string;
+  showReadingFilterIndicator: boolean;
   pageSidebarVisible: boolean;
   pageSidebarDock: "left" | "right";
   pageSidebarWidth: number;
@@ -26,6 +27,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   fontSize: "medium",
   timeZone: "system",
   defaultReadingFilter: "original",
+  showReadingFilterIndicator: true,
   pageSidebarVisible: true,
   pageSidebarDock: "left",
   pageSidebarWidth: 110,
@@ -430,6 +432,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </option>
               ))}
             </select>
+            <label className="settings-toggle-row">
+              <input
+                type="checkbox"
+                checked={localSettings.showReadingFilterIndicator}
+                onChange={(e) => handleChange("showReadingFilterIndicator", e.target.checked)}
+              />
+              <span>
+                <strong>Show current filter beside document title</strong>
+                <small>Keep the active reading filter visible in the reader toolbar.</small>
+              </span>
+            </label>
           </section>
 
           <section className="settings-section">
