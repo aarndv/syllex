@@ -4,7 +4,7 @@
 
 ---
 
-Syllex is a personal study library for the course materials already on your computer. Choose your course folder as a vault, much like an Obsidian vault, and browse your classes and readings together. It gives you a comfortable place to read, keep your place, and return to the passages you've highlighted.
+Syllex is a personal study library for the course materials already on your computer. Choose your course folder as a vault, much like an Obsidian vault, and browse your classes and readings together. If a PDF or presentation looks too bright, switch the viewing filter instantly to make it more comfortable to read, without changing the original file. Keep your place and return to the passages you've highlighted.
 
 Syllex works offline and leaves your original course files untouched. It is designed for Fedora Linux and Windows 11.
 
