@@ -553,7 +553,7 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
         />
       )}
 
-      <header className="app-header">
+      <header className={`app-header ${isSidebarHidden ? "with-clock" : ""}`}>
         <div className="header-left-group">
           {isSidebarHidden && (
             <button
