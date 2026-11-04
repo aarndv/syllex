@@ -1,6 +1,10 @@
 import type { VaultNode, VaultScanResult } from "../types/vault";
 
 const ROOT = "/Browser Demo Vault";
+const LIBRARY = "Study Materials";
+const BIOLOGY = `${LIBRARY}/Biology 101`;
+const MATHEMATICS = `${LIBRARY}/Mathematics 204`;
+const HISTORY = `${LIBRARY}/History 310`;
 const encoder = new TextEncoder();
 
 function makePdf(title: string, course: string): number[] {
@@ -53,25 +57,27 @@ function folder(parent: string, name: string, children: VaultNode[]): VaultNode 
 const scan: VaultScanResult = {
   root_path: ROOT,
   root_nodes: [
-    file("", "Welcome to the Demo.pdf", "Browser-only sample vault"),
-    folder("", "Biology 101", [
-      file("Biology 101", "Course Outline.pdf", "Biology 101"),
-      folder("Biology 101", "Lectures", [
-        file("Biology 101/Lectures", "Cells and Tissues.pdf", "Biology 101"),
-        file("Biology 101/Lectures", "Genetics Basics.pdf", "Biology 101"),
+    folder("", LIBRARY, [
+      file(LIBRARY, "Welcome to the Demo.pdf", "Browser-only sample vault"),
+      folder(LIBRARY, "Biology 101", [
+        file(BIOLOGY, "Course Outline.pdf", "Biology 101"),
+        folder(BIOLOGY, "Lectures", [
+          file(`${BIOLOGY}/Lectures`, "Cells and Tissues.pdf", "Biology 101"),
+          file(`${BIOLOGY}/Lectures`, "Genetics Basics.pdf", "Biology 101"),
+        ]),
       ]),
-    ]),
-    folder("", "Mathematics 204", [
-      file("Mathematics 204", "Syllabus.pdf", "Mathematics 204"),
-      folder("Mathematics 204", "Problem Sets", [
-        file("Mathematics 204/Problem Sets", "Limits Practice.pdf", "Mathematics 204"),
-        file("Mathematics 204/Problem Sets", "Derivatives Practice.pdf", "Mathematics 204"),
+      folder(LIBRARY, "Mathematics 204", [
+        file(MATHEMATICS, "Syllabus.pdf", "Mathematics 204"),
+        folder(MATHEMATICS, "Problem Sets", [
+          file(`${MATHEMATICS}/Problem Sets`, "Limits Practice.pdf", "Mathematics 204"),
+          file(`${MATHEMATICS}/Problem Sets`, "Derivatives Practice.pdf", "Mathematics 204"),
+        ]),
       ]),
-    ]),
-    folder("", "History 310", [
-      file("History 310", "Reading List.pdf", "History 310"),
-      folder("History 310", "Primary Sources", [
-        file("History 310/Primary Sources", "Archive Notes.pdf", "History 310"),
+      folder(LIBRARY, "History 310", [
+        file(HISTORY, "Reading List.pdf", "History 310"),
+        folder(HISTORY, "Primary Sources", [
+          file(`${HISTORY}/Primary Sources`, "Archive Notes.pdf", "History 310"),
+        ]),
       ]),
     ]),
   ],
