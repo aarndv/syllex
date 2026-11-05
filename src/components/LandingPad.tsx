@@ -104,9 +104,6 @@ export const LandingPad: React.FC<LandingPadProps> = ({
       <span className="landing-bookmark" aria-hidden="true">
         <span className="landing-bookmark-paper" />
         <span className="landing-bookmark-hole" />
-        <span className="landing-bookmark-ribbon left" />
-        <span className="landing-bookmark-ribbon right" />
-        <span className="landing-bookmark-knot" />
       </span>
       <div className="landing-pad-card">
         {/* Syllex wordmark */}
