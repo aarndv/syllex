@@ -438,9 +438,25 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
 }) => {
   const ext = getFileExt(node.node_type);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [nearViewport, setNearViewport] = useState(false);
+  const cardRef = useRef<HTMLDivElement | null>(null);
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const pointerRef = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    if (nearViewport || (ext !== "PDF" && ext !== "PPT" && ext !== "PPTX")) return;
+    const card = cardRef.current;
+    if (!card) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        setNearViewport(true);
+        observer.disconnect();
+      }
+    }, { rootMargin: "160px" });
+    observer.observe(card);
+    return () => observer.disconnect();
+  }, [ext, nearViewport]);
 
   const positionTooltip = useCallback(() => {
     const tooltip = tooltipRef.current;
@@ -483,7 +499,7 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
 
   useEffect(() => {
     let isMounted = true;
-    if (!vaultRoot || (ext !== "PDF" && ext !== "PPT" && ext !== "PPTX")) {
+    if (!vaultRoot || !nearViewport || (ext !== "PDF" && ext !== "PPT" && ext !== "PPTX")) {
       setCoverUrl(null);
       return;
     }
@@ -503,10 +519,11 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [vaultRoot, node.relative_path, ext]);
+  }, [vaultRoot, node.relative_path, ext, nearViewport]);
 
   return (
     <div
+      ref={cardRef}
       className={`book-spine-card variant-${colorVariant} ${coverUrl ? "has-cover-snapshot" : ""}`}
       style={{ "--folder-hover-color": folderColor || "#059669" } as React.CSSProperties}
       onMouseEnter={(event) => {

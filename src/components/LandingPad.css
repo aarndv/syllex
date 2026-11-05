@@ -42,25 +42,72 @@
   background-size: 24px 24px;
 }
 
-/* Central Sanctuary Folio Card (120% wider) */
-.landing-pad-card {
+/* A clothbound cover with a visible page block and a back board. */
+.landing-book {
   position: relative;
   width: 100%;
   max-width: 504px;
+  z-index: 10;
+  filter: drop-shadow(0 20px 24px rgba(0, 0, 0, 0.32));
+}
+
+.landing-book::before,
+.landing-book::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.landing-book::before {
+  inset: 9px -13px -10px 15px;
+  border: 1px solid #9d927b;
+  border-radius: 3px 10px 10px 3px;
+  background: repeating-linear-gradient(
+    to bottom,
+    #eee7d5 0 2px,
+    #cfc5ac 2px 3px,
+    #f7f1e2 3px 5px
+  );
+  box-shadow: 3px 4px 0 #102c1d;
+}
+
+.landing-book::after {
+  inset: 13px -17px -14px 19px;
+  z-index: -1;
+  border-radius: 3px 11px 11px 3px;
+  background: #0a2417;
+}
+
+.landing-pad-card {
+  position: relative;
+  width: 100%;
   max-height: calc(100vh - 2.5rem);
-  background-color: #143722;
-  border: 1.5px solid rgba(255, 255, 255, 0.28);
-  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.28), transparent 10%, transparent 93%, rgba(0, 0, 0, 0.1)),
+    #143722;
+  border: 2px solid #8b7950;
+  border-radius: 9px 5px 5px 9px;
   box-shadow:
-    0 16px 40px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  padding: 2rem 2.25rem 1.65rem 2.25rem;
+    inset 3px 0 0 rgba(255, 255, 255, 0.1),
+    inset 14px 0 13px -14px #020e08,
+    inset 0 0 0 5px rgba(201, 175, 111, 0.16);
+  padding: 2rem 2.25rem 1.65rem 3rem;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   z-index: 10;
+}
+
+.landing-pad-card::before {
+  content: "";
+  position: absolute;
+  inset: 7px auto 7px 13px;
+  width: 1px;
+  background: rgba(219, 198, 143, 0.48);
+  box-shadow: 4px 0 0 rgba(0, 0, 0, 0.2);
+  pointer-events: none;
 }
 
 /* Logo Section */
@@ -373,11 +420,22 @@ html[data-theme="light"] .landing-pad-backdrop-pattern {
 }
 
 html[data-theme="light"] .landing-pad-card {
-  background-color: #eee9df;
-  border: 1.5px solid #143222;
+  background:
+    linear-gradient(90deg, rgba(72, 46, 22, 0.17), transparent 11%, transparent 93%, rgba(72, 46, 22, 0.06)),
+    #eee9df;
+  border-color: #6c5939;
   box-shadow:
-    0 12px 32px rgba(20, 50, 34, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    inset 3px 0 0 rgba(255, 255, 255, 0.5),
+    inset 14px 0 13px -14px rgba(72, 46, 22, 0.55),
+    inset 0 0 0 5px rgba(108, 89, 57, 0.12);
+}
+
+html[data-theme="light"] .landing-book::after {
+  background: #59462e;
+}
+
+html[data-theme="light"] .landing-pad-card::before {
+  background: rgba(108, 89, 57, 0.55);
 }
 
 html[data-theme="light"] .landing-tagline {
@@ -470,7 +528,11 @@ html[data-theme="light"] .landing-dropdown-item:hover {
   }
 
   .landing-pad-card {
-    padding: 1.25rem 1.5rem 1.1rem 1.5rem;
+    padding: 1.25rem 1.5rem 1.1rem 2rem;
+    max-width: 456px;
+  }
+
+  .landing-book {
     max-width: 456px;
   }
 

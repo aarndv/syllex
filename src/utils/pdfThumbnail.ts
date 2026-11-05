@@ -14,7 +14,9 @@ interface QueueTask {
 const taskQueue: QueueTask[] = [];
 const pendingTasks = new Map<string, Promise<string | null>>();
 let activeWorkers = 0;
-const MAX_CONCURRENT_WORKERS = 3;
+// Each conversion can allocate a full PDF and render a canvas. Keep the main
+// thread free for scrolling while the next nearby cover waits its turn.
+const MAX_CONCURRENT_WORKERS = 1;
 
 function processQueue() {
   while (activeWorkers < MAX_CONCURRENT_WORKERS && taskQueue.length > 0) {
@@ -25,7 +27,7 @@ function processQueue() {
       .then(task.resolve, () => task.resolve(null))
       .finally(() => {
         activeWorkers--;
-        processQueue();
+        window.setTimeout(processQueue, 16);
       });
   }
 }

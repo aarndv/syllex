@@ -100,6 +100,7 @@ export const LandingPad: React.FC<LandingPadProps> = ({
     <div className="landing-pad-container" role="region" aria-label="Syllex Landing Pad">
       <div className="landing-pad-backdrop-pattern" />
 
+      <div className="landing-book">
       <div className="landing-pad-card">
         {/* Syllex wordmark */}
         <div className="landing-logo-wrapper">
@@ -207,6 +208,7 @@ export const LandingPad: React.FC<LandingPadProps> = ({
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
