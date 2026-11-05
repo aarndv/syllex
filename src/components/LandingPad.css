@@ -60,13 +60,13 @@
 
 .landing-book::before {
   inset: 9px -13px -10px 15px;
-  border: 1px solid #9d927b;
+  border: 1px solid #78917c;
   border-radius: 3px 10px 10px 3px;
   background: repeating-linear-gradient(
     to bottom,
-    #eee7d5 0 2px,
-    #cfc5ac 2px 3px,
-    #f7f1e2 3px 5px
+    #edf1e9 0 2px,
+    #cbd5cb 2px 3px,
+    #f8faf5 3px 5px
   );
   box-shadow: 3px 4px 0 #102c1d;
 }
@@ -159,12 +159,12 @@
   background:
     linear-gradient(90deg, rgba(0, 0, 0, 0.28), transparent 10%, transparent 93%, rgba(0, 0, 0, 0.1)),
     #143722;
-  border: 2px solid #8b7950;
+  border: 2px solid #6f9978;
   border-radius: 9px 5px 5px 9px;
   box-shadow:
     inset 3px 0 0 rgba(255, 255, 255, 0.1),
     inset 14px 0 13px -14px #020e08,
-    inset 0 0 0 5px rgba(201, 175, 111, 0.16);
+    inset 0 0 0 5px rgba(123, 172, 133, 0.16);
   padding: 2rem 2.25rem 1.65rem 3rem;
   box-sizing: border-box;
   display: flex;
@@ -179,7 +179,7 @@
   position: absolute;
   inset: 7px auto 7px 13px;
   width: 1px;
-  background: rgba(219, 198, 143, 0.48);
+  background: rgba(155, 199, 160, 0.5);
   box-shadow: 4px 0 0 rgba(0, 0, 0, 0.2);
   pointer-events: none;
 }
@@ -495,17 +495,17 @@ html[data-theme="light"] .landing-pad-backdrop-pattern {
 
 html[data-theme="light"] .landing-pad-card {
   background:
-    linear-gradient(90deg, rgba(72, 46, 22, 0.17), transparent 11%, transparent 93%, rgba(72, 46, 22, 0.06)),
+    linear-gradient(90deg, rgba(35, 76, 49, 0.17), transparent 11%, transparent 93%, rgba(35, 76, 49, 0.06)),
     #eee9df;
-  border-color: #6c5939;
+  border-color: #315941;
   box-shadow:
     inset 3px 0 0 rgba(255, 255, 255, 0.5),
-    inset 14px 0 13px -14px rgba(72, 46, 22, 0.55),
-    inset 0 0 0 5px rgba(108, 89, 57, 0.12);
+    inset 14px 0 13px -14px rgba(35, 76, 49, 0.5),
+    inset 0 0 0 5px rgba(49, 89, 65, 0.14);
 }
 
 html[data-theme="light"] .landing-book::after {
-  background: #59462e;
+  background: #315941;
 }
 
 html[data-theme="light"] .landing-bookmark-hole {
@@ -513,7 +513,7 @@ html[data-theme="light"] .landing-bookmark-hole {
 }
 
 html[data-theme="light"] .landing-pad-card::before {
-  background: rgba(108, 89, 57, 0.55);
+  background: rgba(49, 89, 65, 0.55);
 }
 
 html[data-theme="light"] .landing-tagline {
