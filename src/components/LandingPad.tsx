@@ -101,6 +101,7 @@ export const LandingPad: React.FC<LandingPadProps> = ({
       <div className="landing-pad-backdrop-pattern" />
 
       <div className="landing-book">
+      <span className="landing-bookmark" aria-hidden="true" />
       <div className="landing-pad-card">
         {/* Syllex wordmark */}
         <div className="landing-logo-wrapper">

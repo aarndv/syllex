@@ -78,6 +78,31 @@
   background: #0a2417;
 }
 
+.landing-bookmark {
+  position: absolute;
+  top: -82px;
+  right: 48px;
+  width: 68px;
+  height: 122px;
+  z-index: 2;
+  transform: rotate(17deg);
+  transform-origin: bottom center;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(100deg, #74282b 0%, #ae4542 28%, #bd514a 66%, #7f2c2e 100%);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 85%, 0 100%);
+  filter: drop-shadow(2px 3px 2px rgba(0, 0, 0, 0.32));
+  pointer-events: none;
+}
+
+.landing-bookmark::before {
+  content: "";
+  position: absolute;
+  inset: 5px 5px 0;
+  border: 1px solid rgba(245, 211, 166, 0.5);
+  border-bottom: 0;
+  border-radius: 2px 2px 0 0;
+}
+
 .landing-pad-card {
   position: relative;
   width: 100%;
