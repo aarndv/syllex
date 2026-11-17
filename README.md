@@ -17,6 +17,7 @@ The name combines *syllabus* and *index*.
 - **Document reading:** Read PDFs and preview presentation slides when available. Navigate pages, zoom, search, and resume where you left off.
 - **Page previews and highlights:** Jump between pages, mark text or page areas in multiple colors, and return to saved highlights. An eraser lets you remove marks you no longer need.
 - **Reading filters:** Switch between original, dark, and other viewing modes without changing the source document.
+- **Document workspace:** Open several PDF or presentation views together, arrange them in a session-only tiled layout, and return to the full reader when needed.
 - **Local control:** Work offline and keep original course files untouched.
 
 ## Project status

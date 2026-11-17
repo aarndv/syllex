@@ -39,6 +39,7 @@ interface BookshelfViewProps {
   nodes: VaultNode[];
   vaultRoot: string;
   onSelectFile: (node: VaultNode) => void;
+  onAddToWorkspace: (node: VaultNode) => void;
   onAddFile: (targetFolderRelPath?: string) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
   onRenameItem: (relPath: string, isFolder: boolean, currentName: string) => void;
@@ -48,6 +49,7 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
   nodes,
   vaultRoot,
   onSelectFile,
+  onAddToWorkspace,
   onAddFile,
   onRemoveItem,
   onRenameItem,
@@ -84,6 +86,7 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
           files={fileNodes}
           vaultRoot={vaultRoot}
           onSelectFile={onSelectFile}
+          onAddToWorkspace={onAddToWorkspace}
           onAddFile={onAddFile}
           onRemoveItem={onRemoveItem}
           onRenameItem={onRenameItem}
@@ -98,6 +101,7 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
           vaultRoot={vaultRoot}
           onSetFolderColor={handleSetFolderColor}
           onSelectFile={onSelectFile}
+          onAddToWorkspace={onAddToWorkspace}
           onAddFile={onAddFile}
           onRemoveItem={onRemoveItem}
           onRenameItem={onRenameItem}
@@ -123,6 +127,7 @@ interface FolderShelfProps {
   vaultRoot: string;
   onSetFolderColor: (relPath: string, colorId: string) => void;
   onSelectFile: (node: VaultNode) => void;
+  onAddToWorkspace: (node: VaultNode) => void;
   onAddFile: (targetFolderRelPath?: string) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
   onRenameItem: (relPath: string, isFolder: boolean, currentName: string) => void;
@@ -134,6 +139,7 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
   vaultRoot,
   onSetFolderColor,
   onSelectFile,
+  onAddToWorkspace,
   onAddFile,
   onRemoveItem,
   onRenameItem,
@@ -292,6 +298,7 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
                   folderColor={folderColor}
                   colorVariant={idx % 4}
                   onSelectFile={onSelectFile}
+                  onAddToWorkspace={onAddToWorkspace}
                   onRemoveItem={onRemoveItem}
                   onRenameItem={onRenameItem}
                 />
@@ -327,6 +334,7 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
               vaultRoot={vaultRoot}
               onSetFolderColor={onSetFolderColor}
               onSelectFile={onSelectFile}
+              onAddToWorkspace={onAddToWorkspace}
               onAddFile={onAddFile}
               onRemoveItem={onRemoveItem}
               onRenameItem={onRenameItem}
@@ -344,6 +352,7 @@ interface ShelfSectionProps {
   files: VaultNode[];
   vaultRoot: string;
   onSelectFile: (node: VaultNode) => void;
+  onAddToWorkspace: (node: VaultNode) => void;
   onAddFile: (targetFolderRelPath?: string) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
   onRenameItem: (relPath: string, isFolder: boolean, currentName: string) => void;
@@ -355,6 +364,7 @@ const ShelfSection: React.FC<ShelfSectionProps> = ({
   files,
   vaultRoot,
   onSelectFile,
+  onAddToWorkspace,
   onAddFile,
   onRemoveItem,
   onRenameItem,
@@ -393,6 +403,7 @@ const ShelfSection: React.FC<ShelfSectionProps> = ({
               folderColor="#059669"
               colorVariant={idx % 4}
               onSelectFile={onSelectFile}
+              onAddToWorkspace={onAddToWorkspace}
               onRemoveItem={onRemoveItem}
               onRenameItem={onRenameItem}
             />
@@ -423,6 +434,7 @@ interface BookSpineItemProps {
   folderColor?: string;
   colorVariant: number;
   onSelectFile: (node: VaultNode) => void;
+  onAddToWorkspace: (node: VaultNode) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
   onRenameItem: (relPath: string, isFolder: boolean, currentName: string) => void;
 }
@@ -433,6 +445,7 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
   folderColor,
   colorVariant,
   onSelectFile,
+  onAddToWorkspace,
   onRemoveItem,
   onRenameItem,
 }) => {
@@ -564,6 +577,13 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
       </button>
 
       <div className="book-spine-actions">
+        {ext !== "MD" && <button type="button"
+          onClick={() => onAddToWorkspace(node)}
+          className="book-rename-btn"
+          aria-label={`Add ${node.name} to workspace`} title="Add to workspace"
+        >
+          <PlusIcon size={11} />
+        </button>}
         <button type="button"
           onClick={() => onRenameItem(node.relative_path, false, node.name)}
           className="book-rename-btn"

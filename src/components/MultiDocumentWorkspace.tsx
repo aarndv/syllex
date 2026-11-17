@@ -1,0 +1,317 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { pdfjsLib, getPdfDocumentParams } from "../utils/pdfInit";
+import { PdfJsViewer } from "./PdfJsViewer";
+import { VIEW_MODE_LABELS, type DocumentViewMode } from "./PdfViewer";
+import type { Highlight } from "../types/highlight";
+import type { VaultNode } from "../types/vault";
+import type { WorkspacePaneState, WorkspaceState } from "../types/workspace";
+import { movePane, paneIds, removePane, type WorkspaceLayout, type WorkspaceSide } from "../utils/workspaceLayout";
+import { toUserFacingError } from "../utils/userFacingError";
+import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, PlusIcon } from "./Icons";
+import "./PdfViewer.css";
+import "./MultiDocumentWorkspace.css";
+
+const SIDES: { value: WorkspaceSide; label: string }[] = [
+  { value: "right", label: "Right" },
+  { value: "bottom", label: "Below" },
+  { value: "left", label: "Left" },
+  { value: "top", label: "Above" },
+];
+
+function readableModules(nodes: VaultNode[]): VaultNode[] {
+  return nodes.flatMap((node) => {
+    if (node.node_type === "Folder") return readableModules(node.children);
+    return node.node_type.File === "Md" ? [] : [node];
+  });
+}
+
+interface MultiDocumentWorkspaceProps {
+  vaultRoot: string;
+  allNodes: VaultNode[];
+  state: WorkspaceState;
+  onChange: (update: (previous: WorkspaceState) => WorkspaceState) => void;
+  onAddNode: (node: VaultNode, targetId?: string | null, side?: WorkspaceSide, page?: number) => void;
+  onOpenSingle: (node: VaultNode, page: number) => void;
+  onClose: () => void;
+}
+
+export function MultiDocumentWorkspace({
+  vaultRoot, allNodes, state, onChange, onAddNode, onOpenSingle, onClose,
+}: MultiDocumentWorkspaceProps) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [addSide, setAddSide] = useState<WorkspaceSide>("right");
+  const [moveTarget, setMoveTarget] = useState("");
+  const [moveSide, setMoveSide] = useState<WorkspaceSide>("right");
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  const pickerOpenRef = useRef(pickerOpen);
+  onCloseRef.current = onClose;
+  pickerOpenRef.current = pickerOpen;
+  const modules = useMemo(() => readableModules(allNodes), [allNodes]);
+  const ids = paneIds(state.layout);
+  const selectedId = state.selectedPaneId && ids.includes(state.selectedPaneId)
+    ? state.selectedPaneId : ids[0] ?? null;
+  const selectedPane = selectedId ? state.panes[selectedId] : null;
+  const moveTargets = ids.filter((id) => id !== selectedId);
+  const filteredModules = modules.filter((node) =>
+    `${node.name} ${node.relative_path}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
+
+  useEffect(() => {
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    dialogRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const dialog = dialogRef.current;
+      if (!dialog || !dialog.contains(document.activeElement)) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (pickerOpenRef.current) setPickerOpen(false);
+        else onCloseRef.current();
+      } else if (event.key === "Tab") {
+        const controls = [...dialog.querySelectorAll<HTMLElement>("button:not(:disabled), select:not(:disabled), input:not(:disabled)")]
+          .filter((element) => element.offsetParent !== null);
+        if (!controls.length) return;
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault(); last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault(); first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      previousFocus?.focus();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!moveTargets.includes(moveTarget)) setMoveTarget(moveTargets[0] ?? "");
+  }, [moveTarget, moveTargets.join("|")]);
+
+  function updatePane(id: string, patch: Partial<WorkspacePaneState>) {
+    onChange((previous) => {
+      const pane = previous.panes[id];
+      if (!pane || Object.entries(patch).every(([key, value]) => pane[key as keyof WorkspacePaneState] === value)) return previous;
+      return { ...previous, panes: { ...previous.panes, [id]: { ...pane, ...patch } } };
+    });
+  }
+
+  function closePane(id: string) {
+    onChange((previous) => {
+      const layout = removePane(previous.layout, id);
+      const panes = { ...previous.panes };
+      delete panes[id];
+      const selectedPaneId = previous.selectedPaneId === id ? paneIds(layout)[0] ?? null : previous.selectedPaneId;
+      return { layout, panes, selectedPaneId };
+    });
+  }
+
+  function arrange(dragged: string, target: string, side: WorkspaceSide) {
+    onChange((previous) => ({ ...previous, layout: movePane(previous.layout, dragged, target, side) }));
+    setDraggedId(null);
+  }
+
+  function renderLayout(layout: WorkspaceLayout): React.ReactNode {
+    if (layout.kind === "split") {
+      return <div className={`workspace-split axis-${layout.axis}`}>
+        {renderLayout(layout.first)}
+        {renderLayout(layout.second)}
+      </div>;
+    }
+    const pane = state.panes[layout.paneId];
+    if (!pane) return null;
+    return <WorkspacePane
+      key={pane.id}
+      vaultRoot={vaultRoot}
+      pane={pane}
+      selected={selectedId === pane.id}
+      draggedId={draggedId}
+      onSelect={() => onChange((previous) => previous.selectedPaneId === pane.id
+        ? previous : { ...previous, selectedPaneId: pane.id })}
+      onUpdate={(patch) => updatePane(pane.id, patch)}
+      onClose={() => closePane(pane.id)}
+      onDuplicate={() => onAddNode(pane.node, pane.id, "right", pane.page)}
+      onOpenSingle={() => onOpenSingle(pane.node, pane.page)}
+      onDragStart={(event) => {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", pane.id);
+        setDraggedId(pane.id);
+      }}
+      onDragEnd={() => setDraggedId(null)}
+      onDropSide={(event, side) => {
+        const dragged = event.dataTransfer.getData("text/plain") || draggedId;
+        if (dragged) arrange(dragged, pane.id, side);
+      }}
+    />;
+  }
+
+  return <div ref={dialogRef} className="multi-workspace-overlay" role="dialog" aria-modal="true" aria-label="Document workspace">
+    <header className="multi-workspace-header">
+      <div className="multi-workspace-heading">
+        <button type="button" onClick={onClose} className="workspace-toolbar-btn">Back to library</button>
+        <div><strong>Document workspace</strong><span>Session only · {ids.length} {ids.length === 1 ? "view" : "views"}</span></div>
+      </div>
+      <div className="multi-workspace-actions">
+        <label>Place new view
+          <select value={addSide} onChange={(event) => setAddSide(event.target.value as WorkspaceSide)}>
+            {SIDES.map((side) => <option key={side.value} value={side.value}>{side.label}</option>)}
+          </select>
+        </label>
+        <button type="button" className="workspace-toolbar-btn" onClick={() => setPickerOpen((open) => !open)} aria-expanded={pickerOpen}>
+          <PlusIcon size={14} /> Add module
+        </button>
+        <button type="button" className="workspace-toolbar-btn" disabled={!selectedPane}
+          onClick={() => selectedPane && onAddNode(selectedPane.node, selectedId, addSide, selectedPane.page)}>
+          Add view of selected
+        </button>
+      </div>
+    </header>
+
+    {pickerOpen && <section className="workspace-picker" aria-label="Choose a module">
+      <label htmlFor="workspace-module-search">Choose a PDF or presentation</label>
+      <input id="workspace-module-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search modules" autoFocus />
+      <div className="workspace-picker-results">
+        {filteredModules.length === 0 ? <p>No matching readable modules.</p> : filteredModules.slice(0, 100).map((node) =>
+          <button type="button" key={node.relative_path} onClick={() => {
+            onAddNode(node, selectedId, addSide);
+            setPickerOpen(false);
+            setQuery("");
+          }}><strong>{node.name}</strong><small>{node.relative_path}</small></button>)}
+        {filteredModules.length > 100 && <p>Showing 100 of {filteredModules.length} matches. Refine the search to find more.</p>}
+      </div>
+    </section>}
+
+    {ids.length > 1 && selectedPane && <div className="workspace-arrange-bar">
+      <span>Move <strong>{selectedPane.node.name}</strong> next to</span>
+      <select aria-label="Target view" value={moveTarget} onChange={(event) => setMoveTarget(event.target.value)}>
+        {moveTargets.map((id) => <option key={id} value={id}>{state.panes[id]?.node.name ?? "View"} · view {ids.indexOf(id) + 1}</option>)}
+      </select>
+      <select aria-label="Placement" value={moveSide} onChange={(event) => setMoveSide(event.target.value as WorkspaceSide)}>
+        {SIDES.map((side) => <option key={side.value} value={side.value}>{side.label}</option>)}
+      </select>
+      <button type="button" className="workspace-toolbar-btn" disabled={!moveTarget}
+        onClick={() => selectedId && arrange(selectedId, moveTarget, moveSide)}>Move</button>
+      <span className="workspace-drag-tip">or drag a view title onto another view</span>
+    </div>}
+
+    <div className="multi-workspace-content">
+      {state.layout ? renderLayout(state.layout) : <div className="workspace-empty">
+        <h2>No views open</h2>
+        <p>Add a PDF or presentation to start reading modules together.</p>
+        <button type="button" className="workspace-toolbar-btn" onClick={() => setPickerOpen(true)}>Choose a module</button>
+      </div>}
+    </div>
+  </div>;
+}
+
+interface WorkspacePaneProps {
+  vaultRoot: string;
+  pane: WorkspacePaneState;
+  selected: boolean;
+  draggedId: string | null;
+  onSelect: () => void;
+  onUpdate: (patch: Partial<WorkspacePaneState>) => void;
+  onClose: () => void;
+  onDuplicate: () => void;
+  onOpenSingle: () => void;
+  onDragStart: (event: React.DragEvent<HTMLElement>) => void;
+  onDragEnd: () => void;
+  onDropSide: (event: React.DragEvent<HTMLElement>, side: WorkspaceSide) => void;
+}
+
+function WorkspacePane({ vaultRoot, pane, selected, draggedId, onSelect, onUpdate, onClose,
+  onDuplicate, onOpenSingle, onDragStart, onDragEnd, onDropSide }: WorkspacePaneProps) {
+  const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
+  const [highlights, setHighlights] = useState<Highlight[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const zoomPercent = Math.round(pane.zoom * 100);
+  const zoomOptions = [...new Set([50, 75, 100, 125, 150, 200, zoomPercent])].sort((a, b) => a - b);
+
+  useEffect(() => {
+    let active = true;
+    let task: pdfjsLib.PDFDocumentLoadingTask | null = null;
+    setPdfDoc(null);
+    setHighlights([]);
+    setLoading(true);
+    setError(null);
+    async function load() {
+      try {
+        const isPresentation = /\.pptx?$/i.test(pane.node.relative_path);
+        const bytes = await invoke<number[]>(isPresentation ? "convert_ppt_to_pdf" : "read_module_bytes", {
+          vaultRoot, relativePath: pane.node.relative_path,
+        });
+        if (!active) return;
+        task = pdfjsLib.getDocument(getPdfDocumentParams(new Uint8Array(bytes)));
+        const document = await task.promise;
+        if (!active) return;
+        setPdfDoc(document);
+        onUpdate({ page: Math.min(Math.max(pane.page, 1), document.numPages) });
+        void invoke<Highlight[]>("list_highlights", { vaultRoot, relativePath: pane.node.relative_path })
+          .then((items) => { if (active) setHighlights(items); })
+          .catch(() => { /* Reading remains available when annotations cannot load. */ });
+      } catch (cause: unknown) {
+        if (active) setError(toUserFacingError(cause, "open this module"));
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    void load();
+    return () => { active = false; void task?.destroy(); };
+  }, [vaultRoot, pane.node.relative_path]);
+
+  const canMove = draggedId && draggedId !== pane.id;
+
+  return <section className={`workspace-pane ${selected ? "selected" : ""}`} onPointerDown={onSelect} onFocusCapture={onSelect} aria-label={`View of ${pane.node.name}`}>
+    <header className="workspace-pane-header">
+      <span className="workspace-drag-handle" draggable onDragStart={onDragStart} onDragEnd={onDragEnd}
+        title="Drag onto an edge of another view" aria-label={`Drag ${pane.node.name} to arrange`}>
+        Drag
+      </span>
+      <strong title={pane.node.relative_path}>{pane.node.name}</strong>
+      <div className="workspace-pane-actions">
+        <button type="button" onClick={onDuplicate} title="Open another view of this module">Duplicate</button>
+        <button type="button" onClick={onOpenSingle} title="Open in full reader">Full reader</button>
+        <button type="button" onClick={onClose} aria-label={`Close view of ${pane.node.name}`} title="Close view"><CloseIcon size={13} /></button>
+      </div>
+    </header>
+    <div className="workspace-pane-controls">
+      <button type="button" onClick={() => onUpdate({ page: Math.max(1, pane.page - 1) })} disabled={loading || pane.page <= 1} aria-label={`Previous page of ${pane.node.name}`}><ChevronLeftIcon size={14} /></button>
+      <span>Page {pane.page} of {pdfDoc?.numPages ?? "–"}</span>
+      <button type="button" onClick={() => onUpdate({ page: Math.min(pdfDoc?.numPages ?? pane.page, pane.page + 1) })} disabled={loading || !pdfDoc || pane.page >= pdfDoc.numPages} aria-label={`Next page of ${pane.node.name}`}><ChevronRightIcon size={14} /></button>
+      <select aria-label={`Zoom for ${pane.node.name}`} value={pane.fitWidth ? "fit" : String(zoomPercent)}
+        onChange={(event) => event.target.value === "fit" ? onUpdate({ fitWidth: true }) : onUpdate({ fitWidth: false, zoom: Number(event.target.value) / 100 })}>
+        <option value="fit">Fit width</option>
+        {zoomOptions.map((value) => <option key={value} value={value}>{value}%</option>)}
+      </select>
+      <select aria-label={`Reading filter for ${pane.node.name}`} value={pane.viewMode}
+        onChange={(event) => onUpdate({ viewMode: event.target.value as DocumentViewMode })}>
+        {Object.entries(VIEW_MODE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+      </select>
+    </div>
+    <div className="workspace-pane-reading">
+      {loading && <p className="workspace-pane-message" role="status">Loading module…</p>}
+      {error && <p className="workspace-pane-message error" role="alert">{error}</p>}
+      {!loading && !error && pdfDoc && <PdfJsViewer
+        pdfDoc={pdfDoc} currentPage={pane.page} zoom={pane.zoom} isFitWidth={pane.fitWidth}
+        continuous={false} viewMode={pane.viewMode} onPageChange={(page) => onUpdate({ page })}
+        highlights={highlights} highlightEnabled={false} erasingHighlights={false} highlightColor="yellow"
+        onCreateHighlight={() => {}} onEraseHighlight={() => {}} focusHighlight={null}
+        sidebarVisible={false} sidebarWidth={0} sidebarDock="left"
+        onScaleChange={(zoom) => { if (!pane.fitWidth) onUpdate({ zoom }); }}
+      />}
+      {canMove && <div className="workspace-drop-zones">
+        {SIDES.map((side) => <div key={side.value} className={`workspace-drop-zone side-${side.value}`}
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={(event) => { event.preventDefault(); onDropSide(event, side.value); }}>
+          {side.label}
+        </div>)}
+      </div>}
+    </div>
+  </section>;
+}

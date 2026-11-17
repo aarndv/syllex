@@ -8,6 +8,7 @@ interface FileTreeProps {
   activePath?: string;
   compact?: boolean;
   onSelectFile: (node: VaultNode) => void;
+  onAddToWorkspace?: (node: VaultNode) => void;
   onAddFile: (targetFolderRelPath?: string) => void;
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
   onRenameItem: (relPath: string, isFolder: boolean, currentName: string) => void;
@@ -36,7 +37,7 @@ function getFileFormat(type: VaultNodeType): string {
 }
 
 export const FileTree: React.FC<FileTreeProps> = React.memo(({
-  nodes, activePath, compact = false, onSelectFile, onAddFile, onRemoveItem, onRenameItem,
+  nodes, activePath, compact = false, onSelectFile, onAddToWorkspace, onAddFile, onRemoveItem, onRenameItem,
 }) => {
   const activeFile = useMemo(() => findActiveFile(nodes, activePath), [nodes, activePath]);
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(
@@ -178,6 +179,7 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
               setOpenMenuPath((current) => current === path ? null : path);
             }}
             onCloseMenu={() => setOpenMenuPath(null)} onAddFile={onAddFile}
+            onAddToWorkspace={onAddToWorkspace}
             onRemoveItem={onRemoveItem} onRenameItem={onRenameItem} />
         ))}
       </ul>
@@ -186,7 +188,7 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
 });
 
 interface FileTreeNodeProps extends Pick<FileTreeProps,
-  "activePath" | "compact" | "onAddFile" | "onRemoveItem" | "onRenameItem"> {
+  "activePath" | "compact" | "onAddToWorkspace" | "onAddFile" | "onRemoveItem" | "onRenameItem"> {
   node: VaultNode;
   expandedPaths: Set<string>;
   focusedPath: string | null;
@@ -202,7 +204,7 @@ interface FileTreeNodeProps extends Pick<FileTreeProps,
 const FileTreeNode: React.FC<FileTreeNodeProps> = React.memo(({
   node, activePath, compact, expandedPaths, focusedPath, openMenuPath,
   onActivate, onFocusItem, onKeyDown, registerItem, onToggleMenu, onCloseMenu,
-  onAddFile, onRemoveItem, onRenameItem,
+  onAddToWorkspace, onAddFile, onRemoveItem, onRenameItem,
 }) => {
   const isFolder = node.node_type === "Folder";
   const isOpen = expandedPaths.has(node.relative_path);
@@ -255,6 +257,10 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = React.memo(({
               {isFolder && <button type="button" aria-label={`Add file to ${node.name}`} onClick={() => {
                 onCloseMenu(); onAddFile(node.relative_path);
               }}><PlusIcon size={13} /> Add file to folder</button>}
+              {!isFolder && format !== "MD" && onAddToWorkspace && <button type="button"
+                aria-label={`Add ${node.name} to workspace`} onClick={() => {
+                  onCloseMenu(); onAddToWorkspace(node);
+                }}><PlusIcon size={13} /> Add to workspace</button>}
               <button type="button" className="tree-menu-delete"
                 aria-label={`Hide ${isFolder ? "folder" : "file"} ${node.name} from library`} onClick={() => {
                   onCloseMenu(); onRemoveItem(node.relative_path, isFolder);
@@ -272,6 +278,7 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = React.memo(({
                 openMenuPath={openMenuPath} onActivate={onActivate} onFocusItem={onFocusItem}
                 onKeyDown={onKeyDown} registerItem={registerItem} onToggleMenu={onToggleMenu}
                 onCloseMenu={onCloseMenu} onAddFile={onAddFile}
+                onAddToWorkspace={onAddToWorkspace}
                 onRemoveItem={onRemoveItem} onRenameItem={onRenameItem} />
             ))}
         </ul>
