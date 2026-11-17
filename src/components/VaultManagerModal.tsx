@@ -9,7 +9,7 @@ import "./VaultManagerModal.css";
 interface VaultManagerModalProps {
   currentVaultPath: string | null;
   defaultVaultsRoot: string | null;
-  onSelectVaultPath: (path: string) => void;
+  onSelectVaultPath: (path: string) => Promise<void>;
   onSetDefaultVaultsRoot: (path: string) => void;
   onClose: () => void;
 }
@@ -90,7 +90,7 @@ export const VaultManagerModal: React.FC<VaultManagerModalProps> = ({
         vaultName: vaultName.trim(),
       });
 
-      onSelectVaultPath(newVaultPath);
+      await onSelectVaultPath(newVaultPath);
       onClose();
     } catch (err: unknown) {
       setError(toUserFacingError(err, "create this vault"));
@@ -106,11 +106,21 @@ export const VaultManagerModal: React.FC<VaultManagerModalProps> = ({
       });
 
       if (selected && typeof selected === "string") {
-        onSelectVaultPath(selected);
+        await onSelectVaultPath(selected);
         onClose();
       }
     } catch (err: unknown) {
       setError(toUserFacingError(err, "open this folder"));
+    }
+  }
+
+  async function handleSelectExistingVault(path: string) {
+    setError(null);
+    try {
+      await onSelectVaultPath(path);
+      onClose();
+    } catch (err: unknown) {
+      setError(toUserFacingError(err, "open this vault"));
     }
   }
 
@@ -175,8 +185,7 @@ export const VaultManagerModal: React.FC<VaultManagerModalProps> = ({
                         key={vault.path}
                         className={`subvault-item ${isActive ? "active" : ""}`}
                         onClick={() => {
-                          onSelectVaultPath(vault.path);
-                          onClose();
+                          void handleSelectExistingVault(vault.path);
                         }}
                       >
                         <div className="subvault-info">
@@ -191,8 +200,7 @@ export const VaultManagerModal: React.FC<VaultManagerModalProps> = ({
                           className={`subvault-open-btn ${isActive ? "current" : ""}`}
                           onClick={(e) => {
                             e.stopPropagation();
-                            onSelectVaultPath(vault.path);
-                            onClose();
+                            void handleSelectExistingVault(vault.path);
                           }}
                         >
                           {isActive ? "Active" : "Open"}

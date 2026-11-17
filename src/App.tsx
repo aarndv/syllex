@@ -46,6 +46,7 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
   const [defaultVaultsRoot, setDefaultVaultsRoot] = useState<string | null>(null);
 
   const [scanResult, setScanResult] = useState<VaultScanResult | null>(null);
+  const [vaultScanFailed, setVaultScanFailed] = useState(false);
   const [activeNode, setActiveNode] = useState<VaultNode | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -212,6 +213,7 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
     const requestId = ++scanRequestRef.current;
     setLoading(true);
     setError(null);
+    setVaultScanFailed(false);
     try {
       const res = await invoke<VaultScanResult>("scan_vault", { path });
       if (requestId === scanRequestRef.current) {
@@ -221,6 +223,7 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
       if (requestId === scanRequestRef.current) {
         setError(toUserFacingError(err, "scan this vault"));
         setScanResult(null);
+        setVaultScanFailed(true);
       }
     } finally {
       if (requestId === scanRequestRef.current) {
@@ -236,6 +239,7 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
       localStorage.removeItem(VAULT_STORAGE_KEY);
       setVaultPath(null);
       setScanResult(null);
+      setVaultScanFailed(false);
       setActiveNode(null);
       setError(null);
     } catch (err: unknown) {
@@ -426,11 +430,13 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
       scanRequestRef.current++;
       setVaultPath(canonicalPath);
       setScanResult(null);
+      setVaultScanFailed(false);
       setActiveNode(null);
       localStorage.removeItem(VAULT_STORAGE_KEY);
       void scanVault(canonicalPath);
     } catch (err: unknown) {
       setError(toUserFacingError(err, "select this vault"));
+      throw err;
     }
   }
 
@@ -546,6 +552,7 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
         <LandingPad
           onEnter={() => setHasEntered(true)}
           vaultPath={vaultPath}
+          vaultUnavailable={vaultScanFailed}
           courseCount={vaultStats.courses}
           fileCount={vaultStats.files}
           onOpenVaultManager={() => setIsVaultManagerOpen(true)}
@@ -721,6 +728,16 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
                 </button>
               </div>
             </>
+          )}
+
+          {vaultPath && vaultScanFailed && !loading && (
+            <div className="empty-state" role="status">
+              <h2>Vault Unavailable</h2>
+              <p>The saved course folder could not be opened. Choose its new location or select another vault.</p>
+              <button type="button" onClick={() => setIsVaultManagerOpen(true)} className="primary-btn large">
+                Open Vault Manager
+              </button>
+            </div>
           )}
 
           {loading && (

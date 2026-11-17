@@ -162,6 +162,16 @@ pub fn set_item_display_name(
     }
     let (root, relative, is_folder) = validated_item(vault_root, relative_path)?;
     let connection = open_for_app(app)?;
+    save_display_name_at(&connection, &root, &relative, name, is_folder)
+}
+
+fn save_display_name_at(
+    connection: &Connection,
+    root: &str,
+    relative: &str,
+    name: &str,
+    is_folder: bool,
+) -> Result<(), String> {
     connection
         .execute(
             "INSERT INTO library_overrides(vault_root, relative_path, display_name, hidden, is_folder) VALUES (?1, ?2, ?3, 0, ?4)
@@ -181,6 +191,22 @@ pub fn set_item_hidden(
     let connection = open_for_app(app)?;
     if hidden {
         let (root, relative, is_folder) = validated_item(vault_root, relative_path)?;
+        save_hidden_at(&connection, &root, &relative, true, is_folder)?;
+    } else {
+        let (root, relative) = validated_key(vault_root, relative_path)?;
+        save_hidden_at(&connection, &root, &relative, false, false)?;
+    }
+    Ok(())
+}
+
+fn save_hidden_at(
+    connection: &Connection,
+    root: &str,
+    relative: &str,
+    hidden: bool,
+    is_folder: bool,
+) -> Result<(), String> {
+    if hidden {
         connection
             .execute(
                 "INSERT INTO library_overrides(vault_root, relative_path, hidden, is_folder) VALUES (?1, ?2, 1, ?3)
@@ -189,7 +215,6 @@ pub fn set_item_hidden(
             )
             .map_err(|_| "Could not hide library item".to_string())?;
     } else {
-        let (root, relative) = validated_key(vault_root, relative_path)?;
         connection
             .execute("UPDATE library_overrides SET hidden = 0 WHERE vault_root = ?1 AND relative_path = ?2", params![root, relative])
             .map_err(|_| "Could not restore library item".to_string())?;
@@ -345,6 +370,7 @@ pub fn save_reading_progress(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
 
     #[test]
     fn migration_and_vault_scoped_progress() {
@@ -414,5 +440,118 @@ mod tests {
             progress_at(&upgraded, Path::new("module.pdf")).unwrap(),
             Some(9)
         );
+    }
+
+    #[test]
+    fn missing_selected_vault_remains_recorded_for_recovery() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("metadata.sqlite3");
+        let connection = open_at(&path).unwrap();
+        let missing = dir.path().join("moved-vault");
+        connection
+            .execute(
+                "INSERT INTO settings(key, value) VALUES ('selected_vault', ?1)",
+                params![missing.to_string_lossy()],
+            )
+            .unwrap();
+        drop(connection);
+
+        let reopened = open_at(&path).unwrap();
+        assert_eq!(
+            selected_vault_at(&reopened).unwrap(),
+            Some(missing.to_string_lossy().into_owned())
+        );
+    }
+
+    #[test]
+    fn hiding_and_display_name_preserve_source_and_reading_progress() {
+        let dir = tempfile::tempdir().unwrap();
+        let vault = dir.path().join("vault");
+        let course = vault.join("CS101");
+        fs::create_dir_all(&course).unwrap();
+        let module = course.join("lecture.pdf");
+        fs::write(&module, b"original course material").unwrap();
+        let (root, relative, is_folder) =
+            validated_item(vault.to_str().unwrap(), "CS101/lecture.pdf").unwrap();
+        assert!(!is_folder);
+
+        let path = dir.path().join("metadata.sqlite3");
+        let connection = open_at(&path).unwrap();
+        connection
+            .execute(
+                "INSERT INTO reading_progress(document_path, last_page) VALUES (?1, 7)",
+                params![module.to_string_lossy()],
+            )
+            .unwrap();
+        save_display_name_at(&connection, &root, &relative, "Lecture One", false).unwrap();
+        save_hidden_at(&connection, &root, &relative, true, false).unwrap();
+        save_hidden_at(&connection, &root, &relative, false, false).unwrap();
+        drop(connection);
+
+        let reopened = open_at(&path).unwrap();
+        let (display_name, hidden): (String, bool) = reopened
+            .query_row(
+                "SELECT display_name, hidden FROM library_overrides WHERE vault_root = ?1 AND relative_path = ?2",
+                params![root, relative],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .unwrap();
+        assert_eq!(display_name, "Lecture One");
+        assert!(!hidden);
+        assert_eq!(progress_at(&reopened, &module).unwrap(), Some(7));
+        assert_eq!(fs::read(&module).unwrap(), b"original course material");
+    }
+
+    #[test]
+    fn hiding_and_restoring_a_folder_restores_its_descendants() {
+        let dir = tempfile::tempdir().unwrap();
+        let vault = dir.path().join("vault");
+        let course = vault.join("CS101");
+        fs::create_dir_all(&course).unwrap();
+        let module = course.join("lecture.pdf");
+        fs::write(&module, b"original module").unwrap();
+        let (root, relative, is_folder) = validated_item(vault.to_str().unwrap(), "CS101").unwrap();
+        assert!(is_folder);
+        let connection = open_at(&dir.path().join("metadata.sqlite3")).unwrap();
+
+        save_hidden_at(&connection, &root, &relative, true, is_folder).unwrap();
+        let mut hidden_scan = crate::vault::scan_vault(&vault).unwrap();
+        let overrides = HashMap::from([(relative.clone(), (None, true))]);
+        apply_overrides_to_nodes(&mut hidden_scan.root_nodes, &overrides);
+        assert!(hidden_scan.root_nodes.is_empty());
+
+        save_hidden_at(&connection, &root, &relative, false, is_folder).unwrap();
+        let (still_hidden, still_folder): (bool, bool) = connection
+            .query_row(
+                "SELECT hidden, is_folder FROM library_overrides WHERE vault_root = ?1 AND relative_path = ?2",
+                params![root, relative],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .unwrap();
+        assert!(!still_hidden);
+        assert!(still_folder);
+        let restored = crate::vault::scan_vault(&vault).unwrap();
+        assert_eq!(
+            restored.root_nodes[0].children[0].relative_path,
+            "CS101/lecture.pdf"
+        );
+        assert_eq!(fs::read(&module).unwrap(), b"original module");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn library_metadata_rejects_an_outside_link() {
+        use std::os::unix::fs::symlink;
+
+        let dir = tempfile::tempdir().unwrap();
+        let vault = dir.path().join("vault");
+        fs::create_dir(&vault).unwrap();
+        let outside = dir.path().join("private.pdf");
+        fs::write(&outside, b"external course material").unwrap();
+        symlink(&outside, vault.join("linked.pdf")).unwrap();
+
+        assert!(validated_item(vault.to_str().unwrap(), "../private.pdf").is_err());
+        assert!(validated_item(vault.to_str().unwrap(), "linked.pdf").is_err());
+        assert_eq!(fs::read(&outside).unwrap(), b"external course material");
     }
 }

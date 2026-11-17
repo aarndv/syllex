@@ -12,6 +12,7 @@ import "./LandingPad.css";
 interface LandingPadProps {
   onEnter: () => void;
   vaultPath: string | null;
+  vaultUnavailable: boolean;
   courseCount?: number;
   fileCount?: number;
   onOpenVaultManager: () => void;
@@ -21,6 +22,7 @@ interface LandingPadProps {
 export const LandingPad: React.FC<LandingPadProps> = ({
   onEnter,
   vaultPath,
+  vaultUnavailable,
   courseCount,
   fileCount,
   onOpenVaultManager,
@@ -121,7 +123,21 @@ export const LandingPad: React.FC<LandingPadProps> = ({
 
         {/* Vault Status Indicator */}
         <div className="landing-vault-status-box">
-          {vaultPath ? (
+          {vaultPath && vaultUnavailable ? (
+            <div className="landing-vault-unselected">
+              <div className="landing-vault-unselected-label">
+                <span className="landing-vault-icon unconfigured">
+                  <FolderIcon size={14} />
+                </span>
+                <span className="landing-vault-unselected-text">
+                  Saved vault unavailable
+                </span>
+              </div>
+              <button type="button" onClick={onOpenVaultManager} className="landing-mini-action-btn">
+                Choose Vault
+              </button>
+            </div>
+          ) : vaultPath ? (
             <div className="landing-vault-active" title={vaultPath}>
               <span className="landing-vault-icon">
                 <FolderIcon size={15} />

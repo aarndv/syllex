@@ -2,6 +2,19 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::{Component, Path};
 
+fn is_link_or_reparse_point(metadata: &std::fs::Metadata) -> bool {
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::MetadataExt;
+        const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x0400;
+        metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0
+    }
+    #[cfg(not(windows))]
+    {
+        metadata.file_type().is_symlink()
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ModuleFileType {
     Pdf,
@@ -62,6 +75,8 @@ pub fn scan_vault<P: AsRef<Path>>(root_path: P) -> Result<VaultScanResult, Strin
     let canonical_root = root
         .canonicalize()
         .map_err(|e| format!("Failed to resolve vault path: {}", e))?;
+    std::fs::read_dir(&canonical_root)
+        .map_err(|_| "Could not read selected vault folder".to_string())?;
 
     fn scan_dir(
         canonical_root: &Path,
@@ -105,7 +120,7 @@ pub fn scan_vault<P: AsRef<Path>>(root_path: P) -> Result<VaultScanResult, Strin
                     continue;
                 }
             };
-            if link_metadata.file_type().is_symlink() {
+            if is_link_or_reparse_point(&link_metadata) {
                 warnings.push(format!("Skipped linked entry: {}", relative.display()));
                 continue;
             }
@@ -248,24 +263,7 @@ pub fn add_module_to_vault<P: AsRef<Path>>(
     let dest_file_path = target_dir.join(&file_name);
     let mut input = std::fs::File::open(source)
         .map_err(|_| "Could not open the selected module".to_string())?;
-    let mut staged = tempfile::NamedTempFile::new_in(&target_dir)
-        .map_err(|_| "Could not stage module in the selected course".to_string())?;
-    std::io::copy(&mut input, &mut staged)
-        .map_err(|_| "Could not copy the complete module".to_string())?;
-    staged
-        .as_file()
-        .sync_all()
-        .map_err(|_| "Could not finish writing the module".to_string())?;
-    if target_dir.canonicalize().ok().as_deref() != Some(target_dir.as_path()) {
-        return Err("Course folder changed during import".to_string());
-    }
-    staged.persist_noclobber(&dest_file_path).map_err(|err| {
-        if err.error.kind() == std::io::ErrorKind::AlreadyExists {
-            "A module with this name already exists in the course".to_string()
-        } else {
-            "Could not finish adding the module".to_string()
-        }
-    })?;
+    stage_and_publish(&mut input, &target_dir, &dest_file_path)?;
 
     let metadata = std::fs::metadata(&dest_file_path)
         .map_err(|e| format!("Failed to read metadata of copied file: {}", e))?;
@@ -282,6 +280,32 @@ pub fn add_module_to_vault<P: AsRef<Path>>(
         file_type,
         size_bytes: metadata.len(),
     })
+}
+
+fn stage_and_publish(
+    input: &mut impl std::io::Read,
+    target_dir: &Path,
+    dest_file_path: &Path,
+) -> Result<(), String> {
+    let mut staged = tempfile::NamedTempFile::new_in(target_dir)
+        .map_err(|_| "Could not stage module in the selected course".to_string())?;
+    std::io::copy(input, &mut staged)
+        .map_err(|_| "Could not copy the complete module".to_string())?;
+    staged
+        .as_file()
+        .sync_all()
+        .map_err(|_| "Could not finish writing the module".to_string())?;
+    if target_dir.canonicalize().ok().as_deref() != Some(target_dir) {
+        return Err("Course folder changed during import".to_string());
+    }
+    staged.persist_noclobber(dest_file_path).map_err(|err| {
+        if err.error.kind() == std::io::ErrorKind::AlreadyExists {
+            "A module with this name already exists in the course".to_string()
+        } else {
+            "Could not finish adding the module".to_string()
+        }
+    })?;
+    Ok(())
 }
 
 /// Safely reads document file bytes from within the vault.
@@ -403,14 +427,21 @@ pub fn list_subvaults<P: AsRef<Path>>(parent_dir: P) -> Result<Vec<VaultSummary>
 
     for entry in entries.flatten() {
         let path = entry.path();
-        if path.is_dir() {
+        let metadata = match path.symlink_metadata() {
+            Ok(metadata) if !is_link_or_reparse_point(&metadata) => metadata,
+            _ => continue,
+        };
+        if metadata.is_dir() {
+            let canon_path = match path.canonicalize() {
+                Ok(path) if path.starts_with(&parent_canon) => path,
+                _ => continue,
+            };
             let name = entry.file_name().to_string_lossy().to_string();
-            let file_count = match scan_vault(&path) {
+            let file_count = match scan_vault(&canon_path) {
                 Ok(scan_res) => count_vault_files(&scan_res.root_nodes),
                 Err(_) => 0,
             };
 
-            let canon_path = path.canonicalize().unwrap_or(path.clone());
             result.push(VaultSummary {
                 name,
                 path: canon_path.to_string_lossy().to_string(),
@@ -497,6 +528,38 @@ mod tests {
         assert_eq!(result.warnings.len(), 2);
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn scan_reports_unreadable_nested_folder_and_rejects_unreadable_root() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = tempdir().unwrap();
+        let vault = dir.path().join("vault");
+        let readable = vault.join("CS101");
+        let unreadable = vault.join("Private");
+        fs::create_dir_all(&readable).unwrap();
+        fs::create_dir(&unreadable).unwrap();
+        fs::write(readable.join("lecture.pdf"), b"module").unwrap();
+
+        fs::set_permissions(&unreadable, fs::Permissions::from_mode(0o000)).unwrap();
+        if fs::read_dir(&unreadable).is_err() {
+            let result = scan_vault(&vault).unwrap();
+            assert_eq!(result.root_nodes[0].name, "CS101");
+            assert_eq!(result.root_nodes[0].children.len(), 1);
+            assert!(result
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("Private")));
+        }
+        fs::set_permissions(&unreadable, fs::Permissions::from_mode(0o700)).unwrap();
+
+        fs::set_permissions(&vault, fs::Permissions::from_mode(0o000)).unwrap();
+        if fs::read_dir(&vault).is_err() {
+            assert!(scan_vault(&vault).is_err());
+        }
+        fs::set_permissions(&vault, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+
     #[test]
     fn test_create_vault_and_list_subvaults() {
         let parent_dir = tempdir().unwrap();
@@ -540,5 +603,103 @@ mod tests {
         assert_eq!(fs::read(&destination).unwrap(), b"new module");
         assert_eq!(fs::read(&source).unwrap(), b"new module");
         assert_eq!(fs::read_dir(&course).unwrap().count(), 1);
+    }
+
+    #[test]
+    fn concurrent_imports_with_same_name_publish_only_one_complete_file() {
+        use std::sync::{Arc, Barrier};
+
+        let dir = tempdir().unwrap();
+        let vault = dir.path().join("vault");
+        let course = vault.join("CS101");
+        fs::create_dir_all(&course).unwrap();
+        let source_a = dir.path().join("a").join("lecture.pdf");
+        let source_b = dir.path().join("b").join("lecture.pdf");
+        fs::create_dir_all(source_a.parent().unwrap()).unwrap();
+        fs::create_dir_all(source_b.parent().unwrap()).unwrap();
+        fs::write(&source_a, b"complete module A").unwrap();
+        fs::write(&source_b, b"complete module B").unwrap();
+
+        let barrier = Arc::new(Barrier::new(2));
+        let handles = [source_a, source_b].map(|source| {
+            let barrier = Arc::clone(&barrier);
+            let vault = vault.clone();
+            std::thread::spawn(move || {
+                barrier.wait();
+                add_module_to_vault(&vault, Some("CS101".into()), &source)
+            })
+        });
+        let results = handles.map(|handle| handle.join().unwrap());
+        assert_eq!(results.iter().filter(|result| result.is_ok()).count(), 1);
+        let bytes = fs::read(course.join("lecture.pdf")).unwrap();
+        assert!(bytes == b"complete module A" || bytes == b"complete module B");
+        assert_eq!(fs::read_dir(&course).unwrap().count(), 1);
+    }
+
+    #[test]
+    fn failed_copy_leaves_no_partial_module() {
+        struct FailingReader(bool);
+
+        impl std::io::Read for FailingReader {
+            fn read(&mut self, buffer: &mut [u8]) -> std::io::Result<usize> {
+                if self.0 {
+                    return Err(std::io::Error::other("injected read failure"));
+                }
+                self.0 = true;
+                let len = buffer.len().min(4);
+                buffer[..len].copy_from_slice(&b"part"[..len]);
+                Ok(len)
+            }
+        }
+
+        let dir = tempdir().unwrap();
+        let destination = dir.path().join("lecture.pdf");
+        assert!(stage_and_publish(&mut FailingReader(false), dir.path(), &destination).is_err());
+        assert!(!destination.exists());
+        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 0);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn import_rejects_linked_destination_without_touching_external_file() {
+        use std::os::unix::fs::symlink;
+
+        let dir = tempdir().unwrap();
+        let vault = dir.path().join("vault");
+        let course = vault.join("CS101");
+        let outside = dir.path().join("outside");
+        fs::create_dir_all(&course).unwrap();
+        fs::create_dir(&outside).unwrap();
+        let source = dir.path().join("lecture.pdf");
+        let external = outside.join("lecture.pdf");
+        fs::write(&source, b"new module").unwrap();
+        fs::write(&external, b"existing external module").unwrap();
+
+        symlink(&outside, vault.join("LinkedCourse")).unwrap();
+        assert!(add_module_to_vault(&vault, Some("LinkedCourse".into()), &source).is_err());
+        assert_eq!(fs::read(&external).unwrap(), b"existing external module");
+
+        symlink(&external, course.join("lecture.pdf")).unwrap();
+        assert!(add_module_to_vault(&vault, Some("CS101".into()), &source).is_err());
+        assert_eq!(fs::read(&external).unwrap(), b"existing external module");
+        assert_eq!(fs::read_dir(&course).unwrap().count(), 1);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn vault_manager_does_not_list_linked_directories() {
+        use std::os::unix::fs::symlink;
+
+        let dir = tempdir().unwrap();
+        let parent = dir.path().join("vaults");
+        let outside = dir.path().join("outside");
+        fs::create_dir(&parent).unwrap();
+        fs::create_dir(&outside).unwrap();
+        fs::create_dir(parent.join("RealVault")).unwrap();
+        symlink(&outside, parent.join("LinkedVault")).unwrap();
+
+        let listed = list_subvaults(&parent).unwrap();
+        assert_eq!(listed.len(), 1);
+        assert_eq!(listed[0].name, "RealVault");
     }
 }
