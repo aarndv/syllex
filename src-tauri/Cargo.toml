@@ -27,6 +27,8 @@ walkdir = "2.5"
 sha2 = "0.10"
 rusqlite = { version = "0.40.1", features = ["bundled"] }
 tempfile = "3.10"
+cap-std = "4.0.3"
+getrandom = "0.4.3"
 
 [dev-dependencies]
 

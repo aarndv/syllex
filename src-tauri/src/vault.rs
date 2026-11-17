@@ -1,3 +1,5 @@
+use cap_std::ambient_authority;
+use cap_std::fs::{Dir, OpenOptions};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::{Component, Path};
@@ -12,6 +14,19 @@ fn is_link_or_reparse_point(metadata: &std::fs::Metadata) -> bool {
     #[cfg(not(windows))]
     {
         metadata.file_type().is_symlink()
+    }
+}
+
+fn is_cap_link_or_reparse_point(metadata: &cap_std::fs::Metadata) -> bool {
+    #[cfg(windows)]
+    {
+        use cap_std::fs::MetadataExt;
+        const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x0400;
+        metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0
+    }
+    #[cfg(not(windows))]
+    {
+        metadata.is_symlink()
     }
 }
 
@@ -241,7 +256,7 @@ pub fn add_module_to_vault<P: AsRef<Path>>(
         .to_string_lossy()
         .to_string();
 
-    let target_dir = match target_course_rel_path {
+    let target_relative = match target_course_rel_path {
         Some(rel) if !rel.trim().is_empty() => {
             let relative = Path::new(&rel);
             if relative
@@ -250,27 +265,33 @@ pub fn add_module_to_vault<P: AsRef<Path>>(
             {
                 return Err("Invalid course folder path".to_string());
             }
-            vault_canon.join(relative)
+            relative.to_path_buf()
         }
-        _ => vault_canon.clone(),
+        _ => std::path::PathBuf::new(),
     };
-    let target_dir = target_dir
-        .canonicalize()
-        .map_err(|_| "Course folder is unavailable".to_string())?;
-    if !target_dir.starts_with(&vault_canon) || !target_dir.is_dir() {
-        return Err("Target path escapes the vault boundary".to_string());
+    let vault_dir = Dir::open_ambient_dir(&vault_canon, ambient_authority())
+        .map_err(|_| "Selected vault is unavailable".to_string())?;
+    let mut course_dir = vault_dir;
+    for component in target_relative.components() {
+        let name = match component {
+            Component::Normal(name) => name,
+            _ => return Err("Invalid course folder path".to_string()),
+        };
+        let metadata = course_dir
+            .symlink_metadata(name)
+            .map_err(|_| "Course folder is unavailable".to_string())?;
+        if is_cap_link_or_reparse_point(&metadata) || !metadata.is_dir() {
+            return Err("Target path escapes the vault boundary".to_string());
+        }
+        course_dir = course_dir
+            .open_dir(name)
+            .map_err(|_| "Course folder is unavailable".to_string())?;
     }
-    let dest_file_path = target_dir.join(&file_name);
     let mut input = std::fs::File::open(source)
         .map_err(|_| "Could not open the selected module".to_string())?;
-    stage_and_publish(&mut input, &target_dir, &dest_file_path)?;
-
-    let metadata = std::fs::metadata(&dest_file_path)
-        .map_err(|e| format!("Failed to read metadata of copied file: {}", e))?;
-
-    let rel_path = dest_file_path
-        .strip_prefix(&vault_canon)
-        .map_err(|e| format!("Failed to compute relative path: {}", e))?
+    let size_bytes = stage_and_publish(&mut input, &course_dir, Path::new(&file_name))?;
+    let rel_path = target_relative
+        .join(&file_name)
         .to_string_lossy()
         .to_string();
 
@@ -278,34 +299,61 @@ pub fn add_module_to_vault<P: AsRef<Path>>(
         relative_path: rel_path,
         file_name,
         file_type,
-        size_bytes: metadata.len(),
+        size_bytes,
     })
+}
+
+struct StagedModule<'a> {
+    course_dir: &'a Dir,
+    name: String,
+    file: Option<cap_std::fs::File>,
+}
+
+impl Drop for StagedModule<'_> {
+    fn drop(&mut self) {
+        self.file.take();
+        let _ = self.course_dir.remove_file(&self.name);
+    }
 }
 
 fn stage_and_publish(
     input: &mut impl std::io::Read,
-    target_dir: &Path,
-    dest_file_path: &Path,
-) -> Result<(), String> {
-    let mut staged = tempfile::NamedTempFile::new_in(target_dir)
+    course_dir: &Dir,
+    dest_name: &Path,
+) -> Result<u64, String> {
+    let mut random = [0_u8; 16];
+    getrandom::fill(&mut random)
+        .map_err(|_| "Could not prepare a temporary module name".to_string())?;
+    let staged_name = format!(".syllex-import-{:032x}.tmp", u128::from_le_bytes(random));
+    let mut options = OpenOptions::new();
+    options.write(true).create_new(true);
+    let staged = course_dir
+        .open_with(&staged_name, &options)
         .map_err(|_| "Could not stage module in the selected course".to_string())?;
-    std::io::copy(input, &mut staged)
+    let mut cleanup = StagedModule {
+        course_dir,
+        name: staged_name,
+        file: Some(staged),
+    };
+    let size_bytes = std::io::copy(input, cleanup.file.as_mut().unwrap())
         .map_err(|_| "Could not copy the complete module".to_string())?;
-    staged
-        .as_file()
+    cleanup
+        .file
+        .as_ref()
+        .unwrap()
         .sync_all()
         .map_err(|_| "Could not finish writing the module".to_string())?;
-    if target_dir.canonicalize().ok().as_deref() != Some(target_dir) {
-        return Err("Course folder changed during import".to_string());
-    }
-    staged.persist_noclobber(dest_file_path).map_err(|err| {
-        if err.error.kind() == std::io::ErrorKind::AlreadyExists {
-            "A module with this name already exists in the course".to_string()
-        } else {
-            "Could not finish adding the module".to_string()
-        }
-    })?;
-    Ok(())
+    cleanup.file.take();
+    course_dir
+        .hard_link(&cleanup.name, course_dir, dest_name)
+        .map_err(|err| {
+            if err.kind() == std::io::ErrorKind::AlreadyExists {
+                "A module with this name already exists in the course".to_string()
+            } else {
+                "Could not finish adding the module".to_string()
+            }
+        })?;
+    Ok(size_bytes)
 }
 
 /// Safely reads document file bytes from within the vault.
@@ -654,9 +702,46 @@ mod tests {
 
         let dir = tempdir().unwrap();
         let destination = dir.path().join("lecture.pdf");
-        assert!(stage_and_publish(&mut FailingReader(false), dir.path(), &destination).is_err());
+        let course_dir = Dir::open_ambient_dir(dir.path(), ambient_authority()).unwrap();
+        assert!(stage_and_publish(
+            &mut FailingReader(false),
+            &course_dir,
+            Path::new("lecture.pdf")
+        )
+        .is_err());
         assert!(!destination.exists());
         assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 0);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn import_handle_does_not_follow_replacement_link() {
+        use std::os::unix::fs::symlink;
+
+        let dir = tempdir().unwrap();
+        let vault = dir.path().join("vault");
+        let course = vault.join("CS101");
+        let relocated = vault.join("CS101-relocated");
+        let outside = dir.path().join("outside");
+        fs::create_dir(&vault).unwrap();
+        fs::create_dir(&course).unwrap();
+        fs::create_dir(&outside).unwrap();
+        let course_dir = Dir::open_ambient_dir(&course, ambient_authority()).unwrap();
+        fs::rename(&course, &relocated).unwrap();
+        symlink(&outside, &course).unwrap();
+
+        let size = stage_and_publish(
+            &mut b"complete module".as_slice(),
+            &course_dir,
+            Path::new("lecture.pdf"),
+        )
+        .unwrap();
+        assert_eq!(size, 15);
+        assert_eq!(
+            fs::read(relocated.join("lecture.pdf")).unwrap(),
+            b"complete module"
+        );
+        assert!(!outside.join("lecture.pdf").exists());
     }
 
     #[cfg(unix)]

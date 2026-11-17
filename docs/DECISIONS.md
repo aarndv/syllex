@@ -304,5 +304,21 @@ D-020 changes the future storage owner of hidden flags and display names. This e
 
 **Consequences:** File watching is a personal-release gate in M8. Packaging and manual smoke tests remain required on both desktop targets, without public-release distribution work.
 
+## D-024 — Directory handles for safe module imports
+
+**Status:** Accepted
+
+**Decision:** Use capability-relative directory operations for Add Module imports. Open the selected vault and course as directory handles, stage the copy inside the course, and publish it with a no-clobber hard link. Keep the existing path checks for user-facing validation, but do not rely on a second absolute-path lookup to decide where the final write lands.
+
+**Evidence and reason:** Canonicalizing a course path and later creating a temporary file or final destination by that path leaves a replacement window. An external process could replace the course directory with a link after validation. The current recheck reduces that window but cannot remove it. The `cap-std` Rust crate provides directory-relative operations on Fedora and Windows, which is the missing capability in the standard-library path-based flow.
+
+**Alternatives:** Add more canonical-path rechecks, which still leave a race; use separate Linux `openat` and Windows handle implementations, which would duplicate security-sensitive code; or publish directly with `create_new`, which could expose an incomplete module.
+
+**Cross-platform impact:** The same relative-handle flow is used on Fedora and Windows 11. Hard-link publication requires filesystem support; an unsupported filesystem returns a copy error and leaves the staged file cleaned up. Windows compilation and a junction/collision smoke test remain required before closing issue #32.
+
+**Security impact:** The course handle anchors staging and publication to the directory opened from the selected vault, even if its former path is replaced by a link. Final-name creation fails if any file or link already occupies it. Failed imports remove the temporary file. No original or external source file is rewritten, and no network access is added.
+
+**Consequences:** Add `cap-std` for scoped directory operations and `getrandom` for unpredictable staging names. The same approach may be reused for later portable study-file writes after those workflows are separately designed.
+
 
 
