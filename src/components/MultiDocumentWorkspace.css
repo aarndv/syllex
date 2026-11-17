@@ -1,0 +1,208 @@
+.multi-workspace-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  color: #f5f3ec;
+  background: #0d1f14;
+  font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.multi-workspace-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  padding: 0.55rem 0.8rem;
+  border-bottom: 1px solid #3d684e;
+  background: #1b3627;
+}
+
+.multi-workspace-heading,
+.multi-workspace-actions,
+.workspace-arrange-bar,
+.workspace-pane-actions,
+.workspace-pane-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.multi-workspace-heading > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.multi-workspace-heading strong { font-size: 0.95rem; }
+.multi-workspace-heading span { color: #c9d9cd; font-size: 0.75rem; }
+.multi-workspace-actions { flex-wrap: wrap; }
+
+.multi-workspace-overlay button,
+.multi-workspace-overlay select,
+.multi-workspace-overlay input {
+  font: inherit;
+}
+
+.multi-workspace-overlay button,
+.multi-workspace-overlay select {
+  border: 1px solid #597360;
+  border-radius: 4px;
+  color: inherit;
+  background: #294635;
+}
+
+.multi-workspace-overlay button { cursor: pointer; }
+.multi-workspace-overlay button:hover:not(:disabled) { background: #355b43; }
+.multi-workspace-overlay button:disabled { opacity: 0.5; cursor: default; }
+.multi-workspace-overlay :focus-visible { outline: 2px solid #d6aa58; outline-offset: 2px; }
+
+.workspace-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 30px;
+  padding: 0.3rem 0.6rem;
+  white-space: nowrap;
+}
+
+.multi-workspace-actions label { display: inline-flex; align-items: center; gap: 0.35rem; }
+.multi-workspace-actions select,
+.workspace-arrange-bar select { min-height: 30px; padding: 0.2rem 0.35rem; }
+
+.workspace-arrange-bar {
+  flex-wrap: wrap;
+  padding: 0.3rem 0.8rem;
+  border-bottom: 1px solid #2b4e37;
+  background: #142a1d;
+}
+
+.workspace-arrange-bar strong { max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-drag-tip { color: #b8c9bc; font-size: 0.76rem; }
+
+.workspace-picker {
+  position: absolute;
+  z-index: 20;
+  top: 3.7rem;
+  right: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: min(26rem, calc(100vw - 1.6rem));
+  max-height: min(30rem, calc(100vh - 5rem));
+  padding: 0.8rem;
+  border: 1px solid #597360;
+  border-radius: 6px;
+  background: #1b3627;
+  box-shadow: 0 10px 30px #0008;
+}
+
+.workspace-picker input {
+  min-height: 32px;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #77937e;
+  border-radius: 4px;
+  color: #17291c;
+  background: #fbf9f4;
+}
+
+.workspace-picker-results { overflow: auto; display: flex; flex-direction: column; gap: 0.25rem; }
+.workspace-picker-results button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+}
+.workspace-picker-results small { max-width: 100%; color: #c9d9cd; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-picker-results p { margin: 0.5rem 0; }
+
+.multi-workspace-content { flex: 1; min-height: 0; min-width: 0; display: flex; overflow: auto; padding: 5px; }
+.workspace-split { flex: 1 1 0; display: flex; min-width: 0; min-height: 0; gap: 5px; }
+.workspace-split.axis-row { flex-direction: row; }
+.workspace-split.axis-column { flex-direction: column; }
+
+.workspace-pane {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 190px;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #3d684e;
+  border-radius: 5px;
+  background: #142a1d;
+}
+.workspace-pane.selected { border-color: #d6aa58; }
+
+.workspace-pane-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  min-height: 34px;
+  padding: 0.2rem 0.4rem;
+  border-bottom: 1px solid #365640;
+  background: #1b3627;
+}
+.workspace-pane-header > strong { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-drag-handle { padding: 0.2rem 0.3rem; cursor: grab; user-select: none; color: #d2ddcf; font-size: 0.7rem; }
+.workspace-drag-handle:active { cursor: grabbing; }
+.workspace-pane-actions { flex-shrink: 0; margin-left: auto; }
+.workspace-pane-actions button,
+.workspace-pane-controls button { min-height: 25px; padding: 0.15rem 0.35rem; white-space: nowrap; }
+.workspace-pane-actions button:last-child { display: inline-flex; align-items: center; }
+
+.workspace-pane-controls {
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  padding: 0.3rem 0.4rem;
+  border-bottom: 1px solid #365640;
+}
+.workspace-pane-controls span { white-space: nowrap; }
+.workspace-pane-controls select { min-height: 25px; max-width: 9rem; padding: 0.1rem 0.2rem; }
+
+.workspace-pane-reading { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+.workspace-pane-reading .pdfjs-viewer-container { padding: 0.7rem 0 1.2rem; }
+.workspace-pane-message { margin: 1rem; }
+.workspace-pane-message.error { color: #ffd7cf; }
+
+.workspace-drop-zones { position: absolute; inset: 0; z-index: 10; pointer-events: none; }
+.workspace-drop-zone {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border: 1px dashed #d6aa58;
+  border-radius: 4px;
+  color: #fff;
+  background: #1b3627c9;
+  font-weight: 600;
+  pointer-events: auto;
+}
+.workspace-drop-zone:hover { background: #a36c22e6; }
+.workspace-drop-zone.side-left { left: 2%; top: 27%; width: 20%; height: 46%; }
+.workspace-drop-zone.side-right { right: 2%; top: 27%; width: 20%; height: 46%; }
+.workspace-drop-zone.side-top { left: 27%; top: 2%; width: 46%; height: 20%; }
+.workspace-drop-zone.side-bottom { left: 27%; bottom: 2%; width: 46%; height: 20%; }
+
+.workspace-empty { margin: auto; max-width: 22rem; text-align: center; }
+.workspace-empty h2 { margin-bottom: 0.25rem; }
+
+html[data-theme="light"] .multi-workspace-overlay { color: #253328; background: #e9ede7; }
+html[data-theme="light"] .multi-workspace-header { color: #fbf9f4; }
+html[data-theme="light"] .workspace-arrange-bar { color: #fbf9f4; }
+html[data-theme="light"] .workspace-pane { color: #fbf9f4; }
+html[data-theme="light"] .workspace-empty { color: #253328; }
+
+@media (max-width: 720px) {
+  .multi-workspace-header { align-items: flex-start; }
+  .workspace-pane-actions button { font-size: 0.7rem; }
+  .workspace-drag-tip { display: none; }
+}

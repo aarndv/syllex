@@ -5,6 +5,7 @@ import { VaultScanResult, VaultNode } from "./types/vault";
 import { FileTree } from "./components/FileTree";
 import { BookshelfView } from "./components/BookshelfView";
 import { PdfViewer } from "./components/PdfViewer";
+import { MultiDocumentWorkspace } from "./components/MultiDocumentWorkspace";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { VaultManagerModal } from "./components/VaultManagerModal";
 import { SettingsModal, AppSettings, DEFAULT_SETTINGS } from "./components/SettingsModal";
@@ -18,6 +19,8 @@ import { RenameModal } from "./components/RenameModal";
 import { LandingPad } from "./components/LandingPad";
 import { SyllexLogo } from "./components/SyllexLogo";
 import { toUserFacingError } from "./utils/userFacingError";
+import { splitPane, type WorkspaceSide } from "./utils/workspaceLayout";
+import { EMPTY_WORKSPACE, type WorkspaceState } from "./types/workspace";
 import {
   PlusIcon,
   FolderIcon,
@@ -47,6 +50,8 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
 
   const [scanResult, setScanResult] = useState<VaultScanResult | null>(null);
   const [activeNode, setActiveNode] = useState<VaultNode | null>(null);
+  const [workspaceOpen, setWorkspaceOpen] = useState(false);
+  const [workspaceState, setWorkspaceState] = useState<WorkspaceState>(EMPTY_WORKSPACE);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState<boolean>(false);
@@ -237,6 +242,8 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
       setVaultPath(null);
       setScanResult(null);
       setActiveNode(null);
+      setWorkspaceOpen(false);
+      setWorkspaceState(EMPTY_WORKSPACE);
       setError(null);
     } catch (err: unknown) {
       setError(toUserFacingError(err, "close this vault"));
@@ -388,11 +395,27 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
 
     const fileType = (node.node_type as { File: string }).File;
     if (fileType === "Pdf" || fileType === "Ppt" || fileType === "Pptx") {
+      setWorkspaceOpen(false);
       setActiveNode(node);
       setInitialPdfState({ page: targetPage, query: initialSearchQuery });
     } else {
       setError(`Viewing ${fileType} files is coming in later milestones.`);
     }
+  }
+
+  function handleAddToWorkspace(node: VaultNode, targetId?: string | null, side: WorkspaceSide = "right", page = 1) {
+    if (node.node_type === "Folder" || node.node_type.File === "Md") {
+      setError("Workspace reading is available for PDFs and presentations.");
+      return;
+    }
+    const id = crypto.randomUUID();
+    setWorkspaceState((previous) => ({
+      layout: splitPane(previous.layout, targetId ?? previous.selectedPaneId, id, side),
+      panes: { ...previous.panes, [id]: { id, node, page, zoom: 1, fitWidth: true, viewMode: "original" } },
+      selectedPaneId: id,
+    }));
+    setActiveNode(null);
+    setWorkspaceOpen(true);
   }
 
   const vaultStats = useMemo(() => {
@@ -427,6 +450,8 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
       setVaultPath(canonicalPath);
       setScanResult(null);
       setActiveNode(null);
+      setWorkspaceOpen(false);
+      setWorkspaceState(EMPTY_WORKSPACE);
       localStorage.removeItem(VAULT_STORAGE_KEY);
       void scanVault(canonicalPath);
     } catch (err: unknown) {
@@ -481,10 +506,23 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
           onRemoveItem={handleRemoveItem}
           onRenameItem={handleRenameItem}
           onRefreshVault={() => scanVault(vaultPath)}
+          onOpenWorkspace={(page) => handleAddToWorkspace(activeNode, undefined, "right", page)}
           onClose={() => {
             setActiveNode(null);
             setInitialPdfState(null);
           }}
+        />
+      )}
+
+      {workspaceOpen && vaultPath && scanResult && (
+        <MultiDocumentWorkspace
+          vaultRoot={vaultPath}
+          allNodes={scanResult.root_nodes}
+          state={workspaceState}
+          onChange={setWorkspaceState}
+          onAddNode={handleAddToWorkspace}
+          onOpenSingle={(node, page) => handleSelectFileNode(node, page)}
+          onClose={() => setWorkspaceOpen(false)}
         />
       )}
 
@@ -748,6 +786,9 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
                 </span>
 
                 <div className="view-toggle-button-group">
+                  <button type="button" className="toggle-mode-btn" onClick={() => setWorkspaceOpen(true)}>
+                    Workspace{workspaceState.layout ? ` (${Object.keys(workspaceState.panes).length})` : ""}
+                  </button>
                   <button
                     className={`toggle-mode-btn ${activeViewMode === "bookshelf" ? "active" : ""}`}
                     onClick={() => setActiveViewMode("bookshelf")}
@@ -799,6 +840,7 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
                   nodes={scanResult.root_nodes}
                   vaultRoot={vaultPath || ""}
                   onSelectFile={handleSelectFileNode}
+                  onAddToWorkspace={handleAddToWorkspace}
                   onAddFile={handleAddModule}
                   onRemoveItem={handleRemoveItem}
                   onRenameItem={handleRenameItem}
@@ -810,6 +852,7 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
                       nodes={scanResult.root_nodes}
                       activePath={activeNode?.relative_path}
                       onSelectFile={handleSelectFileNode}
+                      onAddToWorkspace={handleAddToWorkspace}
                       onAddFile={handleAddModule}
                       onRemoveItem={handleRemoveItem}
                       onRenameItem={handleRenameItem}
