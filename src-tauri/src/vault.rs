@@ -271,7 +271,9 @@ pub fn add_module_to_vault<P: AsRef<Path>>(
     };
     let vault_dir = Dir::open_ambient_dir(&vault_canon, ambient_authority())
         .map_err(|_| "Selected vault is unavailable".to_string())?;
-    let mut course_dir = vault_dir;
+    let mut course_dir = vault_dir
+        .try_clone()
+        .map_err(|_| "Selected vault is unavailable".to_string())?;
     for component in target_relative.components() {
         let name = match component {
             Component::Normal(name) => name,
@@ -289,11 +291,9 @@ pub fn add_module_to_vault<P: AsRef<Path>>(
     }
     let mut input = std::fs::File::open(source)
         .map_err(|_| "Could not open the selected module".to_string())?;
-    let size_bytes = stage_and_publish(&mut input, &course_dir, Path::new(&file_name))?;
-    let rel_path = target_relative
-        .join(&file_name)
-        .to_string_lossy()
-        .to_string();
+    let destination = target_relative.join(&file_name);
+    let size_bytes = stage_and_publish(&mut input, &vault_dir, &destination)?;
+    let rel_path = destination.to_string_lossy().to_string();
 
     Ok(ModuleItem {
         relative_path: rel_path,
@@ -304,7 +304,7 @@ pub fn add_module_to_vault<P: AsRef<Path>>(
 }
 
 struct StagedModule<'a> {
-    course_dir: &'a Dir,
+    vault_dir: &'a Dir,
     name: String,
     file: Option<cap_std::fs::File>,
 }
@@ -312,14 +312,14 @@ struct StagedModule<'a> {
 impl Drop for StagedModule<'_> {
     fn drop(&mut self) {
         self.file.take();
-        let _ = self.course_dir.remove_file(&self.name);
+        let _ = self.vault_dir.remove_file(&self.name);
     }
 }
 
 fn stage_and_publish(
     input: &mut impl std::io::Read,
-    course_dir: &Dir,
-    dest_name: &Path,
+    vault_dir: &Dir,
+    destination: &Path,
 ) -> Result<u64, String> {
     let mut random = [0_u8; 16];
     getrandom::fill(&mut random)
@@ -327,11 +327,11 @@ fn stage_and_publish(
     let staged_name = format!(".syllex-import-{:032x}.tmp", u128::from_le_bytes(random));
     let mut options = OpenOptions::new();
     options.write(true).create_new(true);
-    let staged = course_dir
+    let staged = vault_dir
         .open_with(&staged_name, &options)
-        .map_err(|_| "Could not stage module in the selected course".to_string())?;
+        .map_err(|_| "Could not stage module in the selected vault".to_string())?;
     let mut cleanup = StagedModule {
-        course_dir,
+        vault_dir,
         name: staged_name,
         file: Some(staged),
     };
@@ -344,8 +344,8 @@ fn stage_and_publish(
         .sync_all()
         .map_err(|_| "Could not finish writing the module".to_string())?;
     cleanup.file.take();
-    course_dir
-        .hard_link(&cleanup.name, course_dir, dest_name)
+    vault_dir
+        .hard_link(&cleanup.name, vault_dir, destination)
         .map_err(|err| {
             if err.kind() == std::io::ErrorKind::AlreadyExists {
                 "A module with this name already exists in the course".to_string()
@@ -702,10 +702,10 @@ mod tests {
 
         let dir = tempdir().unwrap();
         let destination = dir.path().join("lecture.pdf");
-        let course_dir = Dir::open_ambient_dir(dir.path(), ambient_authority()).unwrap();
+        let vault_dir = Dir::open_ambient_dir(dir.path(), ambient_authority()).unwrap();
         assert!(stage_and_publish(
             &mut FailingReader(false),
-            &course_dir,
+            &vault_dir,
             Path::new("lecture.pdf")
         )
         .is_err());
@@ -715,33 +715,29 @@ mod tests {
 
     #[cfg(unix)]
     #[test]
-    fn import_handle_does_not_follow_replacement_link() {
+    fn import_rejects_replacement_link_to_moved_course() {
         use std::os::unix::fs::symlink;
 
         let dir = tempdir().unwrap();
         let vault = dir.path().join("vault");
         let course = vault.join("CS101");
-        let relocated = vault.join("CS101-relocated");
         let outside = dir.path().join("outside");
         fs::create_dir(&vault).unwrap();
         fs::create_dir(&course).unwrap();
         fs::create_dir(&outside).unwrap();
-        let course_dir = Dir::open_ambient_dir(&course, ambient_authority()).unwrap();
-        fs::rename(&course, &relocated).unwrap();
+        let vault_dir = Dir::open_ambient_dir(&vault, ambient_authority()).unwrap();
+        fs::rename(&course, outside.join("moved-course")).unwrap();
         symlink(&outside, &course).unwrap();
 
-        let size = stage_and_publish(
+        assert!(stage_and_publish(
             &mut b"complete module".as_slice(),
-            &course_dir,
-            Path::new("lecture.pdf"),
+            &vault_dir,
+            Path::new("CS101/lecture.pdf"),
         )
-        .unwrap();
-        assert_eq!(size, 15);
-        assert_eq!(
-            fs::read(relocated.join("lecture.pdf")).unwrap(),
-            b"complete module"
-        );
+        .is_err());
         assert!(!outside.join("lecture.pdf").exists());
+        assert!(!outside.join("moved-course/lecture.pdf").exists());
+        assert_eq!(fs::read_dir(&vault).unwrap().count(), 1);
     }
 
     #[cfg(unix)]
