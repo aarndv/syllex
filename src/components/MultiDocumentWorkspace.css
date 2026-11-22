@@ -164,6 +164,8 @@
 .workspace-pane.selected { border-color: #d6aa58; }
 
 .workspace-pane-header {
+  position: relative;
+  z-index: 200;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -249,6 +251,23 @@
 .workspace-pane-controls select { max-width: 9rem; }
 .workspace-pane-controls button { display: inline-flex; align-items: center; justify-content: center; width: 28px; padding: 0; }
 .workspace-pane-controls button[aria-pressed="true"] { border-color: #d6aa58; background: #456c4c; }
+
+.workspace-view-options-popover {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0.4rem;
+  box-sizing: border-box;
+  display: grid;
+  gap: 0.55rem;
+  width: min(13rem, calc(100% - 0.8rem));
+  padding: 0.65rem;
+  border: 1px solid #597360;
+  border-radius: 5px;
+  background: #1b3627;
+  box-shadow: 0 5px 16px #0007;
+}
+.workspace-view-options-popover label { display: grid; gap: 0.2rem; }
+.workspace-view-options-popover select { width: 100%; max-width: none; }
 
 .workspace-highlight-palette {
   position: absolute;

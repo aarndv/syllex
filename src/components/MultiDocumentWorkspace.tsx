@@ -417,11 +417,35 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
   const [error, setError] = useState<string | null>(null);
   const [highlightError, setHighlightError] = useState<string | null>(null);
   const [highlightToast, setHighlightToast] = useState<{ kind: "saved" | "erased"; highlight: Highlight } | null>(null);
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const optionsRef = useRef<HTMLDivElement>(null);
+  const optionsButtonRef = useRef<HTMLButtonElement>(null);
   const toastTimerRef = useRef<number | null>(null);
   const undoPendingRef = useRef(false);
   const deletingIdsRef = useRef(new Set<string>());
   const zoomPercent = Math.round(pane.zoom * 100);
   const zoomOptions = [...new Set([50, 75, 100, 125, 150, 200, zoomPercent])].sort((a, b) => a - b);
+
+  useEffect(() => {
+    if (!optionsOpen) return;
+    optionsRef.current?.querySelector<HTMLSelectElement>("select")?.focus();
+    const onPointerDown = (event: PointerEvent) => {
+      if (!optionsRef.current?.contains(event.target as Node)) setOptionsOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      setOptionsOpen(false);
+      optionsButtonRef.current?.focus();
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown, true);
+    };
+  }, [optionsOpen]);
 
   useEffect(() => {
     let active = true;
@@ -534,7 +558,7 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
           title="Drag onto an edge of another view" aria-label={`Drag ${pane.node.name} to arrange`}>
           <GripIcon size={16} />
         </span>
-        <strong title={pane.node.relative_path}>{pane.node.name}</strong>
+        <strong title={pane.node.name}>{pane.node.name}</strong>
         <div className="workspace-pane-actions">
           <button type="button" onClick={onDuplicate} aria-label={`Duplicate view of ${pane.node.name}`} title="Open another view of this module"><DuplicateIcon size={15} /></button>
           <button type="button" onClick={onOpenSingle} aria-label={`Open ${pane.node.name} in full reader`} title="Open in full reader"><ExpandIcon size={15} /></button>
@@ -557,22 +581,35 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
         </button>
         <button type="button" onClick={() => onUpdate({ zoom: Math.max(MIN_ZOOM, Math.round((pane.zoom - 0.1) * 100) / 100), fitWidth: false, fitHeight: false })}
           disabled={pane.zoom <= MIN_ZOOM} aria-label={`Zoom out of ${pane.node.name}`} title="Zoom out (-)">−</button>
-        <select aria-label={`Zoom for ${pane.node.name}`} value={pane.fitHeight ? "fit-height" : pane.fitWidth ? "fit-width" : String(zoomPercent)}
-          onChange={(event) => {
-            if (event.target.value === "fit-width") onUpdate({ fitWidth: true, fitHeight: false });
-            else if (event.target.value === "fit-height") onUpdate({ fitWidth: false, fitHeight: true });
-            else onUpdate({ fitWidth: false, fitHeight: false, zoom: Number(event.target.value) / 100 });
-          }}>
-          <option value="fit-width">Fit width</option>
-          <option value="fit-height">Fit height</option>
-          {zoomOptions.map((value) => <option key={value} value={value}>{value}%</option>)}
-        </select>
         <button type="button" onClick={() => onUpdate({ zoom: Math.min(MAX_ZOOM, Math.round((pane.zoom + 0.1) * 100) / 100), fitWidth: false, fitHeight: false })}
           disabled={pane.zoom >= MAX_ZOOM} aria-label={`Zoom in to ${pane.node.name}`} title="Zoom in (+)">+</button>
-        <select aria-label={`Reading filter for ${pane.node.name}`} title={VIEW_MODE_LABELS[pane.viewMode]} value={pane.viewMode}
-          onChange={(event) => onUpdate({ viewMode: event.target.value as DocumentViewMode })}>
-          {Object.entries(VIEW_MODE_SHORT_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-        </select>
+        <div className="workspace-view-options" ref={optionsRef}
+          onBlurCapture={(event) => {
+            if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) setOptionsOpen(false);
+          }}>
+          <button type="button" ref={optionsButtonRef} aria-label={`More view options for ${pane.node.name}`}
+            aria-expanded={optionsOpen} title="Zoom and reading filter" onClick={() => setOptionsOpen((open) => !open)}>…</button>
+          {optionsOpen && <div className="workspace-view-options-popover" role="group" aria-label={`View options for ${pane.node.name}`}>
+            <label>Zoom
+              <select aria-label={`Zoom for ${pane.node.name}`} value={pane.fitHeight ? "fit-height" : pane.fitWidth ? "fit-width" : String(zoomPercent)}
+                onChange={(event) => {
+                  if (event.target.value === "fit-width") onUpdate({ fitWidth: true, fitHeight: false });
+                  else if (event.target.value === "fit-height") onUpdate({ fitWidth: false, fitHeight: true });
+                  else onUpdate({ fitWidth: false, fitHeight: false, zoom: Number(event.target.value) / 100 });
+                }}>
+                <option value="fit-width">Fit width</option>
+                <option value="fit-height">Fit height</option>
+                {zoomOptions.map((value) => <option key={value} value={value}>{value}%</option>)}
+              </select>
+            </label>
+            <label>Reading filter
+              <select aria-label={`Reading filter for ${pane.node.name}`} title={VIEW_MODE_LABELS[pane.viewMode]} value={pane.viewMode}
+                onChange={(event) => onUpdate({ viewMode: event.target.value as DocumentViewMode })}>
+                {Object.entries(VIEW_MODE_SHORT_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+            </label>
+          </div>}
+        </div>
       </div>
     </header>
     <div className="workspace-pane-reading">
