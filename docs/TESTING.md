@@ -118,6 +118,8 @@ Never commit real student modules or personal flashcard data as fixtures.
 
 Development checks run locally on Fedora. CI must compile and test the Windows target before merging. Platform-sensitive milestones still require periodic manual testing of packaged builds on the Windows 11 PC.
 
+The Windows pull-request workflow in `.github/workflows/windows-checks.yml` runs the frontend build, workspace layout tests, Rust formatting and tests, and a native Tauri compile without packaging. A green workflow does not replace the Fedora/WebKitGTK and Windows 11/WebView2 desktop smoke tests above.
+
 ## Performance checks
 
 Measure rather than promise fixed targets before representative hardware and documents are selected. Track:
