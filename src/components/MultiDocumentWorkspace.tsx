@@ -367,7 +367,7 @@ export function MultiDocumentWorkspace({
       </select>
       <button type="button" className="workspace-toolbar-btn" disabled={!moveTarget}
         onClick={() => selectedId && arrange(selectedId, moveTarget, moveSide)}>Move</button>
-      <span className="workspace-drag-tip">or drag a view title onto another view</span>
+      <span className="workspace-drag-tip">or drag a view by its six-dot handle</span>
     </div>}
 
     <div ref={contentRef} className="multi-workspace-content">
