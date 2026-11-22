@@ -21,6 +21,7 @@ import { SyllexLogo } from "./components/SyllexLogo";
 import { toUserFacingError } from "./utils/userFacingError";
 import { splitPane, type WorkspaceSide } from "./utils/workspaceLayout";
 import { EMPTY_WORKSPACE, type WorkspaceState } from "./types/workspace";
+import { HIGHLIGHT_COLORS } from "./types/highlight";
 import {
   PlusIcon,
   FolderIcon,
@@ -409,9 +410,12 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
       return;
     }
     const id = crypto.randomUUID();
+    const savedHighlightColor = localStorage.getItem("syllex_highlight_color");
+    const highlightColor = HIGHLIGHT_COLORS.find((color) => color.id === savedHighlightColor)?.id ?? "gold";
     setWorkspaceState((previous) => ({
       layout: splitPane(previous.layout, targetId ?? previous.selectedPaneId, id, side),
-      panes: { ...previous.panes, [id]: { id, node, page, zoom: 1, fitWidth: true, fitHeight: false, continuous: false, viewMode: "original" } },
+      panes: { ...previous.panes, [id]: { id, node, page, zoom: 1, fitWidth: true, fitHeight: false, continuous: false,
+        viewMode: "original", highlightEnabled: false, erasingHighlights: false, highlightColor } },
       selectedPaneId: id,
     }));
     setActiveNode(null);

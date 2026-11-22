@@ -1,4 +1,5 @@
 import type { DocumentViewMode } from "../components/PdfViewer";
+import type { HighlightColor } from "./highlight";
 import type { VaultNode } from "./vault";
 import type { WorkspaceLayout } from "../utils/workspaceLayout";
 
@@ -12,6 +13,9 @@ export interface WorkspacePaneState {
   fitHeight: boolean;
   continuous: boolean;
   viewMode: DocumentViewMode;
+  highlightEnabled: boolean;
+  erasingHighlights: boolean;
+  highlightColor: HighlightColor;
 }
 
 export interface WorkspaceState {

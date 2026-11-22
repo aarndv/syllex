@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { pdfjsLib, getPdfDocumentParams } from "../utils/pdfInit";
 import { PdfJsViewer } from "./PdfJsViewer";
 import { VIEW_MODE_LABELS, type DocumentViewMode } from "./PdfViewer";
-import type { Highlight } from "../types/highlight";
+import { HIGHLIGHT_COLORS, type Highlight, type HighlightRect } from "../types/highlight";
 import type { VaultNode } from "../types/vault";
 import type { WorkspacePaneState, WorkspaceState } from "../types/workspace";
 import { minimumLayoutSize, movePane, paneIds, paneRects, removePane, resizeSplit, splitDividers, type WorkspaceSide } from "../utils/workspaceLayout";
@@ -53,6 +53,7 @@ export function MultiDocumentWorkspace({
   const [moveSide, setMoveSide] = useState<WorkspaceSide>("right");
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => new Set());
+  const [highlightRevisions, setHighlightRevisions] = useState<Record<string, number>>({});
   const dialogRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -69,6 +70,10 @@ export function MultiDocumentWorkspace({
   const selectedId = state.selectedPaneId && ids.includes(state.selectedPaneId)
     ? state.selectedPaneId : ids[0] ?? null;
   const selectedPane = selectedId ? state.panes[selectedId] : null;
+  const selectedPaneRef = useRef(selectedPane);
+  selectedPaneRef.current = selectedPane;
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
   const moveTargets = ids.filter((id) => id !== selectedId);
 
   function chooseModule(node: VaultNode) {
@@ -111,6 +116,13 @@ export function MultiDocumentWorkspace({
       if (event.key === "Escape") {
         event.preventDefault();
         if (pickerOpenRef.current) setPickerOpen(false);
+        else if (selectedPaneRef.current?.highlightEnabled) {
+          const id = selectedPaneRef.current.id;
+          onChangeRef.current((previous) => {
+            const pane = previous.panes[id];
+            return pane ? { ...previous, panes: { ...previous.panes, [id]: { ...pane, highlightEnabled: false, erasingHighlights: false } } } : previous;
+          });
+        }
         else onCloseRef.current();
       } else if (event.key === "Tab") {
         const controls = [...dialog.querySelectorAll<HTMLElement>("button:not(:disabled), select:not(:disabled), input:not(:disabled)")]
@@ -168,6 +180,7 @@ export function MultiDocumentWorkspace({
       else if (modifier && (event.key === "0" || event.code === "Numpad0")) patch = { fitWidth: !pane.fitWidth, fitHeight: false, zoom: pane.fitWidth ? 1 : pane.zoom };
       else if (!modifier && key === "d") patch = { viewMode: FILTER_ORDER[(FILTER_ORDER.indexOf(pane.viewMode) + 1) % FILTER_ORDER.length] };
       else if (!modifier && key === "c") patch = { continuous: !pane.continuous };
+      else if (!modifier && key === "h" && pane.numPages) patch = { highlightEnabled: !pane.highlightEnabled, erasingHighlights: false };
       if (patch) {
         event.preventDefault();
         updatePane(selectedId, patch);
@@ -255,6 +268,9 @@ export function MultiDocumentWorkspace({
     }}><WorkspacePane
       vaultRoot={vaultRoot}
       pane={pane}
+      highlightRevision={highlightRevisions[pane.node.relative_path] ?? 0}
+      onHighlightChanged={() => setHighlightRevisions((previous) => ({ ...previous,
+        [pane.node.relative_path]: (previous[pane.node.relative_path] ?? 0) + 1 }))}
       selected={selectedId === pane.id}
       draggedId={draggedId}
       onSelect={() => onChange((previous) => previous.selectedPaneId === pane.id
@@ -350,6 +366,8 @@ export function MultiDocumentWorkspace({
 interface WorkspacePaneProps {
   vaultRoot: string;
   pane: WorkspacePaneState;
+  highlightRevision: number;
+  onHighlightChanged: () => void;
   selected: boolean;
   draggedId: string | null;
   onSelect: () => void;
@@ -362,12 +380,17 @@ interface WorkspacePaneProps {
   onDropSide: (event: React.DragEvent<HTMLElement>, side: WorkspaceSide) => void;
 }
 
-function WorkspacePane({ vaultRoot, pane, selected, draggedId, onSelect, onUpdate, onClose,
+function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged, selected, draggedId, onSelect, onUpdate, onClose,
   onDuplicate, onOpenSingle, onDragStart, onDragEnd, onDropSide }: WorkspacePaneProps) {
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [highlightError, setHighlightError] = useState<string | null>(null);
+  const [highlightToast, setHighlightToast] = useState<{ kind: "saved" | "erased"; highlight: Highlight } | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
+  const undoPendingRef = useRef(false);
+  const deletingIdsRef = useRef(new Set<string>());
   const zoomPercent = Math.round(pane.zoom * 100);
   const zoomOptions = [...new Set([50, 75, 100, 125, 150, 200, zoomPercent])].sort((a, b) => a - b);
 
@@ -375,7 +398,6 @@ function WorkspacePane({ vaultRoot, pane, selected, draggedId, onSelect, onUpdat
     let active = true;
     let task: pdfjsLib.PDFDocumentLoadingTask | null = null;
     setPdfDoc(null);
-    setHighlights([]);
     setLoading(true);
     setError(null);
     async function load() {
@@ -390,9 +412,6 @@ function WorkspacePane({ vaultRoot, pane, selected, draggedId, onSelect, onUpdat
         if (!active) return;
         setPdfDoc(document);
         onUpdate({ page: Math.min(Math.max(pane.page, 1), document.numPages), numPages: document.numPages });
-        void invoke<Highlight[]>("list_highlights", { vaultRoot, relativePath: pane.node.relative_path })
-          .then((items) => { if (active) setHighlights(items); })
-          .catch(() => { /* Reading remains available when annotations cannot load. */ });
       } catch (cause: unknown) {
         if (active) setError(toUserFacingError(cause, "open this module"));
       } finally {
@@ -402,6 +421,80 @@ function WorkspacePane({ vaultRoot, pane, selected, draggedId, onSelect, onUpdat
     void load();
     return () => { active = false; void task?.destroy(); };
   }, [vaultRoot, pane.node.relative_path]);
+
+  useEffect(() => {
+    let active = true;
+    void invoke<Highlight[]>("list_highlights", { vaultRoot, relativePath: pane.node.relative_path })
+      .then((items) => { if (active) { setHighlights(items); setHighlightError(null); } })
+      .catch((cause: unknown) => { if (active) setHighlightError(toUserFacingError(cause, "load highlights")); });
+    return () => { active = false; };
+  }, [vaultRoot, pane.node.relative_path, highlightRevision]);
+
+  useEffect(() => () => { if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current); }, []);
+
+  function showHighlightToast(kind: "saved" | "erased", highlight: Highlight) {
+    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+    setHighlightToast({ kind, highlight });
+    toastTimerRef.current = window.setTimeout(() => setHighlightToast(null), 6000);
+  }
+
+  function clearHighlightToast() {
+    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+    setHighlightToast(null);
+  }
+
+  async function saveHighlight(pageNumber: number, rects: HighlightRect[]) {
+    const highlight: Highlight = { id: crypto.randomUUID(), page_number: pageNumber, color: pane.highlightColor, rects };
+    try {
+      await invoke("save_highlight", { vaultRoot, relativePath: pane.node.relative_path, highlight });
+      setHighlights((current) => [...current, highlight]);
+      setHighlightError(null);
+      showHighlightToast("saved", highlight);
+      onHighlightChanged();
+    } catch (cause: unknown) {
+      setHighlightError(toUserFacingError(cause, "save this highlight"));
+    }
+  }
+
+  async function eraseHighlight(id: string) {
+    if (deletingIdsRef.current.has(id)) return;
+    const highlight = highlights.find((item) => item.id === id);
+    if (!highlight) return;
+    deletingIdsRef.current.add(id);
+    try {
+      await invoke("delete_highlight", { vaultRoot, relativePath: pane.node.relative_path, id });
+      setHighlights((current) => current.filter((item) => item.id !== id));
+      setHighlightError(null);
+      showHighlightToast("erased", highlight);
+      onHighlightChanged();
+    } catch (cause: unknown) {
+      setHighlightError(toUserFacingError(cause, "erase this highlight"));
+    } finally {
+      deletingIdsRef.current.delete(id);
+    }
+  }
+
+  async function undoHighlight() {
+    if (!highlightToast || undoPendingRef.current) return;
+    undoPendingRef.current = true;
+    const { kind, highlight } = highlightToast;
+    try {
+      if (kind === "saved") {
+        await invoke("delete_highlight", { vaultRoot, relativePath: pane.node.relative_path, id: highlight.id });
+        setHighlights((current) => current.filter((item) => item.id !== highlight.id));
+      } else {
+        await invoke("save_highlight", { vaultRoot, relativePath: pane.node.relative_path, highlight });
+        setHighlights((current) => [...current.filter((item) => item.id !== highlight.id), highlight]);
+      }
+      setHighlightError(null);
+      clearHighlightToast();
+      onHighlightChanged();
+    } catch (cause: unknown) {
+      setHighlightError(toUserFacingError(cause, "undo this highlight change"));
+    } finally {
+      undoPendingRef.current = false;
+    }
+  }
 
   const canMove = draggedId && draggedId !== pane.id;
 
@@ -450,15 +543,37 @@ function WorkspacePane({ vaultRoot, pane, selected, draggedId, onSelect, onUpdat
       </select>
       <button type="button" onClick={() => onUpdate({ viewMode: FILTER_ORDER[(FILTER_ORDER.indexOf(pane.viewMode) + 1) % FILTER_ORDER.length] })}
         aria-label={`Cycle reading filter for ${pane.node.name}`} title="Next reading filter (D)">Filter</button>
+      <button type="button" onClick={() => onUpdate({ highlightEnabled: !pane.highlightEnabled, erasingHighlights: false })}
+        disabled={loading || !!error || !pdfDoc} aria-pressed={pane.highlightEnabled}
+        aria-label={`Highlight in ${pane.node.name}`} aria-keyshortcuts="H" title="Highlight (H)">Highlight</button>
     </div>
+    {pane.highlightEnabled && pdfDoc && !loading && !error && <div className="workspace-highlight-palette" role="group" aria-label={`Highlight controls for ${pane.node.name}`}>
+      <span>{pane.erasingHighlights ? "Click a highlight to erase" : "Drag over text or a page area"}</span>
+      <div className="workspace-highlight-colors" role="group" aria-label="Highlight colors">
+        {HIGHLIGHT_COLORS.map((color) => <button key={color.id} type="button" className="workspace-highlight-swatch" title={color.label}
+          aria-label={`${color.label} highlight`} aria-pressed={!pane.erasingHighlights && pane.highlightColor === color.id}
+          onClick={() => { localStorage.setItem("syllex_highlight_color", color.id); onUpdate({ highlightColor: color.id, erasingHighlights: false }); }}>
+          <span style={{ backgroundColor: color.swatch }} aria-hidden="true" />
+        </button>)}
+        <button type="button" aria-pressed={pane.erasingHighlights} onClick={() => onUpdate({ erasingHighlights: true })}>Erase</button>
+      </div>
+      <button type="button" onClick={() => onUpdate({ highlightEnabled: false, erasingHighlights: false })}>Done</button>
+    </div>}
     <div className="workspace-pane-reading">
+      {(highlightError || highlightToast) && <div className="workspace-highlight-feedback">
+        {highlightError && <p className="workspace-highlight-error" role="alert">{highlightError}</p>}
+        {highlightToast && <div className="workspace-highlight-toast" role="status">
+          Highlight {highlightToast.kind === "saved" ? "saved" : "erased"}
+          <button type="button" onClick={() => { void undoHighlight(); }}>Undo</button>
+        </div>}
+      </div>}
       {loading && <p className="workspace-pane-message" role="status">Loading module…</p>}
       {error && <p className="workspace-pane-message error" role="alert">{error}</p>}
       {!loading && !error && pdfDoc && <PdfJsViewer
         pdfDoc={pdfDoc} currentPage={pane.page} zoom={pane.zoom} isFitWidth={pane.fitWidth} isFitHeight={pane.fitHeight}
         continuous={pane.continuous} viewMode={pane.viewMode} onPageChange={(page) => onUpdate({ page })}
-        highlights={highlights} highlightEnabled={false} erasingHighlights={false} highlightColor="yellow"
-        onCreateHighlight={() => {}} onEraseHighlight={() => {}} focusHighlight={null}
+        highlights={highlights} highlightEnabled={pane.highlightEnabled} erasingHighlights={pane.erasingHighlights} highlightColor={pane.highlightColor}
+        onCreateHighlight={(page, rects) => { void saveHighlight(page, rects); }} onEraseHighlight={(id) => { void eraseHighlight(id); }} focusHighlight={null}
         sidebarVisible={false} sidebarWidth={0} sidebarDock="left"
         onScaleChange={(zoom) => { if (!pane.fitWidth && !pane.fitHeight) onUpdate({ zoom }); }}
       />}
