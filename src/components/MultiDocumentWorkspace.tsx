@@ -8,7 +8,7 @@ import type { VaultNode } from "../types/vault";
 import type { WorkspacePaneState, WorkspaceState } from "../types/workspace";
 import { minimumLayoutSize, movePane, paneIds, paneRects, removePane, type WorkspaceSide } from "../utils/workspaceLayout";
 import { toUserFacingError } from "../utils/userFacingError";
-import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, PlusIcon } from "./Icons";
+import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon, CloseIcon, FileIcon, FolderIcon, PlusIcon } from "./Icons";
 import "./PdfViewer.css";
 import "./MultiDocumentWorkspace.css";
 
@@ -19,11 +19,15 @@ const SIDES: { value: WorkspaceSide; label: string }[] = [
   { value: "top", label: "Above" },
 ];
 
-function readableModules(nodes: VaultNode[]): VaultNode[] {
-  return nodes.flatMap((node) => {
-    if (node.node_type === "Folder") return readableModules(node.children);
-    return node.node_type.File === "Md" ? [] : [node];
-  });
+function pickerTree(nodes: VaultNode[], query: string): VaultNode[] {
+  const search = query.trim().toLocaleLowerCase();
+  function visit(node: VaultNode, parentMatches: boolean): VaultNode | null {
+    const matches = parentMatches || `${node.name} ${node.relative_path}`.toLocaleLowerCase().includes(search);
+    if (node.node_type !== "Folder") return node.node_type.File !== "Md" && matches ? node : null;
+    const children = node.children.map((child) => visit(child, matches)).filter((child): child is VaultNode => child !== null);
+    return children.length ? { ...node, children } : null;
+  }
+  return nodes.map((node) => visit(node, false)).filter((node): node is VaultNode => node !== null);
 }
 
 interface MultiDocumentWorkspaceProps {
@@ -45,12 +49,13 @@ export function MultiDocumentWorkspace({
   const [moveTarget, setMoveTarget] = useState("");
   const [moveSide, setMoveSide] = useState<WorkspaceSide>("right");
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => new Set());
   const dialogRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
   const pickerOpenRef = useRef(pickerOpen);
   onCloseRef.current = onClose;
   pickerOpenRef.current = pickerOpen;
-  const modules = useMemo(() => readableModules(allNodes), [allNodes]);
+  const visibleTree = useMemo(() => pickerTree(allNodes, query), [allNodes, query]);
   const ids = paneIds(state.layout);
   const rects = paneRects(state.layout);
   const minimumSize = minimumLayoutSize(state.layout);
@@ -58,8 +63,37 @@ export function MultiDocumentWorkspace({
     ? state.selectedPaneId : ids[0] ?? null;
   const selectedPane = selectedId ? state.panes[selectedId] : null;
   const moveTargets = ids.filter((id) => id !== selectedId);
-  const filteredModules = modules.filter((node) =>
-    `${node.name} ${node.relative_path}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
+
+  function chooseModule(node: VaultNode) {
+    onAddNode(node, selectedId, addSide);
+    setPickerOpen(false);
+    setQuery("");
+  }
+
+  function renderPickerNode(node: VaultNode): React.ReactNode {
+    if (node.node_type === "Folder") {
+      const expanded = Boolean(query.trim()) || expandedFolders.has(node.relative_path);
+      return <li key={node.relative_path}>
+        <button type="button" className="workspace-picker-row folder" aria-expanded={expanded} disabled={Boolean(query.trim())}
+          onClick={() => setExpandedFolders((previous) => {
+            const next = new Set(previous);
+            if (next.has(node.relative_path)) next.delete(node.relative_path);
+            else next.add(node.relative_path);
+            return next;
+          })}>
+          <ChevronDownIcon size={12} className={expanded ? "" : "collapsed"} />
+          <FolderIcon size={15} /> <span>{node.name}</span>
+        </button>
+        {expanded && <ul>{node.children.map(renderPickerNode)}</ul>}
+      </li>;
+    }
+    return <li key={node.relative_path}>
+      <button type="button" className="workspace-picker-row file" title={node.relative_path}
+        onClick={() => chooseModule(node)}>
+        <FileIcon size={15} /> <span>{node.name}</span><small>{node.node_type.File.toUpperCase()}</small>
+      </button>
+    </li>;
+  }
 
   useEffect(() => {
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -160,29 +194,24 @@ export function MultiDocumentWorkspace({
             {SIDES.map((side) => <option key={side.value} value={side.value}>{side.label}</option>)}
           </select>
         </label>
-        <button type="button" className="workspace-toolbar-btn" onClick={() => setPickerOpen((open) => !open)} aria-expanded={pickerOpen}>
-          <PlusIcon size={14} /> Add module
-        </button>
+        <div className="workspace-picker-anchor">
+          <button type="button" className="workspace-toolbar-btn" onClick={() => setPickerOpen((open) => !open)} aria-expanded={pickerOpen} aria-controls="workspace-module-picker">
+            <PlusIcon size={14} /> Add module
+          </button>
+          {pickerOpen && <section id="workspace-module-picker" className="workspace-picker" aria-label="Choose a module">
+            <label htmlFor="workspace-module-search">Choose a PDF or presentation</label>
+            <input id="workspace-module-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search modules" autoFocus />
+            <div className="workspace-picker-results">
+              {visibleTree.length === 0 ? <p>No matching readable modules.</p> : <ul>{visibleTree.map(renderPickerNode)}</ul>}
+            </div>
+          </section>}
+        </div>
         <button type="button" className="workspace-toolbar-btn" disabled={!selectedPane}
           onClick={() => selectedPane && onAddNode(selectedPane.node, selectedId, addSide, selectedPane.page)}>
           Add view of selected
         </button>
       </div>
     </header>
-
-    {pickerOpen && <section className="workspace-picker" aria-label="Choose a module">
-      <label htmlFor="workspace-module-search">Choose a PDF or presentation</label>
-      <input id="workspace-module-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search modules" autoFocus />
-      <div className="workspace-picker-results">
-        {filteredModules.length === 0 ? <p>No matching readable modules.</p> : filteredModules.slice(0, 100).map((node) =>
-          <button type="button" key={node.relative_path} onClick={() => {
-            onAddNode(node, selectedId, addSide);
-            setPickerOpen(false);
-            setQuery("");
-          }}><strong>{node.name}</strong><small>{node.relative_path}</small></button>)}
-        {filteredModules.length > 100 && <p>Showing 100 of {filteredModules.length} matches. Refine the search to find more.</p>}
-      </div>
-    </section>}
 
     {ids.length > 1 && selectedPane && <div className="workspace-arrange-bar">
       <span>Move <strong>{selectedPane.node.name}</strong> next to</span>

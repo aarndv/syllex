@@ -72,7 +72,15 @@
 
 .multi-workspace-actions label { display: inline-flex; align-items: center; gap: 0.35rem; }
 .multi-workspace-actions select,
-.workspace-arrange-bar select { min-height: 30px; padding: 0.2rem 0.35rem; }
+.workspace-arrange-bar select,
+.multi-workspace-actions .workspace-toolbar-btn,
+.workspace-arrange-bar .workspace-toolbar-btn {
+  box-sizing: border-box;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 0.6rem;
+}
+.workspace-picker-anchor { position: relative; }
 
 .workspace-arrange-bar {
   flex-wrap: wrap;
@@ -87,8 +95,8 @@
 .workspace-picker {
   position: absolute;
   z-index: 20;
-  top: 3.7rem;
-  right: 0.8rem;
+  top: calc(100% + 0.45rem);
+  right: 0;
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
@@ -110,16 +118,24 @@
   background: #fbf9f4;
 }
 
-.workspace-picker-results { overflow: auto; display: flex; flex-direction: column; gap: 0.25rem; }
-.workspace-picker-results button {
+.workspace-picker-results { overflow: auto; min-height: 0; }
+.workspace-picker-results ul { list-style: none; margin: 0; padding: 0; }
+.workspace-picker-results ul ul { margin-left: 0.9rem; border-left: 1px solid #597360; padding-left: 0.3rem; }
+.workspace-picker-results li { min-width: 0; }
+.workspace-picker-results .workspace-picker-row {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.1rem;
-  padding: 0.4rem 0.5rem;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  min-height: 30px;
+  padding: 0.3rem 0.45rem;
   text-align: left;
 }
-.workspace-picker-results small { max-width: 100%; color: #c9d9cd; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-picker-row span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-picker-row svg { flex-shrink: 0; }
+.workspace-picker-row .collapsed { transform: rotate(-90deg); }
+.workspace-picker-row small { color: #c9d9cd; font-size: 0.7rem; }
+.workspace-picker-row.folder:disabled { opacity: 1; }
 .workspace-picker-results p { margin: 0.5rem 0; }
 
 .multi-workspace-content { flex: 1; min-height: 0; min-width: 0; display: flex; overflow: auto; padding: 5px; }
@@ -201,6 +217,7 @@ html[data-theme="light"] .workspace-empty { color: #253328; }
 
 @media (max-width: 720px) {
   .multi-workspace-header { align-items: flex-start; }
+  .workspace-picker { position: fixed; top: 7rem; left: 0.8rem; right: 0.8rem; width: auto; max-height: calc(100vh - 8rem); }
   .workspace-pane-actions button { font-size: 0.7rem; }
   .workspace-drag-tip { display: none; }
 }
