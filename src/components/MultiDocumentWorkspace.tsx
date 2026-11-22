@@ -273,8 +273,14 @@ export function MultiDocumentWorkspace({
         [pane.node.relative_path]: (previous[pane.node.relative_path] ?? 0) + 1 }))}
       selected={selectedId === pane.id}
       draggedId={draggedId}
-      onSelect={() => onChange((previous) => previous.selectedPaneId === pane.id
-        ? previous : { ...previous, selectedPaneId: pane.id })}
+      onSelect={() => onChange((previous) => {
+        if (previous.selectedPaneId === pane.id) return previous;
+        const panes = { ...previous.panes };
+        for (const [id, current] of Object.entries(panes)) {
+          if (current.highlightEnabled) panes[id] = { ...current, highlightEnabled: false, erasingHighlights: false };
+        }
+        return { ...previous, panes, selectedPaneId: pane.id };
+      })}
       onUpdate={(patch) => updatePane(pane.id, patch)}
       onClose={() => closePane(pane.id)}
       onDuplicate={() => onAddNode(pane.node, pane.id, "right", pane.page)}
@@ -320,6 +326,29 @@ export function MultiDocumentWorkspace({
           onClick={() => selectedPane && onAddNode(selectedPane.node, selectedId, addSide, selectedPane.page)}>
           Add view of selected
         </button>
+        <div className="workspace-highlight-anchor">
+          <button type="button" className="workspace-toolbar-btn" disabled={!selectedPane?.numPages}
+            aria-label={selectedPane ? `Highlight in ${selectedPane.node.name}` : "Highlight selected view"}
+            aria-keyshortcuts="H" aria-pressed={selectedPane?.highlightEnabled ?? false}
+            aria-expanded={selectedPane?.highlightEnabled ?? false} aria-controls="workspace-highlight-menu"
+            onClick={() => selectedId && updatePane(selectedId, {
+              highlightEnabled: !selectedPane?.highlightEnabled, erasingHighlights: false,
+            })}>Highlight</button>
+          {selectedPane?.highlightEnabled && <div id="workspace-highlight-menu" className="workspace-highlight-palette" role="group"
+            aria-label={`Highlight controls for ${selectedPane.node.name}`}>
+            <span>{selectedPane.erasingHighlights ? "Click a highlight to erase" : "Drag over text or a page area"}</span>
+            <div className="workspace-highlight-colors" role="group" aria-label="Highlight colors">
+              {HIGHLIGHT_COLORS.map((color) => <button key={color.id} type="button" className="workspace-highlight-swatch" title={color.label}
+                aria-label={`${color.label} highlight`} aria-pressed={!selectedPane.erasingHighlights && selectedPane.highlightColor === color.id}
+                onClick={() => { localStorage.setItem("syllex_highlight_color", color.id); updatePane(selectedPane.id, { highlightColor: color.id, erasingHighlights: false }); }}>
+                <span style={{ backgroundColor: color.swatch }} aria-hidden="true" />
+              </button>)}
+              <button type="button" aria-pressed={selectedPane.erasingHighlights}
+                onClick={() => updatePane(selectedPane.id, { erasingHighlights: true })}>Erase</button>
+            </div>
+            <button type="button" onClick={() => updatePane(selectedPane.id, { highlightEnabled: false, erasingHighlights: false })}>Done</button>
+          </div>}
+        </div>
       </div>
     </header>
 
@@ -543,22 +572,7 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
       </select>
       <button type="button" onClick={() => onUpdate({ viewMode: FILTER_ORDER[(FILTER_ORDER.indexOf(pane.viewMode) + 1) % FILTER_ORDER.length] })}
         aria-label={`Cycle reading filter for ${pane.node.name}`} title="Next reading filter (D)">Filter</button>
-      <button type="button" onClick={() => onUpdate({ highlightEnabled: !pane.highlightEnabled, erasingHighlights: false })}
-        disabled={loading || !!error || !pdfDoc} aria-pressed={pane.highlightEnabled}
-        aria-label={`Highlight in ${pane.node.name}`} aria-keyshortcuts="H" title="Highlight (H)">Highlight</button>
     </div>
-    {pane.highlightEnabled && pdfDoc && !loading && !error && <div className="workspace-highlight-palette" role="group" aria-label={`Highlight controls for ${pane.node.name}`}>
-      <span>{pane.erasingHighlights ? "Click a highlight to erase" : "Drag over text or a page area"}</span>
-      <div className="workspace-highlight-colors" role="group" aria-label="Highlight colors">
-        {HIGHLIGHT_COLORS.map((color) => <button key={color.id} type="button" className="workspace-highlight-swatch" title={color.label}
-          aria-label={`${color.label} highlight`} aria-pressed={!pane.erasingHighlights && pane.highlightColor === color.id}
-          onClick={() => { localStorage.setItem("syllex_highlight_color", color.id); onUpdate({ highlightColor: color.id, erasingHighlights: false }); }}>
-          <span style={{ backgroundColor: color.swatch }} aria-hidden="true" />
-        </button>)}
-        <button type="button" aria-pressed={pane.erasingHighlights} onClick={() => onUpdate({ erasingHighlights: true })}>Erase</button>
-      </div>
-      <button type="button" onClick={() => onUpdate({ highlightEnabled: false, erasingHighlights: false })}>Done</button>
-    </div>}
     <div className="workspace-pane-reading">
       {(highlightError || highlightToast) && <div className="workspace-highlight-feedback">
         {highlightError && <p className="workspace-highlight-error" role="alert">{highlightError}</p>}
