@@ -9,6 +9,7 @@ export interface WorkspacePaneState {
   numPages?: number;
   zoom: number;
   fitWidth: boolean;
+  fitHeight: boolean;
   continuous: boolean;
   viewMode: DocumentViewMode;
 }

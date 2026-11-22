@@ -163,9 +163,9 @@ export function MultiDocumentWorkspace({
       let patch: Partial<WorkspacePaneState> | null = null;
       if (!modifier && event.key === "ArrowLeft") patch = { page: Math.max(1, pane.page - 1) };
       else if (!modifier && event.key === "ArrowRight") patch = { page: Math.min(pane.numPages ?? pane.page, pane.page + 1) };
-      else if (event.key === "+" || event.key === "=" || event.code === "NumpadAdd") patch = { zoom: Math.min(MAX_ZOOM, Math.max(pane.zoom + 0.05, Math.floor(pane.zoom * 10 + 1.0001) / 10)), fitWidth: false };
-      else if (event.key === "-" || event.key === "_" || event.code === "NumpadSubtract") patch = { zoom: Math.max(MIN_ZOOM, Math.min(pane.zoom - 0.05, Math.ceil(pane.zoom * 10 - 1.0001) / 10)), fitWidth: false };
-      else if (modifier && (event.key === "0" || event.code === "Numpad0")) patch = { fitWidth: !pane.fitWidth, zoom: pane.fitWidth ? 1 : pane.zoom };
+      else if (event.key === "+" || event.key === "=" || event.code === "NumpadAdd") patch = { zoom: Math.min(MAX_ZOOM, Math.max(pane.zoom + 0.05, Math.floor(pane.zoom * 10 + 1.0001) / 10)), fitWidth: false, fitHeight: false };
+      else if (event.key === "-" || event.key === "_" || event.code === "NumpadSubtract") patch = { zoom: Math.max(MIN_ZOOM, Math.min(pane.zoom - 0.05, Math.ceil(pane.zoom * 10 - 1.0001) / 10)), fitWidth: false, fitHeight: false };
+      else if (modifier && (event.key === "0" || event.code === "Numpad0")) patch = { fitWidth: !pane.fitWidth, fitHeight: false, zoom: pane.fitWidth ? 1 : pane.zoom };
       else if (!modifier && key === "d") patch = { viewMode: FILTER_ORDER[(FILTER_ORDER.indexOf(pane.viewMode) + 1) % FILTER_ORDER.length] };
       else if (!modifier && key === "c") patch = { continuous: !pane.continuous };
       if (patch) {
@@ -428,16 +428,21 @@ function WorkspacePane({ vaultRoot, pane, selected, draggedId, onSelect, onUpdat
       <button type="button" onClick={() => onUpdate({ continuous: !pane.continuous })} aria-pressed={pane.continuous} title="Toggle continuous scroll (C)">
         {pane.continuous ? "Continuous" : "Single page"}
       </button>
-      <button type="button" onClick={() => onUpdate({ zoom: Math.max(MIN_ZOOM, Math.round((pane.zoom - 0.1) * 100) / 100), fitWidth: false })}
+      <button type="button" onClick={() => onUpdate({ zoom: Math.max(MIN_ZOOM, Math.round((pane.zoom - 0.1) * 100) / 100), fitWidth: false, fitHeight: false })}
         disabled={pane.zoom <= MIN_ZOOM} aria-label={`Zoom out of ${pane.node.name}`} title="Zoom out (-)">−</button>
-      <select aria-label={`Zoom for ${pane.node.name}`} value={pane.fitWidth ? "fit" : String(zoomPercent)}
-        onChange={(event) => event.target.value === "fit" ? onUpdate({ fitWidth: true }) : onUpdate({ fitWidth: false, zoom: Number(event.target.value) / 100 })}>
-        <option value="fit">Fit width</option>
+      <select aria-label={`Zoom for ${pane.node.name}`} value={pane.fitHeight ? "fit-height" : pane.fitWidth ? "fit-width" : String(zoomPercent)}
+        onChange={(event) => {
+          if (event.target.value === "fit-width") onUpdate({ fitWidth: true, fitHeight: false });
+          else if (event.target.value === "fit-height") onUpdate({ fitWidth: false, fitHeight: true });
+          else onUpdate({ fitWidth: false, fitHeight: false, zoom: Number(event.target.value) / 100 });
+        }}>
+        <option value="fit-width">Fit width</option>
+        <option value="fit-height">Fit height</option>
         {zoomOptions.map((value) => <option key={value} value={value}>{value}%</option>)}
       </select>
-      <button type="button" onClick={() => onUpdate({ zoom: Math.min(MAX_ZOOM, Math.round((pane.zoom + 0.1) * 100) / 100), fitWidth: false })}
+      <button type="button" onClick={() => onUpdate({ zoom: Math.min(MAX_ZOOM, Math.round((pane.zoom + 0.1) * 100) / 100), fitWidth: false, fitHeight: false })}
         disabled={pane.zoom >= MAX_ZOOM} aria-label={`Zoom in to ${pane.node.name}`} title="Zoom in (+)">+</button>
-      <button type="button" onClick={() => onUpdate({ fitWidth: !pane.fitWidth, zoom: pane.fitWidth ? 1 : pane.zoom })}
+      <button type="button" onClick={() => onUpdate({ fitWidth: !pane.fitWidth, fitHeight: false, zoom: pane.fitWidth ? 1 : pane.zoom })}
         aria-pressed={pane.fitWidth} title="Fit width (Ctrl+0)">Fit width</button>
       <select aria-label={`Reading filter for ${pane.node.name}`} value={pane.viewMode}
         onChange={(event) => onUpdate({ viewMode: event.target.value as DocumentViewMode })}>
@@ -450,12 +455,12 @@ function WorkspacePane({ vaultRoot, pane, selected, draggedId, onSelect, onUpdat
       {loading && <p className="workspace-pane-message" role="status">Loading module…</p>}
       {error && <p className="workspace-pane-message error" role="alert">{error}</p>}
       {!loading && !error && pdfDoc && <PdfJsViewer
-        pdfDoc={pdfDoc} currentPage={pane.page} zoom={pane.zoom} isFitWidth={pane.fitWidth}
+        pdfDoc={pdfDoc} currentPage={pane.page} zoom={pane.zoom} isFitWidth={pane.fitWidth} isFitHeight={pane.fitHeight}
         continuous={pane.continuous} viewMode={pane.viewMode} onPageChange={(page) => onUpdate({ page })}
         highlights={highlights} highlightEnabled={false} erasingHighlights={false} highlightColor="yellow"
         onCreateHighlight={() => {}} onEraseHighlight={() => {}} focusHighlight={null}
         sidebarVisible={false} sidebarWidth={0} sidebarDock="left"
-        onScaleChange={(zoom) => { if (!pane.fitWidth) onUpdate({ zoom }); }}
+        onScaleChange={(zoom) => { if (!pane.fitWidth && !pane.fitHeight) onUpdate({ zoom }); }}
       />}
       {canMove && <div className="workspace-drop-zones">
         {SIDES.map((side) => <div key={side.value} className={`workspace-drop-zone side-${side.value}`}
