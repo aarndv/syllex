@@ -529,50 +529,52 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
 
   return <section className={`workspace-pane ${selected ? "selected" : ""}`} onPointerDown={onSelect} onFocusCapture={onSelect} aria-label={`View of ${pane.node.name}`}>
     <header className="workspace-pane-header">
-      <span className="workspace-drag-handle" draggable onDragStart={onDragStart} onDragEnd={onDragEnd}
-        title="Drag onto an edge of another view" aria-label={`Drag ${pane.node.name} to arrange`}>
-        <GripIcon size={16} />
-      </span>
-      <strong title={pane.node.relative_path}>{pane.node.name}</strong>
-      <div className="workspace-pane-actions">
-        <button type="button" onClick={onDuplicate} aria-label={`Duplicate view of ${pane.node.name}`} title="Open another view of this module"><DuplicateIcon size={15} /></button>
-        <button type="button" onClick={onOpenSingle} aria-label={`Open ${pane.node.name} in full reader`} title="Open in full reader"><ExpandIcon size={15} /></button>
-        <button type="button" onClick={onClose} aria-label={`Close view of ${pane.node.name}`} title="Close view"><CloseIcon size={13} /></button>
+      <div className="workspace-pane-identity">
+        <span className="workspace-drag-handle" draggable onDragStart={onDragStart} onDragEnd={onDragEnd}
+          title="Drag onto an edge of another view" aria-label={`Drag ${pane.node.name} to arrange`}>
+          <GripIcon size={16} />
+        </span>
+        <strong title={pane.node.relative_path}>{pane.node.name}</strong>
+        <div className="workspace-pane-actions">
+          <button type="button" onClick={onDuplicate} aria-label={`Duplicate view of ${pane.node.name}`} title="Open another view of this module"><DuplicateIcon size={15} /></button>
+          <button type="button" onClick={onOpenSingle} aria-label={`Open ${pane.node.name} in full reader`} title="Open in full reader"><ExpandIcon size={15} /></button>
+          <button type="button" onClick={onClose} aria-label={`Close view of ${pane.node.name}`} title="Close view"><CloseIcon size={13} /></button>
+        </div>
+      </div>
+      <div className="workspace-pane-controls">
+        <div className="workspace-page-navigation" data-continuous={pane.continuous}>
+          <button type="button" onClick={() => onUpdate({ page: Math.max(1, pane.page - 1) })} disabled={pane.continuous || loading || pane.page <= 1} aria-label={`Previous page of ${pane.node.name}`} title="Previous page (Left)"><ChevronLeftIcon size={14} /></button>
+          <span title={`Page ${pane.page} of ${pdfDoc?.numPages ?? "unknown"}`}>
+            <span aria-hidden="true">p{pane.page}/{pdfDoc?.numPages ?? "–"}</span>
+            <span className="workspace-sr-only">Page {pane.page} of {pdfDoc?.numPages ?? "unknown"}</span>
+          </span>
+          <button type="button" onClick={() => onUpdate({ page: Math.min(pdfDoc?.numPages ?? pane.page, pane.page + 1) })} disabled={pane.continuous || loading || !pdfDoc || pane.page >= pdfDoc.numPages} aria-label={`Next page of ${pane.node.name}`} title="Next page (Right)"><ChevronRightIcon size={14} /></button>
+        </div>
+        <button type="button" onClick={() => onUpdate({ continuous: !pane.continuous })} aria-pressed={pane.continuous}
+          aria-label={pane.continuous ? `Switch ${pane.node.name} to single-page view` : `Switch ${pane.node.name} to continuous scroll`}
+          title={pane.continuous ? "Continuous scroll; switch to single page (C)" : "Single page; switch to continuous scroll (C)"}>
+          {pane.continuous ? <ContinuousModeIcon size={16} /> : <PageModeIcon size={16} />}
+        </button>
+        <button type="button" onClick={() => onUpdate({ zoom: Math.max(MIN_ZOOM, Math.round((pane.zoom - 0.1) * 100) / 100), fitWidth: false, fitHeight: false })}
+          disabled={pane.zoom <= MIN_ZOOM} aria-label={`Zoom out of ${pane.node.name}`} title="Zoom out (-)">−</button>
+        <select aria-label={`Zoom for ${pane.node.name}`} value={pane.fitHeight ? "fit-height" : pane.fitWidth ? "fit-width" : String(zoomPercent)}
+          onChange={(event) => {
+            if (event.target.value === "fit-width") onUpdate({ fitWidth: true, fitHeight: false });
+            else if (event.target.value === "fit-height") onUpdate({ fitWidth: false, fitHeight: true });
+            else onUpdate({ fitWidth: false, fitHeight: false, zoom: Number(event.target.value) / 100 });
+          }}>
+          <option value="fit-width">Fit width</option>
+          <option value="fit-height">Fit height</option>
+          {zoomOptions.map((value) => <option key={value} value={value}>{value}%</option>)}
+        </select>
+        <button type="button" onClick={() => onUpdate({ zoom: Math.min(MAX_ZOOM, Math.round((pane.zoom + 0.1) * 100) / 100), fitWidth: false, fitHeight: false })}
+          disabled={pane.zoom >= MAX_ZOOM} aria-label={`Zoom in to ${pane.node.name}`} title="Zoom in (+)">+</button>
+        <select aria-label={`Reading filter for ${pane.node.name}`} title={VIEW_MODE_LABELS[pane.viewMode]} value={pane.viewMode}
+          onChange={(event) => onUpdate({ viewMode: event.target.value as DocumentViewMode })}>
+          {Object.entries(VIEW_MODE_SHORT_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </select>
       </div>
     </header>
-    <div className="workspace-pane-controls">
-      <div className="workspace-page-navigation" data-continuous={pane.continuous}>
-        <button type="button" onClick={() => onUpdate({ page: Math.max(1, pane.page - 1) })} disabled={pane.continuous || loading || pane.page <= 1} aria-label={`Previous page of ${pane.node.name}`} title="Previous page (Left)"><ChevronLeftIcon size={14} /></button>
-        <span title={`Page ${pane.page} of ${pdfDoc?.numPages ?? "unknown"}`}>
-          <span aria-hidden="true">p{pane.page}/{pdfDoc?.numPages ?? "–"}</span>
-          <span className="workspace-sr-only">Page {pane.page} of {pdfDoc?.numPages ?? "unknown"}</span>
-        </span>
-        <button type="button" onClick={() => onUpdate({ page: Math.min(pdfDoc?.numPages ?? pane.page, pane.page + 1) })} disabled={pane.continuous || loading || !pdfDoc || pane.page >= pdfDoc.numPages} aria-label={`Next page of ${pane.node.name}`} title="Next page (Right)"><ChevronRightIcon size={14} /></button>
-      </div>
-      <button type="button" onClick={() => onUpdate({ continuous: !pane.continuous })} aria-pressed={pane.continuous}
-        aria-label={pane.continuous ? `Switch ${pane.node.name} to single-page view` : `Switch ${pane.node.name} to continuous scroll`}
-        title={pane.continuous ? "Continuous scroll; switch to single page (C)" : "Single page; switch to continuous scroll (C)"}>
-        {pane.continuous ? <ContinuousModeIcon size={16} /> : <PageModeIcon size={16} />}
-      </button>
-      <button type="button" onClick={() => onUpdate({ zoom: Math.max(MIN_ZOOM, Math.round((pane.zoom - 0.1) * 100) / 100), fitWidth: false, fitHeight: false })}
-        disabled={pane.zoom <= MIN_ZOOM} aria-label={`Zoom out of ${pane.node.name}`} title="Zoom out (-)">−</button>
-      <select aria-label={`Zoom for ${pane.node.name}`} value={pane.fitHeight ? "fit-height" : pane.fitWidth ? "fit-width" : String(zoomPercent)}
-        onChange={(event) => {
-          if (event.target.value === "fit-width") onUpdate({ fitWidth: true, fitHeight: false });
-          else if (event.target.value === "fit-height") onUpdate({ fitWidth: false, fitHeight: true });
-          else onUpdate({ fitWidth: false, fitHeight: false, zoom: Number(event.target.value) / 100 });
-        }}>
-        <option value="fit-width">Fit width</option>
-        <option value="fit-height">Fit height</option>
-        {zoomOptions.map((value) => <option key={value} value={value}>{value}%</option>)}
-      </select>
-      <button type="button" onClick={() => onUpdate({ zoom: Math.min(MAX_ZOOM, Math.round((pane.zoom + 0.1) * 100) / 100), fitWidth: false, fitHeight: false })}
-        disabled={pane.zoom >= MAX_ZOOM} aria-label={`Zoom in to ${pane.node.name}`} title="Zoom in (+)">+</button>
-      <select aria-label={`Reading filter for ${pane.node.name}`} title={VIEW_MODE_LABELS[pane.viewMode]} value={pane.viewMode}
-        onChange={(event) => onUpdate({ viewMode: event.target.value as DocumentViewMode })}>
-        {Object.entries(VIEW_MODE_SHORT_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-      </select>
-    </div>
     <div className="workspace-pane-reading">
       {(highlightError || highlightToast) && <div className="workspace-highlight-feedback">
         {highlightError && <p className="workspace-highlight-error" role="alert">{highlightError}</p>}

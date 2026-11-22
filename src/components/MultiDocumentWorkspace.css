@@ -174,7 +174,14 @@
   border-bottom: 1px solid #365640;
   background: #1b3627;
 }
-.workspace-pane-header > strong { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-pane-identity {
+  display: flex;
+  flex: 1 1 220px;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.workspace-pane-identity > strong { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .workspace-drag-handle {
   box-sizing: border-box;
   display: inline-flex;
@@ -202,11 +209,10 @@
 }
 
 .workspace-pane-controls {
-  flex-shrink: 0;
+  flex: 0 1 auto;
   flex-wrap: wrap;
   gap: 0.3rem;
-  padding: 0.3rem 0.4rem;
-  border-bottom: 1px solid #365640;
+  max-width: 100%;
 }
 .workspace-page-navigation {
   display: grid;
