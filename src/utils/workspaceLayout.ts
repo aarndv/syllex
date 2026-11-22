@@ -4,6 +4,36 @@ export type WorkspaceLayout =
   | { kind: "pane"; paneId: string }
   | { kind: "split"; axis: "row" | "column"; first: WorkspaceLayout; second: WorkspaceLayout };
 
+export interface WorkspaceRect { left: number; top: number; width: number; height: number }
+
+export function paneRects(layout: WorkspaceLayout | null): Record<string, WorkspaceRect> {
+  const rects: Record<string, WorkspaceRect> = {};
+  function visit(node: WorkspaceLayout, rect: WorkspaceRect) {
+    if (node.kind === "pane") {
+      rects[node.paneId] = rect;
+      return;
+    }
+    if (node.axis === "row") {
+      visit(node.first, { ...rect, width: rect.width / 2 });
+      visit(node.second, { ...rect, left: rect.left + rect.width / 2, width: rect.width / 2 });
+    } else {
+      visit(node.first, { ...rect, height: rect.height / 2 });
+      visit(node.second, { ...rect, top: rect.top + rect.height / 2, height: rect.height / 2 });
+    }
+  }
+  if (layout) visit(layout, { left: 0, top: 0, width: 100, height: 100 });
+  return rects;
+}
+
+export function minimumLayoutSize(layout: WorkspaceLayout | null): { width: number; height: number } {
+  if (!layout || layout.kind === "pane") return { width: 190, height: 160 };
+  const first = minimumLayoutSize(layout.first);
+  const second = minimumLayoutSize(layout.second);
+  return layout.axis === "row"
+    ? { width: first.width + second.width, height: Math.max(first.height, second.height) }
+    : { width: Math.max(first.width, second.width), height: first.height + second.height };
+}
+
 export function paneIds(layout: WorkspaceLayout | null): string[] {
   if (!layout) return [];
   if (layout.kind === "pane") return [layout.paneId];

@@ -6,7 +6,7 @@ import { VIEW_MODE_LABELS, type DocumentViewMode } from "./PdfViewer";
 import type { Highlight } from "../types/highlight";
 import type { VaultNode } from "../types/vault";
 import type { WorkspacePaneState, WorkspaceState } from "../types/workspace";
-import { movePane, paneIds, removePane, type WorkspaceLayout, type WorkspaceSide } from "../utils/workspaceLayout";
+import { minimumLayoutSize, movePane, paneIds, paneRects, removePane, type WorkspaceSide } from "../utils/workspaceLayout";
 import { toUserFacingError } from "../utils/userFacingError";
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, PlusIcon } from "./Icons";
 import "./PdfViewer.css";
@@ -52,6 +52,8 @@ export function MultiDocumentWorkspace({
   pickerOpenRef.current = pickerOpen;
   const modules = useMemo(() => readableModules(allNodes), [allNodes]);
   const ids = paneIds(state.layout);
+  const rects = paneRects(state.layout);
+  const minimumSize = minimumLayoutSize(state.layout);
   const selectedId = state.selectedPaneId && ids.includes(state.selectedPaneId)
     ? state.selectedPaneId : ids[0] ?? null;
   const selectedPane = selectedId ? state.panes[selectedId] : null;
@@ -116,17 +118,13 @@ export function MultiDocumentWorkspace({
     setDraggedId(null);
   }
 
-  function renderLayout(layout: WorkspaceLayout): React.ReactNode {
-    if (layout.kind === "split") {
-      return <div className={`workspace-split axis-${layout.axis}`}>
-        {renderLayout(layout.first)}
-        {renderLayout(layout.second)}
-      </div>;
-    }
-    const pane = state.panes[layout.paneId];
-    if (!pane) return null;
-    return <WorkspacePane
-      key={pane.id}
+  function renderPane(id: string): React.ReactNode {
+    const pane = state.panes[id];
+    const rect = rects[id];
+    if (!pane || !rect) return null;
+    return <div key={id} className="workspace-pane-slot" style={{
+      left: `${rect.left}%`, top: `${rect.top}%`, width: `${rect.width}%`, height: `${rect.height}%`,
+    }}><WorkspacePane
       vaultRoot={vaultRoot}
       pane={pane}
       selected={selectedId === pane.id}
@@ -147,7 +145,7 @@ export function MultiDocumentWorkspace({
         const dragged = event.dataTransfer.getData("text/plain") || draggedId;
         if (dragged) arrange(dragged, pane.id, side);
       }}
-    />;
+    /></div>;
   }
 
   return <div ref={dialogRef} className="multi-workspace-overlay" role="dialog" aria-modal="true" aria-label="Document workspace">
@@ -200,7 +198,9 @@ export function MultiDocumentWorkspace({
     </div>}
 
     <div className="multi-workspace-content">
-      {state.layout ? renderLayout(state.layout) : <div className="workspace-empty">
+      {state.layout ? <div className="workspace-canvas" style={{
+        minWidth: `max(100%, ${minimumSize.width}px)`, minHeight: `max(100%, ${minimumSize.height}px)`,
+      }}>{ids.map(renderPane)}</div> : <div className="workspace-empty">
         <h2>No views open</h2>
         <p>Add a PDF or presentation to start reading modules together.</p>
         <button type="button" className="workspace-toolbar-btn" onClick={() => setPickerOpen(true)}>Choose a module</button>

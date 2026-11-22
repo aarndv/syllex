@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { movePane, paneIds, removePane, splitPane } from "../src/utils/workspaceLayout.ts";
+import { minimumLayoutSize, movePane, paneIds, paneRects, removePane, splitPane } from "../src/utils/workspaceLayout.ts";
 
 test("splits support rows, columns, and combined layouts", () => {
   let layout = splitPane(null, null, "a", "right");
@@ -28,4 +28,18 @@ test("closing a pane collapses its split and allows an empty workspace", () => {
   const layout = splitPane(splitPane(null, null, "a", "right"), "a", "b", "bottom");
   assert.deepEqual(paneIds(removePane(layout, "a")), ["b"]);
   assert.equal(removePane(removePane(layout, "a"), "b"), null);
+});
+
+test("mixed tiles have stable pane identities and nonoverlapping positions", () => {
+  let layout = splitPane(null, null, "a", "right");
+  layout = splitPane(layout, "a", "b", "right");
+  layout = splitPane(layout, "b", "c", "bottom");
+  assert.deepEqual(paneRects(layout), {
+    a: { left: 0, top: 0, width: 50, height: 100 },
+    b: { left: 50, top: 0, width: 50, height: 50 },
+    c: { left: 50, top: 50, width: 50, height: 50 },
+  });
+  assert.deepEqual(minimumLayoutSize(layout), { width: 380, height: 320 });
+  const moved = movePane(layout, "a", "c", "right");
+  assert.deepEqual(new Set(Object.keys(paneRects(moved))), new Set(["a", "b", "c"]));
 });

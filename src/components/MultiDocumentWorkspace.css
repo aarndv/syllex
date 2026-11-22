@@ -123,15 +123,13 @@
 .workspace-picker-results p { margin: 0.5rem 0; }
 
 .multi-workspace-content { flex: 1; min-height: 0; min-width: 0; display: flex; overflow: auto; padding: 5px; }
-.workspace-split { flex: 1 1 0; display: flex; min-width: 0; min-height: 0; gap: 5px; }
-.workspace-split.axis-row { flex-direction: row; }
-.workspace-split.axis-column { flex-direction: column; }
+.workspace-canvas { position: relative; flex: 1 0 auto; }
+.workspace-pane-slot { position: absolute; box-sizing: border-box; padding: 2.5px; }
 
 .workspace-pane {
   position: relative;
-  flex: 1 1 0;
-  min-width: 190px;
-  min-height: 160px;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
