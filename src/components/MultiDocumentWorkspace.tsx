@@ -38,13 +38,15 @@ interface MultiDocumentWorkspaceProps {
   allNodes: VaultNode[];
   state: WorkspaceState;
   onChange: (update: (previous: WorkspaceState) => WorkspaceState) => void;
+  compactMode: boolean;
+  onToggleCompactMode: () => void;
   onAddNode: (node: VaultNode, targetId?: string | null, side?: WorkspaceSide, page?: number) => void;
   onOpenSingle: (node: VaultNode, page: number) => void;
   onClose: () => void;
 }
 
 export function MultiDocumentWorkspace({
-  vaultRoot, allNodes, state, onChange, onAddNode, onOpenSingle, onClose,
+  vaultRoot, allNodes, state, onChange, compactMode, onToggleCompactMode, onAddNode, onOpenSingle, onClose,
 }: MultiDocumentWorkspaceProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -175,8 +177,8 @@ export function MultiDocumentWorkspace({
       let patch: Partial<WorkspacePaneState> | null = null;
       if (!modifier && event.key === "ArrowLeft") patch = { page: Math.max(1, pane.page - 1) };
       else if (!modifier && event.key === "ArrowRight") patch = { page: Math.min(pane.numPages ?? pane.page, pane.page + 1) };
-      else if (event.key === "+" || event.key === "=" || event.code === "NumpadAdd") patch = { zoom: Math.min(MAX_ZOOM, Math.max(pane.zoom + 0.05, Math.floor(pane.zoom * 10 + 1.0001) / 10)), fitWidth: false, fitHeight: false };
-      else if (event.key === "-" || event.key === "_" || event.code === "NumpadSubtract") patch = { zoom: Math.max(MIN_ZOOM, Math.min(pane.zoom - 0.05, Math.ceil(pane.zoom * 10 - 1.0001) / 10)), fitWidth: false, fitHeight: false };
+      else if (event.ctrlKey && (event.key === "+" || event.key === "=" || event.code === "NumpadAdd")) patch = { zoom: Math.min(MAX_ZOOM, Math.max(pane.zoom + 0.05, Math.floor(pane.zoom * 10 + 1.0001) / 10)), fitWidth: false, fitHeight: false };
+      else if (event.ctrlKey && (event.key === "-" || event.key === "_" || event.code === "NumpadSubtract")) patch = { zoom: Math.max(MIN_ZOOM, Math.min(pane.zoom - 0.05, Math.ceil(pane.zoom * 10 - 1.0001) / 10)), fitWidth: false, fitHeight: false };
       else if (modifier && (event.key === "0" || event.code === "Numpad0")) patch = { fitWidth: !pane.fitWidth, fitHeight: false, zoom: pane.fitWidth ? 1 : pane.zoom };
       else if (!modifier && key === "d") patch = { viewMode: FILTER_ORDER[(FILTER_ORDER.indexOf(pane.viewMode) + 1) % FILTER_ORDER.length] };
       else if (!modifier && key === "c") patch = { continuous: !pane.continuous };
@@ -272,6 +274,7 @@ export function MultiDocumentWorkspace({
       onHighlightChanged={() => setHighlightRevisions((previous) => ({ ...previous,
         [pane.node.relative_path]: (previous[pane.node.relative_path] ?? 0) + 1 }))}
       selected={selectedId === pane.id}
+      compactMode={compactMode}
       draggedId={draggedId}
       onSelect={() => onChange((previous) => {
         if (previous.selectedPaneId === pane.id) return previous;
@@ -305,6 +308,8 @@ export function MultiDocumentWorkspace({
         <div><strong>Document workspace</strong><span>Session only · {ids.length} {ids.length === 1 ? "view" : "views"}</span></div>
       </div>
       <div className="multi-workspace-actions">
+        <button type="button" className="workspace-toolbar-btn" aria-pressed={compactMode}
+          onClick={onToggleCompactMode}>Compact mode</button>
         <label>Place new view
           <select value={addSide} onChange={(event) => setAddSide(event.target.value as WorkspaceSide)}>
             {SIDES.map((side) => <option key={side.value} value={side.value}>{side.label}</option>)}
@@ -398,6 +403,7 @@ interface WorkspacePaneProps {
   highlightRevision: number;
   onHighlightChanged: () => void;
   selected: boolean;
+  compactMode: boolean;
   draggedId: string | null;
   onSelect: () => void;
   onUpdate: (patch: Partial<WorkspacePaneState>) => void;
@@ -409,7 +415,7 @@ interface WorkspacePaneProps {
   onDropSide: (event: React.DragEvent<HTMLElement>, side: WorkspaceSide) => void;
 }
 
-function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged, selected, draggedId, onSelect, onUpdate, onClose,
+function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged, selected, compactMode, draggedId, onSelect, onUpdate, onClose,
   onDuplicate, onOpenSingle, onDragStart, onDragEnd, onDropSide }: WorkspacePaneProps) {
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
@@ -427,7 +433,7 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
   const zoomOptions = [...new Set([50, 75, 100, 125, 150, 200, zoomPercent])].sort((a, b) => a - b);
 
   useEffect(() => {
-    if (!optionsOpen) return;
+    if (!optionsOpen || !compactMode) return;
     optionsRef.current?.querySelector<HTMLSelectElement>("select")?.focus();
     const onPointerDown = (event: PointerEvent) => {
       if (!optionsRef.current?.contains(event.target as Node)) setOptionsOpen(false);
@@ -445,7 +451,11 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown, true);
     };
-  }, [optionsOpen]);
+  }, [optionsOpen, compactMode]);
+
+  useEffect(() => {
+    if (!compactMode) setOptionsOpen(false);
+  }, [compactMode]);
 
   useEffect(() => {
     let active = true;
@@ -550,6 +560,20 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
   }
 
   const canMove = draggedId && draggedId !== pane.id;
+  const zoomSelect = <select aria-label={`Zoom for ${pane.node.name}`} title="Zoom (Ctrl + / Ctrl -)" value={pane.fitHeight ? "fit-height" : pane.fitWidth ? "fit-width" : String(zoomPercent)}
+    onChange={(event) => {
+      if (event.target.value === "fit-width") onUpdate({ fitWidth: true, fitHeight: false });
+      else if (event.target.value === "fit-height") onUpdate({ fitWidth: false, fitHeight: true });
+      else onUpdate({ fitWidth: false, fitHeight: false, zoom: Number(event.target.value) / 100 });
+    }}>
+    <option value="fit-width">Fit width</option>
+    <option value="fit-height">Fit height</option>
+    {zoomOptions.map((value) => <option key={value} value={value}>{value}%</option>)}
+  </select>;
+  const filterSelect = <select aria-label={`Reading filter for ${pane.node.name}`} title={VIEW_MODE_LABELS[pane.viewMode]} value={pane.viewMode}
+    onChange={(event) => onUpdate({ viewMode: event.target.value as DocumentViewMode })}>
+    {Object.entries(VIEW_MODE_SHORT_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+  </select>;
 
   return <section className={`workspace-pane ${selected ? "selected" : ""}`} onPointerDown={onSelect} onFocusCapture={onSelect} aria-label={`View of ${pane.node.name}`}>
     <header className="workspace-pane-header">
@@ -579,11 +603,9 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
           title={pane.continuous ? "Continuous scroll; switch to single page (C)" : "Single page; switch to continuous scroll (C)"}>
           {pane.continuous ? <ContinuousModeIcon size={16} /> : <PageModeIcon size={16} />}
         </button>
-        <button type="button" onClick={() => onUpdate({ zoom: Math.max(MIN_ZOOM, Math.round((pane.zoom - 0.1) * 100) / 100), fitWidth: false, fitHeight: false })}
-          disabled={pane.zoom <= MIN_ZOOM} aria-label={`Zoom out of ${pane.node.name}`} title="Zoom out (-)">−</button>
-        <button type="button" onClick={() => onUpdate({ zoom: Math.min(MAX_ZOOM, Math.round((pane.zoom + 0.1) * 100) / 100), fitWidth: false, fitHeight: false })}
-          disabled={pane.zoom >= MAX_ZOOM} aria-label={`Zoom in to ${pane.node.name}`} title="Zoom in (+)">+</button>
-        <div className="workspace-view-options" ref={optionsRef}
+        {!compactMode && zoomSelect}
+        {!compactMode && filterSelect}
+        {compactMode && <div className="workspace-view-options" ref={optionsRef}
           onBlurCapture={(event) => {
             if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) setOptionsOpen(false);
           }}>
@@ -591,25 +613,13 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
             aria-expanded={optionsOpen} title="Zoom and reading filter" onClick={() => setOptionsOpen((open) => !open)}>…</button>
           {optionsOpen && <div className="workspace-view-options-popover" role="group" aria-label={`View options for ${pane.node.name}`}>
             <label>Zoom
-              <select aria-label={`Zoom for ${pane.node.name}`} value={pane.fitHeight ? "fit-height" : pane.fitWidth ? "fit-width" : String(zoomPercent)}
-                onChange={(event) => {
-                  if (event.target.value === "fit-width") onUpdate({ fitWidth: true, fitHeight: false });
-                  else if (event.target.value === "fit-height") onUpdate({ fitWidth: false, fitHeight: true });
-                  else onUpdate({ fitWidth: false, fitHeight: false, zoom: Number(event.target.value) / 100 });
-                }}>
-                <option value="fit-width">Fit width</option>
-                <option value="fit-height">Fit height</option>
-                {zoomOptions.map((value) => <option key={value} value={value}>{value}%</option>)}
-              </select>
+              {zoomSelect}
             </label>
             <label>Reading filter
-              <select aria-label={`Reading filter for ${pane.node.name}`} title={VIEW_MODE_LABELS[pane.viewMode]} value={pane.viewMode}
-                onChange={(event) => onUpdate({ viewMode: event.target.value as DocumentViewMode })}>
-                {Object.entries(VIEW_MODE_SHORT_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-              </select>
+              {filterSelect}
             </label>
           </div>}
-        </div>
+        </div>}
       </div>
     </header>
     <div className="workspace-pane-reading">

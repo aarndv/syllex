@@ -53,6 +53,7 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
   const [activeNode, setActiveNode] = useState<VaultNode | null>(null);
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const [workspaceState, setWorkspaceState] = useState<WorkspaceState>(EMPTY_WORKSPACE);
+  const [workspaceCompactMode, setWorkspaceCompactMode] = useState(true);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState<boolean>(false);
@@ -524,6 +525,8 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
           allNodes={scanResult.root_nodes}
           state={workspaceState}
           onChange={setWorkspaceState}
+          compactMode={workspaceCompactMode}
+          onToggleCompactMode={() => setWorkspaceCompactMode((compact) => !compact)}
           onAddNode={handleAddToWorkspace}
           onOpenSingle={(node, page) => handleSelectFileNode(node, page)}
           onClose={() => setWorkspaceOpen(false)}
