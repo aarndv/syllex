@@ -6,6 +6,41 @@ interface IconProps {
   color?: string;
 }
 
+export const GripIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color} className={`inline-icon ${className}`} aria-hidden="true">
+    <circle cx="9" cy="5" r="1.6" /><circle cx="15" cy="5" r="1.6" />
+    <circle cx="9" cy="12" r="1.6" /><circle cx="15" cy="12" r="1.6" />
+    <circle cx="9" cy="19" r="1.6" /><circle cx="15" cy="19" r="1.6" />
+  </svg>
+);
+
+export const DuplicateIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`inline-icon ${className}`} aria-hidden="true">
+    <rect x="8" y="8" width="12" height="12" rx="1" />
+    <path d="M4 16H3V4a1 1 0 0 1 1-1h12v1" />
+  </svg>
+);
+
+export const ExpandIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`inline-icon ${className}`} aria-hidden="true">
+    <path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5" />
+  </svg>
+);
+
+export const PageModeIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" className={`inline-icon ${className}`} aria-hidden="true">
+    <rect x="5" y="3" width="14" height="18" rx="1" />
+    <path d="M8 7h8M8 10h8" />
+  </svg>
+);
+
+export const ContinuousModeIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" className={`inline-icon ${className}`} aria-hidden="true">
+    <rect x="5" y="2" width="14" height="8" rx="1" />
+    <rect x="5" y="14" width="14" height="8" rx="1" />
+  </svg>
+);
+
 export const FolderIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
   <svg
     width={size}

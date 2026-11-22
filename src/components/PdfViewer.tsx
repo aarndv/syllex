@@ -42,6 +42,7 @@ interface PdfViewerProps {
   onRemoveItem: (relPath: string, isFolder: boolean) => void;
   onRenameItem?: (relPath: string, isFolder: boolean, currentName: string) => void;
   onRefreshVault?: () => void;
+  onOpenWorkspace: (page: number) => void;
   onClose: () => void;
 }
 
@@ -74,7 +75,7 @@ export const VIEW_MODE_LABELS: Record<DocumentViewMode, string> = {
   "ocean-dark": "Ocean Dark Blue",
 };
 
-const VIEW_MODE_SHORT_LABELS: Record<DocumentViewMode, string> = {
+export const VIEW_MODE_SHORT_LABELS: Record<DocumentViewMode, string> = {
   "original": "Original",
   "fast-dark": "Fast dark",
   "sepia": "Sepia",
@@ -108,6 +109,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   onRemoveItem,
   onRenameItem,
   onRefreshVault,
+  onOpenWorkspace,
   onClose,
 }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(true);
@@ -865,6 +867,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             )}
             <button onClick={onClose} className="toolbar-btn back-btn" title="Back to library (Esc)">
               <CloseIcon size={14} /> <span>Back</span>
+            </button>
+            <button type="button" onClick={() => onOpenWorkspace(currentPage)} className="toolbar-btn" title="Read this module alongside others">
+              Workspace
             </button>
             <span className="doc-title" title={node.name}>{node.name}</span>
             {settings.showReadingFilterIndicator && (

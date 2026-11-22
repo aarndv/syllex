@@ -15,6 +15,7 @@ interface PdfJsViewerProps {
   currentPage: number;
   zoom: number;
   isFitWidth?: boolean;
+  isFitHeight?: boolean;
   continuous: boolean;
   viewMode: DocumentViewMode;
   onPageChange: (pageNumber: number) => void;
@@ -90,6 +91,7 @@ export function PdfJsViewer({
   currentPage,
   zoom,
   isFitWidth = false,
+  isFitHeight = false,
   continuous,
   viewMode,
   onPageChange,
@@ -111,6 +113,7 @@ export function PdfJsViewer({
   const currentPageRef = useRef(currentPage);
   const zoomRef = useRef(zoom);
   const isFitWidthRef = useRef(isFitWidth);
+  const isFitHeightRef = useRef(isFitHeight);
   const onPageChangeRef = useRef(onPageChange);
   const highlightsRef = useRef(highlights);
   const createHighlightRef = useRef(onCreateHighlight);
@@ -124,6 +127,7 @@ export function PdfJsViewer({
   currentPageRef.current = currentPage;
   zoomRef.current = zoom;
   isFitWidthRef.current = isFitWidth;
+  isFitHeightRef.current = isFitHeight;
   onPageChangeRef.current = onPageChange;
   highlightsRef.current = highlights;
   createHighlightRef.current = onCreateHighlight;
@@ -192,7 +196,9 @@ export function PdfJsViewer({
     linkService.setViewer(viewer);
 
     const handlePagesInit = () => {
-      if (isFitWidthRef.current) {
+      if (isFitHeightRef.current) {
+        viewer.currentScaleValue = "page-height";
+      } else if (isFitWidthRef.current) {
         viewer.currentScaleValue = "page-width";
       } else {
         viewer.currentScale = zoomRef.current;
@@ -230,11 +236,11 @@ export function PdfJsViewer({
 
     let resizeTimer: number | null = null;
     const resizeObserver = new ResizeObserver(() => {
-      if (isFitWidthRef.current && viewerRef.current?.pdfDocument) {
+      if ((isFitWidthRef.current || isFitHeightRef.current) && viewerRef.current?.pdfDocument) {
         if (resizeTimer) cancelAnimationFrame(resizeTimer);
         resizeTimer = requestAnimationFrame(() => {
-          if (viewerRef.current?.pdfDocument && isFitWidthRef.current) {
-            viewerRef.current.currentScaleValue = "page-width";
+          if (viewerRef.current?.pdfDocument && (isFitWidthRef.current || isFitHeightRef.current)) {
+            viewerRef.current.currentScaleValue = isFitHeightRef.current ? "page-height" : "page-width";
           }
         });
       }
@@ -261,16 +267,20 @@ export function PdfJsViewer({
     const viewer = viewerRef.current;
     if (!viewer?.pdfDocument) return;
 
-    if (isFitWidth) {
+    if (isFitHeight) {
+      if (viewer.currentScaleValue !== "page-height") {
+        viewer.currentScaleValue = "page-height";
+      }
+    } else if (isFitWidth) {
       if (viewer.currentScaleValue !== "page-width") {
         viewer.currentScaleValue = "page-width";
       }
     } else {
-      if (viewer.currentScaleValue === "page-width" || viewer.currentScale !== zoom) {
+      if (viewer.currentScaleValue === "page-width" || viewer.currentScaleValue === "page-height" || viewer.currentScale !== zoom) {
         viewer.currentScale = zoom;
       }
     }
-  }, [zoom, isFitWidth]);
+  }, [zoom, isFitWidth, isFitHeight]);
 
   useEffect(() => {
     const viewer = viewerRef.current;
