@@ -54,7 +54,9 @@ export function MultiDocumentWorkspace({
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => new Set());
   const dialogRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const onCloseRef = useRef(onClose);
   const pickerOpenRef = useRef(pickerOpen);
   onCloseRef.current = onClose;
@@ -135,6 +137,19 @@ export function MultiDocumentWorkspace({
   }, [moveTarget, moveTargets.join("|")]);
 
   useEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const width = entry.contentRect.width;
+      const height = entry.contentRect.height;
+      setViewportSize((previous) => previous.width === width && previous.height === height
+        ? previous : { width, height });
+    });
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
       if (!dialogRef.current?.contains(document.activeElement) || !selectedId) return;
       const target = event.target;
@@ -180,19 +195,25 @@ export function MultiDocumentWorkspace({
     event.currentTarget.focus();
     event.currentTarget.setPointerCapture(event.pointerId);
     const handle = event.currentTarget;
-    let frame = 0;
-    let pendingRatio = 0;
-    const ratioAt = (pointer: PointerEvent) => ((axis === "row" ? pointer.clientX : pointer.clientY) - start) / length;
-    const move = (pointer: PointerEvent) => {
-      pendingRatio = ratioAt(pointer);
-      if (!frame) frame = requestAnimationFrame(() => {
-        frame = 0;
-        setDividerRatio(path, pendingRatio);
-      });
+    const originalPosition = axis === "row" ? handle.style.left : handle.style.top;
+    const ratioAt = (pointer: PointerEvent) => Math.max(0.15, Math.min(0.85,
+      ((axis === "row" ? pointer.clientX : pointer.clientY) - start) / length));
+    handle.classList.add("dragging");
+    const positionHandle = (ratio: number) => {
+      const position = (axis === "row" ? rect.left + rect.width * ratio : rect.top + rect.height * ratio);
+      if (axis === "row") handle.style.left = `${position}%`;
+      else handle.style.top = `${position}%`;
     };
+    const move = (pointer: PointerEvent) => positionHandle(ratioAt(pointer));
     const finish = (pointer: PointerEvent) => {
-      if (frame) cancelAnimationFrame(frame);
-      if (pointer.type === "pointerup") setDividerRatio(path, ratioAt(pointer));
+      if (pointer.type === "pointerup") {
+        const ratio = ratioAt(pointer);
+        positionHandle(ratio);
+        setDividerRatio(path, ratio);
+      }
+      else if (axis === "row") handle.style.left = originalPosition;
+      else handle.style.top = originalPosition;
+      handle.classList.remove("dragging");
       handle.removeEventListener("pointermove", move);
       handle.removeEventListener("pointerup", finish);
       handle.removeEventListener("pointercancel", finish);
@@ -299,9 +320,10 @@ export function MultiDocumentWorkspace({
       <span className="workspace-drag-tip">or drag a view title onto another view</span>
     </div>}
 
-    <div className="multi-workspace-content">
+    <div ref={contentRef} className="multi-workspace-content">
       {state.layout ? <div ref={canvasRef} className="workspace-canvas" style={{
-        minWidth: `max(100%, ${minimumSize.width}px)`, minHeight: `max(100%, ${minimumSize.height}px)`,
+        width: Math.max(viewportSize.width, minimumSize.width),
+        height: Math.max(viewportSize.height, minimumSize.height),
       }}>{ids.map(renderPane)}{dividers.map((divider) => {
         const position = divider.axis === "row" ? divider.rect.left + divider.rect.width * divider.ratio : divider.rect.top + divider.rect.height * divider.ratio;
         return <div key={divider.path} className={`workspace-divider axis-${divider.axis}`} role="separator"
