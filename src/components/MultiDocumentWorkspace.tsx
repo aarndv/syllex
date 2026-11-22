@@ -541,18 +541,14 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
       </div>
     </header>
     <div className="workspace-pane-controls">
-      {!pane.continuous && <>
-        <button type="button" onClick={() => onUpdate({ page: Math.max(1, pane.page - 1) })} disabled={loading || pane.page <= 1} aria-label={`Previous page of ${pane.node.name}`} title="Previous page (Left)"><ChevronLeftIcon size={14} /></button>
+      <div className="workspace-page-navigation" data-continuous={pane.continuous}>
+        <button type="button" onClick={() => onUpdate({ page: Math.max(1, pane.page - 1) })} disabled={pane.continuous || loading || pane.page <= 1} aria-label={`Previous page of ${pane.node.name}`} title="Previous page (Left)"><ChevronLeftIcon size={14} /></button>
         <span title={`Page ${pane.page} of ${pdfDoc?.numPages ?? "unknown"}`}>
           <span aria-hidden="true">p{pane.page}/{pdfDoc?.numPages ?? "–"}</span>
           <span className="workspace-sr-only">Page {pane.page} of {pdfDoc?.numPages ?? "unknown"}</span>
         </span>
-        <button type="button" onClick={() => onUpdate({ page: Math.min(pdfDoc?.numPages ?? pane.page, pane.page + 1) })} disabled={loading || !pdfDoc || pane.page >= pdfDoc.numPages} aria-label={`Next page of ${pane.node.name}`} title="Next page (Right)"><ChevronRightIcon size={14} /></button>
-      </>}
-      {pane.continuous && <span title={`${pdfDoc?.numPages ?? "Unknown number of"} pages`}>
-        <span aria-hidden="true">{pdfDoc?.numPages ?? "–"}p</span>
-        <span className="workspace-sr-only">{pdfDoc?.numPages ?? "Unknown number of"} pages</span>
-      </span>}
+        <button type="button" onClick={() => onUpdate({ page: Math.min(pdfDoc?.numPages ?? pane.page, pane.page + 1) })} disabled={pane.continuous || loading || !pdfDoc || pane.page >= pdfDoc.numPages} aria-label={`Next page of ${pane.node.name}`} title="Next page (Right)"><ChevronRightIcon size={14} /></button>
+      </div>
       <button type="button" onClick={() => onUpdate({ continuous: !pane.continuous })} aria-pressed={pane.continuous}
         aria-label={pane.continuous ? `Switch ${pane.node.name} to single-page view` : `Switch ${pane.node.name} to continuous scroll`}
         title={pane.continuous ? "Continuous scroll; switch to single page (C)" : "Single page; switch to continuous scroll (C)"}>

@@ -208,6 +208,20 @@
   padding: 0.3rem 0.4rem;
   border-bottom: 1px solid #365640;
 }
+.workspace-page-navigation {
+  display: grid;
+  grid-template-columns: 28px 10ch 28px;
+  align-items: center;
+  gap: 0.3rem;
+}
+.workspace-page-navigation > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.workspace-page-navigation[data-continuous="true"] > button { visibility: hidden; }
 .workspace-pane-controls span { white-space: nowrap; }
 .workspace-sr-only {
   position: absolute;
