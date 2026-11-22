@@ -411,7 +411,7 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
     const id = crypto.randomUUID();
     setWorkspaceState((previous) => ({
       layout: splitPane(previous.layout, targetId ?? previous.selectedPaneId, id, side),
-      panes: { ...previous.panes, [id]: { id, node, page, zoom: 1, fitWidth: true, viewMode: "original" } },
+      panes: { ...previous.panes, [id]: { id, node, page, zoom: 1, fitWidth: true, continuous: false, viewMode: "original" } },
       selectedPaneId: id,
     }));
     setActiveNode(null);

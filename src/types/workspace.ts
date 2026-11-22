@@ -6,8 +6,10 @@ export interface WorkspacePaneState {
   id: string;
   node: VaultNode;
   page: number;
+  numPages?: number;
   zoom: number;
   fitWidth: boolean;
+  continuous: boolean;
   viewMode: DocumentViewMode;
 }
 

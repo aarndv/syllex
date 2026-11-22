@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { minimumLayoutSize, movePane, paneIds, paneRects, removePane, splitPane } from "../src/utils/workspaceLayout.ts";
+import { minimumLayoutSize, movePane, paneIds, paneRects, removePane, resizeSplit, splitDividers, splitPane } from "../src/utils/workspaceLayout.ts";
 
 test("splits support rows, columns, and combined layouts", () => {
   let layout = splitPane(null, null, "a", "right");
@@ -42,4 +42,16 @@ test("mixed tiles have stable pane identities and nonoverlapping positions", () 
   assert.deepEqual(minimumLayoutSize(layout), { width: 380, height: 320 });
   const moved = movePane(layout, "a", "c", "right");
   assert.deepEqual(new Set(Object.keys(paneRects(moved))), new Set(["a", "b", "c"]));
+});
+
+test("resizing a nested divider changes only its two sides and preserves minimum pane size", () => {
+  let layout = splitPane(null, null, "a", "right");
+  layout = splitPane(layout, "a", "b", "right");
+  layout = splitPane(layout, "b", "c", "bottom");
+  const resized = resizeSplit(layout, "1", 0.7);
+  assert.equal(splitDividers(resized).find((divider) => divider.path === "1")?.ratio, 0.7);
+  assert.equal(splitDividers(resized).find((divider) => divider.path === "")?.ratio, 0.5);
+  assert.deepEqual(paneRects(resized).c, { left: 50, top: 70, width: 50, height: 30 });
+  assert.equal(resizeSplit(resized, "1", 1).second.ratio, 0.85);
+  assert.ok(Math.abs(minimumLayoutSize(resized).height - 160 / 0.3) < 0.001);
 });

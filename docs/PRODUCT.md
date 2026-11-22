@@ -13,7 +13,7 @@ The next release is for the owner's own Fedora Linux and Windows 11 devices. Sou
 - Select a vault; recursively discover PDF, PPT/PPTX, and Markdown modules; group first-level folders as courses.
 - Copy a new module into the vault without overwriting an existing file. Hide or change an item's Syllex display name without changing its source file.
 - Read PDFs and cached LibreOffice-converted presentations, navigate and search pages, use reversible viewing filters, resume at the last page, and create persistent overlay highlights.
-- Optionally read multiple PDF or presentation views in one session-only workspace. Add views from the library or workspace, arrange them into horizontal and vertical tiles, and return to the full single-document reader. Workspace arrangement and open views are not saved across restarts.
+- Optionally read multiple PDF or presentation views in one session-only workspace. Add views from the library or workspace, arrange and resize horizontal and vertical tiles, and return to the full single-document reader. The focused view has page, zoom, filter, fit-width, and continuous-scroll controls and shortcuts. Workspace arrangement and open views are not saved across restarts.
 - Search the catalog and PDF text. Indexed full-text search and search across notes or flashcards are later work.
 
 The current implementation is still being hardened. In particular, opening originals in the system application and rendering Markdown modules as full documents remain planned release work; a documented capability is not evidence that its UI is finished.

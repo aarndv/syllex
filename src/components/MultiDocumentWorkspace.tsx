@@ -6,7 +6,7 @@ import { VIEW_MODE_LABELS, type DocumentViewMode } from "./PdfViewer";
 import type { Highlight } from "../types/highlight";
 import type { VaultNode } from "../types/vault";
 import type { WorkspacePaneState, WorkspaceState } from "../types/workspace";
-import { minimumLayoutSize, movePane, paneIds, paneRects, removePane, type WorkspaceSide } from "../utils/workspaceLayout";
+import { minimumLayoutSize, movePane, paneIds, paneRects, removePane, resizeSplit, splitDividers, type WorkspaceSide } from "../utils/workspaceLayout";
 import { toUserFacingError } from "../utils/userFacingError";
 import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon, CloseIcon, FileIcon, FolderIcon, PlusIcon } from "./Icons";
 import "./PdfViewer.css";
@@ -18,6 +18,9 @@ const SIDES: { value: WorkspaceSide; label: string }[] = [
   { value: "left", label: "Left" },
   { value: "top", label: "Above" },
 ];
+const FILTER_ORDER = Object.keys(VIEW_MODE_LABELS) as DocumentViewMode[];
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 5;
 
 function pickerTree(nodes: VaultNode[], query: string): VaultNode[] {
   const search = query.trim().toLocaleLowerCase();
@@ -51,6 +54,7 @@ export function MultiDocumentWorkspace({
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => new Set());
   const dialogRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
   const pickerOpenRef = useRef(pickerOpen);
   onCloseRef.current = onClose;
@@ -58,6 +62,7 @@ export function MultiDocumentWorkspace({
   const visibleTree = useMemo(() => pickerTree(allNodes, query), [allNodes, query]);
   const ids = paneIds(state.layout);
   const rects = paneRects(state.layout);
+  const dividers = splitDividers(state.layout);
   const minimumSize = minimumLayoutSize(state.layout);
   const selectedId = state.selectedPaneId && ids.includes(state.selectedPaneId)
     ? state.selectedPaneId : ids[0] ?? null;
@@ -128,6 +133,74 @@ export function MultiDocumentWorkspace({
   useEffect(() => {
     if (!moveTargets.includes(moveTarget)) setMoveTarget(moveTargets[0] ?? "");
   }, [moveTarget, moveTargets.join("|")]);
+
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      if (!dialogRef.current?.contains(document.activeElement) || !selectedId) return;
+      const target = event.target;
+      if (target instanceof HTMLElement && (target.closest("input, select, textarea, .workspace-picker, .workspace-arrange-bar, [role='separator']") || target.isContentEditable)) return;
+      const pane = state.panes[selectedId];
+      if (!pane) return;
+      const modifier = event.ctrlKey || event.metaKey;
+      if (event.altKey || (modifier && !["+", "=", "-", "_", "0"].includes(event.key)
+        && !["NumpadAdd", "NumpadSubtract", "Numpad0"].includes(event.code))) return;
+      const key = event.key.toLowerCase();
+      let patch: Partial<WorkspacePaneState> | null = null;
+      if (!modifier && event.key === "ArrowLeft") patch = { page: Math.max(1, pane.page - 1) };
+      else if (!modifier && event.key === "ArrowRight") patch = { page: Math.min(pane.numPages ?? pane.page, pane.page + 1) };
+      else if (event.key === "+" || event.key === "=" || event.code === "NumpadAdd") patch = { zoom: Math.min(MAX_ZOOM, Math.max(pane.zoom + 0.05, Math.floor(pane.zoom * 10 + 1.0001) / 10)), fitWidth: false };
+      else if (event.key === "-" || event.key === "_" || event.code === "NumpadSubtract") patch = { zoom: Math.max(MIN_ZOOM, Math.min(pane.zoom - 0.05, Math.ceil(pane.zoom * 10 - 1.0001) / 10)), fitWidth: false };
+      else if (modifier && (event.key === "0" || event.code === "Numpad0")) patch = { fitWidth: !pane.fitWidth, zoom: pane.fitWidth ? 1 : pane.zoom };
+      else if (!modifier && key === "d") patch = { viewMode: FILTER_ORDER[(FILTER_ORDER.indexOf(pane.viewMode) + 1) % FILTER_ORDER.length] };
+      else if (!modifier && key === "c") patch = { continuous: !pane.continuous };
+      if (patch) {
+        event.preventDefault();
+        updatePane(selectedId, patch);
+      }
+    };
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, [selectedId, state.panes]);
+
+  function setDividerRatio(path: string, ratio: number) {
+    onChange((previous) => {
+      const layout = resizeSplit(previous.layout, path, ratio);
+      return layout === previous.layout ? previous : { ...previous, layout };
+    });
+  }
+
+  function dragDivider(event: React.PointerEvent<HTMLDivElement>, path: string, axis: "row" | "column", rect: { left: number; top: number; width: number; height: number }) {
+    const canvas = canvasRef.current;
+    if (!canvas || event.button !== 0) return;
+    event.preventDefault();
+    const bounds = canvas.getBoundingClientRect();
+    const start = axis === "row" ? bounds.left + bounds.width * rect.left / 100 : bounds.top + bounds.height * rect.top / 100;
+    const length = (axis === "row" ? bounds.width * rect.width : bounds.height * rect.height) / 100;
+    if (length <= 0) return;
+    event.currentTarget.focus();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const handle = event.currentTarget;
+    let frame = 0;
+    let pendingRatio = 0;
+    const ratioAt = (pointer: PointerEvent) => ((axis === "row" ? pointer.clientX : pointer.clientY) - start) / length;
+    const move = (pointer: PointerEvent) => {
+      pendingRatio = ratioAt(pointer);
+      if (!frame) frame = requestAnimationFrame(() => {
+        frame = 0;
+        setDividerRatio(path, pendingRatio);
+      });
+    };
+    const finish = (pointer: PointerEvent) => {
+      if (frame) cancelAnimationFrame(frame);
+      if (pointer.type === "pointerup") setDividerRatio(path, ratioAt(pointer));
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", finish);
+      handle.removeEventListener("pointercancel", finish);
+    };
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", finish);
+    handle.addEventListener("pointercancel", finish);
+  }
 
   function updatePane(id: string, patch: Partial<WorkspacePaneState>) {
     onChange((previous) => {
@@ -227,9 +300,23 @@ export function MultiDocumentWorkspace({
     </div>}
 
     <div className="multi-workspace-content">
-      {state.layout ? <div className="workspace-canvas" style={{
+      {state.layout ? <div ref={canvasRef} className="workspace-canvas" style={{
         minWidth: `max(100%, ${minimumSize.width}px)`, minHeight: `max(100%, ${minimumSize.height}px)`,
-      }}>{ids.map(renderPane)}</div> : <div className="workspace-empty">
+      }}>{ids.map(renderPane)}{dividers.map((divider) => {
+        const position = divider.axis === "row" ? divider.rect.left + divider.rect.width * divider.ratio : divider.rect.top + divider.rect.height * divider.ratio;
+        return <div key={divider.path} className={`workspace-divider axis-${divider.axis}`} role="separator"
+          aria-label={divider.axis === "row" ? "Resize views left and right" : "Resize views above and below"}
+          aria-orientation={divider.axis === "row" ? "vertical" : "horizontal"}
+          aria-valuemin={15} aria-valuemax={85} aria-valuenow={Math.round(divider.ratio * 100)} tabIndex={0}
+          style={divider.axis === "row" ? { left: `${position}%`, top: `${divider.rect.top}%`, height: `${divider.rect.height}%` }
+            : { top: `${position}%`, left: `${divider.rect.left}%`, width: `${divider.rect.width}%` }}
+          onPointerDown={(event) => dragDivider(event, divider.path, divider.axis, divider.rect)}
+          onKeyDown={(event) => {
+            const change = divider.axis === "row" ? (event.key === "ArrowRight" ? 0.05 : event.key === "ArrowLeft" ? -0.05 : 0)
+              : (event.key === "ArrowDown" ? 0.05 : event.key === "ArrowUp" ? -0.05 : 0);
+            if (change) { event.preventDefault(); setDividerRatio(divider.path, divider.ratio + change); }
+          }} />;
+      })}</div> : <div className="workspace-empty">
         <h2>No views open</h2>
         <p>Add a PDF or presentation to start reading modules together.</p>
         <button type="button" className="workspace-toolbar-btn" onClick={() => setPickerOpen(true)}>Choose a module</button>
@@ -280,7 +367,7 @@ function WorkspacePane({ vaultRoot, pane, selected, draggedId, onSelect, onUpdat
         const document = await task.promise;
         if (!active) return;
         setPdfDoc(document);
-        onUpdate({ page: Math.min(Math.max(pane.page, 1), document.numPages) });
+        onUpdate({ page: Math.min(Math.max(pane.page, 1), document.numPages), numPages: document.numPages });
         void invoke<Highlight[]>("list_highlights", { vaultRoot, relativePath: pane.node.relative_path })
           .then((items) => { if (active) setHighlights(items); })
           .catch(() => { /* Reading remains available when annotations cannot load. */ });
@@ -310,25 +397,39 @@ function WorkspacePane({ vaultRoot, pane, selected, draggedId, onSelect, onUpdat
       </div>
     </header>
     <div className="workspace-pane-controls">
-      <button type="button" onClick={() => onUpdate({ page: Math.max(1, pane.page - 1) })} disabled={loading || pane.page <= 1} aria-label={`Previous page of ${pane.node.name}`}><ChevronLeftIcon size={14} /></button>
-      <span>Page {pane.page} of {pdfDoc?.numPages ?? "–"}</span>
-      <button type="button" onClick={() => onUpdate({ page: Math.min(pdfDoc?.numPages ?? pane.page, pane.page + 1) })} disabled={loading || !pdfDoc || pane.page >= pdfDoc.numPages} aria-label={`Next page of ${pane.node.name}`}><ChevronRightIcon size={14} /></button>
+      {!pane.continuous && <>
+        <button type="button" onClick={() => onUpdate({ page: Math.max(1, pane.page - 1) })} disabled={loading || pane.page <= 1} aria-label={`Previous page of ${pane.node.name}`} title="Previous page (Left)"><ChevronLeftIcon size={14} /></button>
+        <span>Page {pane.page} of {pdfDoc?.numPages ?? "–"}</span>
+        <button type="button" onClick={() => onUpdate({ page: Math.min(pdfDoc?.numPages ?? pane.page, pane.page + 1) })} disabled={loading || !pdfDoc || pane.page >= pdfDoc.numPages} aria-label={`Next page of ${pane.node.name}`} title="Next page (Right)"><ChevronRightIcon size={14} /></button>
+      </>}
+      {pane.continuous && <span>{pdfDoc?.numPages ?? "–"} pages</span>}
+      <button type="button" onClick={() => onUpdate({ continuous: !pane.continuous })} aria-pressed={pane.continuous} title="Toggle continuous scroll (C)">
+        {pane.continuous ? "Continuous" : "Single page"}
+      </button>
+      <button type="button" onClick={() => onUpdate({ zoom: Math.max(MIN_ZOOM, Math.round((pane.zoom - 0.1) * 100) / 100), fitWidth: false })}
+        disabled={pane.zoom <= MIN_ZOOM} aria-label={`Zoom out of ${pane.node.name}`} title="Zoom out (-)">−</button>
       <select aria-label={`Zoom for ${pane.node.name}`} value={pane.fitWidth ? "fit" : String(zoomPercent)}
         onChange={(event) => event.target.value === "fit" ? onUpdate({ fitWidth: true }) : onUpdate({ fitWidth: false, zoom: Number(event.target.value) / 100 })}>
         <option value="fit">Fit width</option>
         {zoomOptions.map((value) => <option key={value} value={value}>{value}%</option>)}
       </select>
+      <button type="button" onClick={() => onUpdate({ zoom: Math.min(MAX_ZOOM, Math.round((pane.zoom + 0.1) * 100) / 100), fitWidth: false })}
+        disabled={pane.zoom >= MAX_ZOOM} aria-label={`Zoom in to ${pane.node.name}`} title="Zoom in (+)">+</button>
+      <button type="button" onClick={() => onUpdate({ fitWidth: !pane.fitWidth, zoom: pane.fitWidth ? 1 : pane.zoom })}
+        aria-pressed={pane.fitWidth} title="Fit width (Ctrl+0)">Fit width</button>
       <select aria-label={`Reading filter for ${pane.node.name}`} value={pane.viewMode}
         onChange={(event) => onUpdate({ viewMode: event.target.value as DocumentViewMode })}>
         {Object.entries(VIEW_MODE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </select>
+      <button type="button" onClick={() => onUpdate({ viewMode: FILTER_ORDER[(FILTER_ORDER.indexOf(pane.viewMode) + 1) % FILTER_ORDER.length] })}
+        aria-label={`Cycle reading filter for ${pane.node.name}`} title="Next reading filter (D)">Filter</button>
     </div>
     <div className="workspace-pane-reading">
       {loading && <p className="workspace-pane-message" role="status">Loading module…</p>}
       {error && <p className="workspace-pane-message error" role="alert">{error}</p>}
       {!loading && !error && pdfDoc && <PdfJsViewer
         pdfDoc={pdfDoc} currentPage={pane.page} zoom={pane.zoom} isFitWidth={pane.fitWidth}
-        continuous={false} viewMode={pane.viewMode} onPageChange={(page) => onUpdate({ page })}
+        continuous={pane.continuous} viewMode={pane.viewMode} onPageChange={(page) => onUpdate({ page })}
         highlights={highlights} highlightEnabled={false} erasingHighlights={false} highlightColor="yellow"
         onCreateHighlight={() => {}} onEraseHighlight={() => {}} focusHighlight={null}
         sidebarVisible={false} sidebarWidth={0} sidebarDock="left"

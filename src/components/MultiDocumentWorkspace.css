@@ -141,6 +141,11 @@
 .multi-workspace-content { flex: 1; min-height: 0; min-width: 0; display: flex; overflow: auto; padding: 5px; }
 .workspace-canvas { position: relative; flex: 1 0 auto; }
 .workspace-pane-slot { position: absolute; box-sizing: border-box; padding: 2.5px; }
+.workspace-divider { position: absolute; z-index: 12; touch-action: none; background: transparent; }
+.workspace-divider.axis-row { width: 12px; transform: translateX(-50%); cursor: col-resize; }
+.workspace-divider.axis-column { height: 12px; transform: translateY(-50%); cursor: row-resize; }
+.workspace-divider:hover,
+.workspace-divider:focus-visible { background: #d6aa5870; }
 
 .workspace-pane {
   position: relative;
@@ -182,6 +187,7 @@
 }
 .workspace-pane-controls span { white-space: nowrap; }
 .workspace-pane-controls select { min-height: 25px; max-width: 9rem; padding: 0.1rem 0.2rem; }
+.workspace-pane-controls button[aria-pressed="true"] { border-color: #d6aa58; background: #456c4c; }
 
 .workspace-pane-reading { position: relative; flex: 1; min-height: 0; overflow: hidden; }
 .workspace-pane-reading .pdfjs-viewer-container { padding: 0.7rem 0 1.2rem; }

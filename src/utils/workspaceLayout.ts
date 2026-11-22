@@ -2,9 +2,14 @@ export type WorkspaceSide = "left" | "right" | "top" | "bottom";
 
 export type WorkspaceLayout =
   | { kind: "pane"; paneId: string }
-  | { kind: "split"; axis: "row" | "column"; first: WorkspaceLayout; second: WorkspaceLayout };
+  | { kind: "split"; axis: "row" | "column"; ratio?: number; first: WorkspaceLayout; second: WorkspaceLayout };
 
 export interface WorkspaceRect { left: number; top: number; width: number; height: number }
+export interface WorkspaceDivider { path: string; axis: "row" | "column"; ratio: number; rect: WorkspaceRect }
+
+export function splitRatio(node: Extract<WorkspaceLayout, { kind: "split" }>): number {
+  return node.ratio ?? 0.5;
+}
 
 export function paneRects(layout: WorkspaceLayout | null): Record<string, WorkspaceRect> {
   const rects: Record<string, WorkspaceRect> = {};
@@ -14,24 +19,58 @@ export function paneRects(layout: WorkspaceLayout | null): Record<string, Worksp
       return;
     }
     if (node.axis === "row") {
-      visit(node.first, { ...rect, width: rect.width / 2 });
-      visit(node.second, { ...rect, left: rect.left + rect.width / 2, width: rect.width / 2 });
+      const firstWidth = rect.width * splitRatio(node);
+      visit(node.first, { ...rect, width: firstWidth });
+      visit(node.second, { ...rect, left: rect.left + firstWidth, width: rect.width - firstWidth });
     } else {
-      visit(node.first, { ...rect, height: rect.height / 2 });
-      visit(node.second, { ...rect, top: rect.top + rect.height / 2, height: rect.height / 2 });
+      const firstHeight = rect.height * splitRatio(node);
+      visit(node.first, { ...rect, height: firstHeight });
+      visit(node.second, { ...rect, top: rect.top + firstHeight, height: rect.height - firstHeight });
     }
   }
   if (layout) visit(layout, { left: 0, top: 0, width: 100, height: 100 });
   return rects;
 }
 
+export function splitDividers(layout: WorkspaceLayout | null): WorkspaceDivider[] {
+  const result: WorkspaceDivider[] = [];
+  function visit(node: WorkspaceLayout, rect: WorkspaceRect, path: string) {
+    if (node.kind === "pane") return;
+    const ratio = splitRatio(node);
+    result.push({ path, axis: node.axis, ratio, rect });
+    if (node.axis === "row") {
+      const firstWidth = rect.width * ratio;
+      visit(node.first, { ...rect, width: firstWidth }, `${path}0`);
+      visit(node.second, { ...rect, left: rect.left + firstWidth, width: rect.width - firstWidth }, `${path}1`);
+    } else {
+      const firstHeight = rect.height * ratio;
+      visit(node.first, { ...rect, height: firstHeight }, `${path}0`);
+      visit(node.second, { ...rect, top: rect.top + firstHeight, height: rect.height - firstHeight }, `${path}1`);
+    }
+  }
+  if (layout) visit(layout, { left: 0, top: 0, width: 100, height: 100 }, "");
+  return result;
+}
+
+export function resizeSplit(layout: WorkspaceLayout | null, path: string, ratio: number): WorkspaceLayout | null {
+  if (!layout || layout.kind === "pane") return layout;
+  if (path === "") {
+    const nextRatio = Math.max(0.15, Math.min(0.85, ratio));
+    return splitRatio(layout) === nextRatio ? layout : { ...layout, ratio: nextRatio };
+  }
+  const branch = path[0] === "0" ? "first" : "second";
+  const child = resizeSplit(layout[branch], path.slice(1), ratio);
+  return child === layout[branch] ? layout : { ...layout, [branch]: child };
+}
+
 export function minimumLayoutSize(layout: WorkspaceLayout | null): { width: number; height: number } {
   if (!layout || layout.kind === "pane") return { width: 190, height: 160 };
   const first = minimumLayoutSize(layout.first);
   const second = minimumLayoutSize(layout.second);
+  const ratio = splitRatio(layout);
   return layout.axis === "row"
-    ? { width: first.width + second.width, height: Math.max(first.height, second.height) }
-    : { width: Math.max(first.width, second.width), height: first.height + second.height };
+    ? { width: Math.max(first.width / ratio, second.width / (1 - ratio)), height: Math.max(first.height, second.height) }
+    : { width: Math.max(first.width, second.width), height: Math.max(first.height / ratio, second.height / (1 - ratio)) };
 }
 
 export function paneIds(layout: WorkspaceLayout | null): string[] {
