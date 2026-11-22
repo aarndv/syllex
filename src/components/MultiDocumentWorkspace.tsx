@@ -2,13 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { pdfjsLib, getPdfDocumentParams } from "../utils/pdfInit";
 import { PdfJsViewer } from "./PdfJsViewer";
-import { VIEW_MODE_LABELS, type DocumentViewMode } from "./PdfViewer";
+import { VIEW_MODE_LABELS, VIEW_MODE_SHORT_LABELS, type DocumentViewMode } from "./PdfViewer";
 import { HIGHLIGHT_COLORS, type Highlight, type HighlightRect } from "../types/highlight";
 import type { VaultNode } from "../types/vault";
 import type { WorkspacePaneState, WorkspaceState } from "../types/workspace";
 import { minimumLayoutSize, movePane, paneIds, paneRects, removePane, resizeSplit, splitDividers, type WorkspaceSide } from "../utils/workspaceLayout";
 import { toUserFacingError } from "../utils/userFacingError";
-import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon, CloseIcon, FileIcon, FolderIcon, PlusIcon } from "./Icons";
+import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon, CloseIcon, ContinuousModeIcon, DuplicateIcon, ExpandIcon, FileIcon, FolderIcon, GripIcon, PageModeIcon, PlusIcon } from "./Icons";
 import "./PdfViewer.css";
 import "./MultiDocumentWorkspace.css";
 
@@ -531,24 +531,32 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
     <header className="workspace-pane-header">
       <span className="workspace-drag-handle" draggable onDragStart={onDragStart} onDragEnd={onDragEnd}
         title="Drag onto an edge of another view" aria-label={`Drag ${pane.node.name} to arrange`}>
-        Drag
+        <GripIcon size={16} />
       </span>
       <strong title={pane.node.relative_path}>{pane.node.name}</strong>
       <div className="workspace-pane-actions">
-        <button type="button" onClick={onDuplicate} title="Open another view of this module">Duplicate</button>
-        <button type="button" onClick={onOpenSingle} title="Open in full reader">Full reader</button>
+        <button type="button" onClick={onDuplicate} aria-label={`Duplicate view of ${pane.node.name}`} title="Open another view of this module"><DuplicateIcon size={15} /></button>
+        <button type="button" onClick={onOpenSingle} aria-label={`Open ${pane.node.name} in full reader`} title="Open in full reader"><ExpandIcon size={15} /></button>
         <button type="button" onClick={onClose} aria-label={`Close view of ${pane.node.name}`} title="Close view"><CloseIcon size={13} /></button>
       </div>
     </header>
     <div className="workspace-pane-controls">
       {!pane.continuous && <>
         <button type="button" onClick={() => onUpdate({ page: Math.max(1, pane.page - 1) })} disabled={loading || pane.page <= 1} aria-label={`Previous page of ${pane.node.name}`} title="Previous page (Left)"><ChevronLeftIcon size={14} /></button>
-        <span>Page {pane.page} of {pdfDoc?.numPages ?? "–"}</span>
+        <span title={`Page ${pane.page} of ${pdfDoc?.numPages ?? "unknown"}`}>
+          <span aria-hidden="true">p{pane.page}/{pdfDoc?.numPages ?? "–"}</span>
+          <span className="workspace-sr-only">Page {pane.page} of {pdfDoc?.numPages ?? "unknown"}</span>
+        </span>
         <button type="button" onClick={() => onUpdate({ page: Math.min(pdfDoc?.numPages ?? pane.page, pane.page + 1) })} disabled={loading || !pdfDoc || pane.page >= pdfDoc.numPages} aria-label={`Next page of ${pane.node.name}`} title="Next page (Right)"><ChevronRightIcon size={14} /></button>
       </>}
-      {pane.continuous && <span>{pdfDoc?.numPages ?? "–"} pages</span>}
-      <button type="button" onClick={() => onUpdate({ continuous: !pane.continuous })} aria-pressed={pane.continuous} title="Toggle continuous scroll (C)">
-        {pane.continuous ? "Continuous" : "Single page"}
+      {pane.continuous && <span title={`${pdfDoc?.numPages ?? "Unknown number of"} pages`}>
+        <span aria-hidden="true">{pdfDoc?.numPages ?? "–"}p</span>
+        <span className="workspace-sr-only">{pdfDoc?.numPages ?? "Unknown number of"} pages</span>
+      </span>}
+      <button type="button" onClick={() => onUpdate({ continuous: !pane.continuous })} aria-pressed={pane.continuous}
+        aria-label={pane.continuous ? `Switch ${pane.node.name} to single-page view` : `Switch ${pane.node.name} to continuous scroll`}
+        title={pane.continuous ? "Continuous scroll; switch to single page (C)" : "Single page; switch to continuous scroll (C)"}>
+        {pane.continuous ? <ContinuousModeIcon size={16} /> : <PageModeIcon size={16} />}
       </button>
       <button type="button" onClick={() => onUpdate({ zoom: Math.max(MIN_ZOOM, Math.round((pane.zoom - 0.1) * 100) / 100), fitWidth: false, fitHeight: false })}
         disabled={pane.zoom <= MIN_ZOOM} aria-label={`Zoom out of ${pane.node.name}`} title="Zoom out (-)">−</button>
@@ -564,14 +572,10 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
       </select>
       <button type="button" onClick={() => onUpdate({ zoom: Math.min(MAX_ZOOM, Math.round((pane.zoom + 0.1) * 100) / 100), fitWidth: false, fitHeight: false })}
         disabled={pane.zoom >= MAX_ZOOM} aria-label={`Zoom in to ${pane.node.name}`} title="Zoom in (+)">+</button>
-      <button type="button" onClick={() => onUpdate({ fitWidth: !pane.fitWidth, fitHeight: false, zoom: pane.fitWidth ? 1 : pane.zoom })}
-        aria-pressed={pane.fitWidth} title="Fit width (Ctrl+0)">Fit width</button>
-      <select aria-label={`Reading filter for ${pane.node.name}`} value={pane.viewMode}
+      <select aria-label={`Reading filter for ${pane.node.name}`} title={VIEW_MODE_LABELS[pane.viewMode]} value={pane.viewMode}
         onChange={(event) => onUpdate({ viewMode: event.target.value as DocumentViewMode })}>
-        {Object.entries(VIEW_MODE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        {Object.entries(VIEW_MODE_SHORT_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </select>
-      <button type="button" onClick={() => onUpdate({ viewMode: FILTER_ORDER[(FILTER_ORDER.indexOf(pane.viewMode) + 1) % FILTER_ORDER.length] })}
-        aria-label={`Cycle reading filter for ${pane.node.name}`} title="Next reading filter (D)">Filter</button>
     </div>
     <div className="workspace-pane-reading">
       {(highlightError || highlightToast) && <div className="workspace-highlight-feedback">

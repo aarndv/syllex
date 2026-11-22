@@ -75,7 +75,7 @@ export const VIEW_MODE_LABELS: Record<DocumentViewMode, string> = {
   "ocean-dark": "Ocean Dark Blue",
 };
 
-const VIEW_MODE_SHORT_LABELS: Record<DocumentViewMode, string> = {
+export const VIEW_MODE_SHORT_LABELS: Record<DocumentViewMode, string> = {
   "original": "Original",
   "fast-dark": "Fast dark",
   "sepia": "Sepia",
