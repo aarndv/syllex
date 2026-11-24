@@ -167,7 +167,9 @@ export function MultiDocumentWorkspace({
 
   useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
-      if (!dialogRef.current?.contains(document.activeElement) || !selectedId) return;
+      const activeElement = document.activeElement;
+      if (!selectedId || (!dialogRef.current?.contains(activeElement)
+        && activeElement !== document.body && activeElement !== document.documentElement)) return;
       const target = event.target;
       if (target instanceof HTMLElement && (target.closest("input, select, textarea, .workspace-picker, .workspace-arrange-bar, [role='separator']") || target.isContentEditable)) return;
       const pane = state.panes[selectedId];
