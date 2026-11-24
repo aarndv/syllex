@@ -277,6 +277,17 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
           onDropTarget(null);
         }}>
         <div className="shelf-title-plate">
+          <button type="button" className="shelf-drag-handle" draggable={siblings.length > 1}
+            aria-label={siblings.length > 1 ? `Drag to reorder ${folder.name}` : `${folder.name} has no sibling folders to reorder`}
+            aria-disabled={siblings.length <= 1}
+            title={siblings.length > 1 ? "Drag to reorder folder" : "No sibling folders to reorder"}
+            onDragStart={(event) => {
+              if (siblings.length <= 1) { event.preventDefault(); return; }
+              event.dataTransfer.effectAllowed = "move";
+              event.dataTransfer.setData("text/plain", folder.relative_path);
+              onDragFolder({ path: folder.relative_path, parent: parentPath });
+            }}
+            onDragEnd={() => { onDragFolder(null); onDropTarget(null); }}><GripIcon size={20} /></button>
           <button type="button" className="shelf-chevron-badge" onClick={() => setIsExpanded((prev) => !prev)} aria-label={`${isExpanded ? "Collapse" : "Expand"} ${folder.name}`} aria-expanded={isExpanded}>
             {isExpanded ? "▼" : "▶"}
           </button>
@@ -290,10 +301,6 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
         </div>
 
         <div className="shelf-actions">
-          {siblings.length > 1 && <button type="button" className="shelf-drag-handle" draggable
-            aria-label={`Drag to reorder ${folder.name}`} title="Drag to reorder folder"
-            onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", folder.relative_path); onDragFolder({ path: folder.relative_path, parent: parentPath }); }}
-            onDragEnd={() => { onDragFolder(null); onDropTarget(null); }}><GripIcon size={17} /></button>}
           <div className="shelf-more-wrapper" ref={actionsRef}>
             <button
               type="button"

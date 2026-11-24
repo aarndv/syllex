@@ -77,18 +77,24 @@
 
 .shelf-drag-handle {
   padding: 0;
-  width: 1.4rem;
+  width: 1.65rem;
   height: 2.1rem;
   border: 0;
   background: none;
-  color: #e2f0d9;
-  font: 1.15rem/1 system-ui, sans-serif;
+  color: #c9e6d0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   cursor: grab;
 }
 
+.shelf-drag-handle:hover { color: #ffffff; }
 .shelf-drag-handle:active { cursor: grabbing; }
 .shelf-drag-handle:focus-visible { outline: 2px solid var(--app-focus-ring); outline-offset: 2px; }
+.shelf-drag-handle[aria-disabled="true"] { opacity: 0.4; cursor: default; }
 html[data-theme="light"] .shelf-drag-handle { color: #143222; }
+html[data-theme="light"] .shelf-drag-handle:hover { color: #1e6740; }
 
 .shelf-order-error {
   margin: 0;
@@ -103,7 +109,7 @@ html[data-theme="light"] .shelf-order-error { color: #8a2525; }
 .shelf-title-plate {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.55rem;
   cursor: pointer;
   color: #ffffff;
 }
