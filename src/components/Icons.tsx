@@ -91,6 +91,15 @@ export const PlusIcon: React.FC<IconProps> = ({ className = "", size = 16, color
   </svg>
 );
 
+export const HighlighterIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`inline-icon ${className}`} aria-hidden="true">
+    <path d="m14 3 7 7-9 9-7-7z" />
+    <path d="m5 12-2 5 4 4 5-2" />
+    <path d="M2 22h19" />
+  </svg>
+);
+
 export const SwitchIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
   <svg
     width={size}
@@ -462,6 +471,15 @@ export const SidebarToggleIcon: React.FC<IconProps> = ({ className = "", size = 
   >
     <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
     <line x1="9" y1="3" x2="9" y2="21" />
+  </svg>
+);
+
+export const ArrangeDrawerIcon: React.FC<IconProps> = ({ className = "", size = 16, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`inline-icon ${className}`} aria-hidden="true">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+    <path d="m9 15 3 3 3-3" />
   </svg>
 );
 

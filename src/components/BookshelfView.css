@@ -70,8 +70,9 @@
 .shelf-chevron-badge {
   font-size: 0.68rem;
   color: rgba(255, 255, 255, 0.85);
-  background-color: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: none;
+  border: 0;
+  padding: 0;
   width: 2.1rem;
   height: 2.1rem;
   box-sizing: border-box;
@@ -81,16 +82,24 @@
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .shelf-title-plate:hover .shelf-chevron-badge {
-  background-color: rgba(255, 255, 255, 0.25);
   color: #ffffff;
 }
 
+.shelf-chevron-badge:focus-visible,
+.folder-icon-emblem:focus-visible,
+.shelf-more-btn:focus-visible {
+  outline: 2px solid var(--app-focus-ring);
+  outline-offset: 2px;
+}
+
 .folder-icon-emblem {
-  background-color: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: none;
+  border: 0;
+  padding: 0;
   box-sizing: border-box;
   width: 2.1rem;
   height: 2.1rem;
@@ -100,6 +109,10 @@
   align-items: center;
   justify-content: center;
   color: #e2f0d9;
+}
+
+.folder-icon-emblem:is(button) {
+  cursor: pointer;
 }
 
 .shelf-title-wrapper {
@@ -181,6 +194,13 @@
   padding: 0;
   font-size: 1.3rem;
   line-height: 1;
+  background: none;
+  border: 0;
+  transform: translateY(-2px);
+}
+
+.shelf-mini-btn.shelf-more-btn:hover {
+  background: none;
 }
 
 .shelf-actions-menu {
@@ -307,7 +327,7 @@
   background: var(--picker-selected);
 }
 .color-option-btn[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--picker-accent); font-weight: 650; }
-.color-picker-popover button:focus-visible { outline: 2px solid var(--picker-accent); outline-offset: 2px; }
+.color-picker-popover button:focus-visible { outline: 2px solid var(--app-focus-ring); outline-offset: 2px; }
 
 /* Shelf Body & Books Row */
 .shelf-body {
@@ -382,7 +402,7 @@
 
 /* Architectural Wooden/Blueprint Shelf Line Bar */
 .blueprint-shelf-bar {
-  height: 12px;
+  height: 9px;
   background-color: #12301f;
   border: 1.5px solid rgba(255, 255, 255, 0.4);
   border-radius: 3px;
@@ -453,7 +473,7 @@
 }
 
 .book-spine-open:focus-visible {
-  outline: 2px solid #facc15;
+  outline: 2px solid var(--app-focus-ring);
   outline-offset: 3px;
 }
 
@@ -574,7 +594,7 @@ html[data-theme="light"] .book-metadata-tooltip {
 
 .book-rename-btn:focus-visible,
 .book-delete-btn:focus-visible {
-  outline: 2px solid #facc15;
+  outline: 2px solid var(--app-focus-ring);
   outline-offset: 1px;
 }
 
@@ -736,8 +756,8 @@ html[data-theme="light"] .shelf-title-sub {
 
 html[data-theme="light"] .shelf-chevron-badge,
 html[data-theme="light"] .folder-icon-emblem {
-  background-color: #e4ddd0;
-  border-color: #143222;
+  background: none;
+  border: 0;
   color: #143222;
 }
 
@@ -750,6 +770,13 @@ html[data-theme="light"] .shelf-mini-btn {
 html[data-theme="light"] .shelf-mini-btn:hover {
   background-color: #143222;
   color: #ffffff;
+}
+
+html[data-theme="light"] .shelf-mini-btn.shelf-more-btn,
+html[data-theme="light"] .shelf-mini-btn.shelf-more-btn:hover {
+  background: none;
+  border: 0;
+  color: #143222;
 }
 
 html[data-theme="light"] .shelf-mini-btn.delete {

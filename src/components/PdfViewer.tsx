@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { VaultNode } from "../types/vault";
 import { FileTree } from "./FileTree";
 import {
+  CheckIcon,
   FolderIcon,
   CloseIcon,
   RefreshIcon,
@@ -14,6 +15,7 @@ import {
   ChevronUpIcon,
   ChevronDownIcon,
   FitWidthIcon,
+  SettingsIcon,
 } from "./Icons";
 import {
   extractLoadedPdfDocText,
@@ -22,6 +24,7 @@ import {
   PdfSearchMatch,
 } from "../utils/pdfSearch";
 import { PdfJsViewer } from "./PdfJsViewer";
+import { ReadingRulerSettings } from "./ReadingRulerControls";
 import { PdfPageSidebar } from "./PdfPageSidebar";
 import type { AppSettings } from "./SettingsModal";
 import { HIGHLIGHT_COLORS } from "../types/highlight";
@@ -149,6 +152,14 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const [filterToast, setFilterToast] = useState<string | null>(null);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [highlightEnabled, setHighlightEnabled] = useState(false);
+  const [readingRulerEnabled, setReadingRulerEnabled] = useState(false);
+  const [readingRulerSettingsOpen, setReadingRulerSettingsOpen] = useState(false);
+  const readingRulerSettingsId = useId();
+  useEffect(() => { if (!isToolsOpen) setReadingRulerSettingsOpen(false); }, [isToolsOpen]);
+  const [readingRulerDragMode, setReadingRulerDragMode] = useState(false);
+  const [readingRulerHeight, setReadingRulerHeight] = useState(48);
+  const [readingRulerColor, setReadingRulerColor] = useState("#ffc444");
+  const [readingRulerOpacity, setReadingRulerOpacity] = useState(33);
   const [erasingHighlights, setErasingHighlights] = useState(false);
   const [highlightColor, setHighlightColor] = useState<HighlightColor>(() => {
     const saved = localStorage.getItem(HIGHLIGHT_COLOR_STORAGE_KEY);
@@ -944,6 +955,22 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             <button type="button" className={`toolbar-btn ${settings.pageSidebarVisible ? "active" : ""}`}
               title="Toggle page previews (T)" aria-pressed={settings.pageSidebarVisible}
               onClick={() => onUpdateSettings({ ...settings, pageSidebarVisible: !settings.pageSidebarVisible })}>Pages</button>
+            <div className="reading-ruler-tool-row">
+              <button type="button" className={`toolbar-btn ${readingRulerEnabled ? "active" : ""}`}
+                title="Toggle reading ruler" aria-pressed={readingRulerEnabled}
+                disabled={loading || !!error || !pdfDoc}
+                onClick={() => { setReadingRulerEnabled((enabled) => !enabled); setReadingRulerSettingsOpen(false); }}>Reading ruler</button>
+              <button type="button" className="toolbar-btn reading-ruler-settings-btn"
+                aria-label="Customize reading ruler" title="Customize reading ruler"
+                aria-expanded={readingRulerSettingsOpen} aria-controls={readingRulerSettingsId}
+                disabled={loading || !!error || !pdfDoc}
+                onClick={() => setReadingRulerSettingsOpen((open) => !open)}><SettingsIcon size={15} /></button>
+            </div>
+            {readingRulerSettingsOpen && <div id={readingRulerSettingsId} role="group" aria-label="Reading ruler settings"><ReadingRulerSettings
+              dragMode={readingRulerDragMode} onDragModeChange={setReadingRulerDragMode}
+              height={readingRulerHeight} onHeightChange={setReadingRulerHeight}
+              color={readingRulerColor} onColorChange={setReadingRulerColor}
+              opacity={readingRulerOpacity} onOpacityChange={setReadingRulerOpacity} /></div>}
             <button type="button" className={`toolbar-btn highlighter-toggle ${highlightEnabled ? "active" : ""}`}
               title="Toggle highlight tool (H)" aria-label={erasingHighlights ? "Highlight eraser (H)" : `Highlight with ${highlightColor} (H)`}
               aria-keyshortcuts="H" aria-pressed={highlightEnabled} disabled={loading || !!error || !pdfDoc}
@@ -1067,9 +1094,10 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               ))}
               <button type="button" className="pdf-highlight-eraser" title="Erase a highlight"
                 aria-label="Erase highlights" aria-pressed={erasingHighlights}
-                onClick={() => setErasingHighlights(true)}>Erase</button>
+                onClick={() => setErasingHighlights(true)}><CloseIcon size={16} /></button>
             </div>
-            <button type="button" className="pdf-highlight-done" onClick={() => setHighlightEnabled(false)}>Done</button>
+            <button type="button" className="pdf-highlight-done" title="Done" aria-label="Done highlighting"
+              onClick={() => setHighlightEnabled(false)}><CheckIcon size={16} /></button>
           </div>
         )}
 
@@ -1218,6 +1246,11 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               sidebarVisible={settings.pageSidebarVisible}
               sidebarWidth={settings.pageSidebarWidth}
               sidebarDock={settings.pageSidebarDock}
+              readingRulerEnabled={readingRulerEnabled}
+              readingRulerDragMode={readingRulerDragMode}
+              readingRulerHeight={readingRulerHeight}
+              readingRulerColor={readingRulerColor}
+              readingRulerOpacity={readingRulerOpacity}
               onPageChange={(pageNumber) => {
                 setCurrentPage(pageNumber);
                 progressWritesRef.current = progressWritesRef.current
