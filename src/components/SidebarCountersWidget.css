@@ -126,7 +126,7 @@
 }
 
 .counter-input:focus {
-  border-color: #ffffff;
+  border-color: var(--app-focus-ring);
   background-color: rgba(255, 255, 255, 0.15);
 }
 
@@ -237,7 +237,7 @@
 }
 
 .counter-edit-input:focus {
-  border-color: #ffffff;
+  border-color: var(--app-focus-ring);
   background-color: rgba(255, 255, 255, 0.25);
 }
 
@@ -328,7 +328,7 @@
 .counter-name:focus-visible,
 .counter-stepper-btn:focus-visible,
 .counter-tool-btn:focus-visible {
-  outline: 2px solid #ffffff;
+  outline: 2px solid var(--app-focus-ring);
   outline-offset: 2px;
 }
 
@@ -391,7 +391,7 @@ html[data-theme="light"] .counter-input::placeholder {
 
 html[data-theme="light"] .counter-input:focus {
   background-color: #ffffff;
-  border-color: #143222;
+  border-color: var(--app-focus-ring);
 }
 
 html[data-theme="light"] .counter-add-btn {
@@ -471,5 +471,5 @@ html[data-theme="light"] .counter-tool-btn.delete:hover {
 html[data-theme="light"] .counter-name:focus-visible,
 html[data-theme="light"] .counter-stepper-btn:focus-visible,
 html[data-theme="light"] .counter-tool-btn:focus-visible {
-  outline-color: #143222;
+  outline-color: var(--app-focus-ring);
 }

@@ -80,7 +80,7 @@
 }
 
 .todo-input:focus {
-  border-color: #ffffff;
+  border-color: var(--app-focus-ring);
   background-color: rgba(255, 255, 255, 0.15);
 }
 
@@ -183,7 +183,7 @@
 }
 
 .todo-edit-input:focus {
-  border-color: #ffffff;
+  border-color: var(--app-focus-ring);
   background-color: rgba(255, 255, 255, 0.22);
 }
 
@@ -254,7 +254,7 @@ html[data-theme="light"] .todo-input::placeholder {
 
 html[data-theme="light"] .todo-input:focus {
   background-color: #ffffff;
-  border-color: #143222;
+  border-color: var(--app-focus-ring);
 }
 
 html[data-theme="light"] .todo-add-btn {

@@ -194,7 +194,7 @@ html[data-theme="light"] .settings-modal-card {
 .settings-toggle-row strong { font-size: 0.78rem; font-weight: 600; line-height: 1.35; }
 .settings-toggle-row small { color: var(--settings-muted); font-size: 0.72rem; line-height: 1.35; }
 .settings-modal-card :is(button, input, select):focus-visible {
-  outline: 2px solid var(--settings-accent);
+  outline: 2px solid var(--app-focus-ring);
   outline-offset: 2px;
 }
 .settings-modal-card .academic-settings-grid {

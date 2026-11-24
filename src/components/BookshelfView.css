@@ -92,7 +92,7 @@
 .shelf-chevron-badge:focus-visible,
 .folder-icon-emblem:focus-visible,
 .shelf-more-btn:focus-visible {
-  outline: 2px solid currentColor;
+  outline: 2px solid var(--app-focus-ring);
   outline-offset: 2px;
 }
 
@@ -327,7 +327,7 @@
   background: var(--picker-selected);
 }
 .color-option-btn[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--picker-accent); font-weight: 650; }
-.color-picker-popover button:focus-visible { outline: 2px solid var(--picker-accent); outline-offset: 2px; }
+.color-picker-popover button:focus-visible { outline: 2px solid var(--app-focus-ring); outline-offset: 2px; }
 
 /* Shelf Body & Books Row */
 .shelf-body {
@@ -402,7 +402,7 @@
 
 /* Architectural Wooden/Blueprint Shelf Line Bar */
 .blueprint-shelf-bar {
-  height: 12px;
+  height: 9px;
   background-color: #12301f;
   border: 1.5px solid rgba(255, 255, 255, 0.4);
   border-radius: 3px;
@@ -473,7 +473,7 @@
 }
 
 .book-spine-open:focus-visible {
-  outline: 2px solid #facc15;
+  outline: 2px solid var(--app-focus-ring);
   outline-offset: 3px;
 }
 
@@ -594,7 +594,7 @@ html[data-theme="light"] .book-metadata-tooltip {
 
 .book-rename-btn:focus-visible,
 .book-delete-btn:focus-visible {
-  outline: 2px solid #facc15;
+  outline: 2px solid var(--app-focus-ring);
   outline-offset: 1px;
 }
 

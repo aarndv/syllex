@@ -126,7 +126,7 @@
 }
 
 .form-field input:focus {
-  border-color: #ffffff;
+  border-color: var(--app-focus-ring);
   background-color: rgba(255, 255, 255, 0.15);
 }
 

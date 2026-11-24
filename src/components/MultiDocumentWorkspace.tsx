@@ -2,13 +2,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { pdfjsLib, getPdfDocumentParams } from "../utils/pdfInit";
 import { PdfJsViewer } from "./PdfJsViewer";
+import { ReadingRulerSettings } from "./ReadingRulerControls";
 import { VIEW_MODE_LABELS, VIEW_MODE_SHORT_LABELS, type DocumentViewMode } from "./PdfViewer";
 import { HIGHLIGHT_COLORS, type Highlight, type HighlightRect } from "../types/highlight";
 import type { VaultNode } from "../types/vault";
 import type { WorkspacePaneState, WorkspaceState } from "../types/workspace";
 import { minimumLayoutSize, movePane, paneIds, paneRects, removePane, resizeSplit, splitDividers, type WorkspaceSide } from "../utils/workspaceLayout";
 import { toUserFacingError } from "../utils/userFacingError";
-import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon, CloseIcon, ContinuousModeIcon, DuplicateIcon, ExpandIcon, FileIcon, FolderIcon, GripIcon, PageModeIcon, PlusIcon } from "./Icons";
+import { ArrangeDrawerIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon, CloseIcon, ContinuousModeIcon, DuplicateIcon, ExpandIcon, FileIcon, FolderIcon, GripIcon, HighlighterIcon, PageModeIcon, PlusIcon, SettingsIcon } from "./Icons";
 import "./PdfViewer.css";
 import "./MultiDocumentWorkspace.css";
 
@@ -49,6 +50,7 @@ export function MultiDocumentWorkspace({
   vaultRoot, allNodes, state, onChange, compactMode, onToggleCompactMode, onAddNode, onOpenSingle, onClose,
 }: MultiDocumentWorkspaceProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [arrangeOpen, setArrangeOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [addSide, setAddSide] = useState<WorkspaceSide>("right");
   const [moveTarget, setMoveTarget] = useState("");
@@ -304,64 +306,80 @@ export function MultiDocumentWorkspace({
   return <div ref={dialogRef} className="multi-workspace-overlay" role="dialog" aria-modal="true" aria-label="Document workspace">
     <header className="multi-workspace-header">
       <div className="multi-workspace-heading">
-        <button type="button" onClick={onClose} className="workspace-toolbar-btn">Back to library</button>
+        <button type="button" onClick={onClose} className="workspace-toolbar-btn workspace-back-btn"
+          aria-label="Back to library" title="Back to library"><ChevronLeftIcon size={16} /></button>
         <div><strong>Document workspace</strong><span>Session only · {ids.length} {ids.length === 1 ? "view" : "views"}</span></div>
       </div>
       <div className="multi-workspace-actions">
-        <button type="button" className="workspace-compact-toggle" aria-pressed={compactMode}
-          onClick={onToggleCompactMode}>
-          <span>Compact mode</span><span className="workspace-switch" aria-hidden="true"><span /></span>
-        </button>
-        <label>Place new view
-          <select value={addSide} onChange={(event) => setAddSide(event.target.value as WorkspaceSide)}>
-            {SIDES.map((side) => <option key={side.value} value={side.value}>{side.label}</option>)}
-          </select>
-        </label>
-        <div className="workspace-picker-anchor">
-          <button type="button" className="workspace-toolbar-btn" onClick={() => setPickerOpen((open) => !open)} aria-expanded={pickerOpen} aria-controls="workspace-module-picker">
-            <PlusIcon size={14} /> Add module
+        <div className="workspace-header-group workspace-add-actions" role="group" aria-label="Add views">
+          <label>Place new view
+            <select value={addSide} onChange={(event) => setAddSide(event.target.value as WorkspaceSide)}>
+              {SIDES.map((side) => <option key={side.value} value={side.value}>{side.label}</option>)}
+            </select>
+          </label>
+          <div className="workspace-picker-anchor">
+            <button type="button" className="workspace-toolbar-btn workspace-icon-toolbar-btn workspace-add-module-btn"
+              aria-label="Add module" title="Add module"
+              onClick={() => setPickerOpen((open) => !open)} aria-expanded={pickerOpen} aria-controls="workspace-module-picker">
+              <PlusIcon size={16} />
+            </button>
+            {pickerOpen && <section id="workspace-module-picker" className="workspace-picker" aria-label="Choose a module">
+              <label htmlFor="workspace-module-search">Choose a PDF or presentation</label>
+              <input id="workspace-module-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search modules" autoFocus />
+              <div className="workspace-picker-results">
+                {visibleTree.length === 0 ? <p>No matching readable modules.</p> : <ul>{visibleTree.map(renderPickerNode)}</ul>}
+              </div>
+            </section>}
+          </div>
+          <button type="button" className="workspace-toolbar-btn workspace-icon-toolbar-btn" disabled={!selectedPane}
+            aria-label="Add another view of selected module" title="Add another view of selected module"
+            onClick={() => selectedPane && onAddNode(selectedPane.node, selectedId, addSide, selectedPane.page)}>
+            <DuplicateIcon size={16} />
           </button>
-          {pickerOpen && <section id="workspace-module-picker" className="workspace-picker" aria-label="Choose a module">
-            <label htmlFor="workspace-module-search">Choose a PDF or presentation</label>
-            <input id="workspace-module-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search modules" autoFocus />
-            <div className="workspace-picker-results">
-              {visibleTree.length === 0 ? <p>No matching readable modules.</p> : <ul>{visibleTree.map(renderPickerNode)}</ul>}
-            </div>
-          </section>}
         </div>
-        <button type="button" className="workspace-toolbar-btn" disabled={!selectedPane}
-          onClick={() => selectedPane && onAddNode(selectedPane.node, selectedId, addSide, selectedPane.page)}>
-          Add view of selected
-        </button>
-        <div className="workspace-highlight-anchor">
-          <button type="button" className="workspace-toolbar-btn" disabled={!selectedPane?.numPages}
-            aria-label={selectedPane ? `Highlight in ${selectedPane.node.name}` : "Highlight selected view"}
-            aria-keyshortcuts="H" aria-pressed={selectedPane?.highlightEnabled ?? false}
-            aria-expanded={selectedPane?.highlightEnabled ?? false} aria-controls="workspace-highlight-menu"
-            onClick={() => selectedId && updatePane(selectedId, {
-              highlightEnabled: !selectedPane?.highlightEnabled, erasingHighlights: false,
-            })}>Highlight</button>
-          {selectedPane?.highlightEnabled && <div id="workspace-highlight-menu" className="workspace-highlight-palette" role="group"
-            aria-label={`Highlight controls for ${selectedPane.node.name}`}>
-            <span>{selectedPane.erasingHighlights ? "Click a highlight to erase" : "Drag over text or a page area"}</span>
-            <div className="workspace-highlight-colors" role="group" aria-label="Highlight colors">
-              {HIGHLIGHT_COLORS.map((color) => <button key={color.id} type="button" className="workspace-highlight-swatch" title={color.label}
-                aria-label={`${color.label} highlight`} aria-pressed={!selectedPane.erasingHighlights && selectedPane.highlightColor === color.id}
-                onClick={() => { localStorage.setItem("syllex_highlight_color", color.id); updatePane(selectedPane.id, { highlightColor: color.id, erasingHighlights: false }); }}>
-                <span style={{ backgroundColor: color.swatch }} aria-hidden="true" />
-              </button>)}
-              <button type="button" className="workspace-highlight-icon-btn" aria-label="Erase highlights" title="Erase highlights"
-                aria-pressed={selectedPane.erasingHighlights}
-                onClick={() => updatePane(selectedPane.id, { erasingHighlights: true })}><CloseIcon size={15} /></button>
-            </div>
-            <button type="button" className="workspace-highlight-icon-btn" aria-label="Done highlighting" title="Done"
-              onClick={() => updatePane(selectedPane.id, { highlightEnabled: false, erasingHighlights: false })}><CheckIcon size={16} /></button>
-          </div>}
+        <div className="workspace-header-group workspace-tools-actions" role="group" aria-label="Workspace tools">
+          <div className="workspace-highlight-anchor">
+            <button type="button" className="workspace-toolbar-btn workspace-icon-toolbar-btn" disabled={!selectedPane?.numPages}
+              aria-label={selectedPane ? `Highlight in ${selectedPane.node.name}` : "Highlight selected view"}
+              title="Highlight selected view (H)"
+              aria-keyshortcuts="H" aria-pressed={selectedPane?.highlightEnabled ?? false}
+              aria-expanded={selectedPane?.highlightEnabled ?? false} aria-controls="workspace-highlight-menu"
+              onClick={() => selectedId && updatePane(selectedId, {
+                highlightEnabled: !selectedPane?.highlightEnabled, erasingHighlights: false,
+              })}><HighlighterIcon size={17} /></button>
+            {selectedPane?.highlightEnabled && <div id="workspace-highlight-menu" className="workspace-highlight-palette" role="group"
+              aria-label={`Highlight controls for ${selectedPane.node.name}`}>
+              <span>{selectedPane.erasingHighlights ? "Click a highlight to erase" : "Drag over text or a page area"}</span>
+              <div className="workspace-highlight-colors" role="group" aria-label="Highlight colors">
+                {HIGHLIGHT_COLORS.map((color) => <button key={color.id} type="button" className="workspace-highlight-swatch" title={color.label}
+                  aria-label={`${color.label} highlight`} aria-pressed={!selectedPane.erasingHighlights && selectedPane.highlightColor === color.id}
+                  onClick={() => { localStorage.setItem("syllex_highlight_color", color.id); updatePane(selectedPane.id, { highlightColor: color.id, erasingHighlights: false }); }}>
+                  <span style={{ backgroundColor: color.swatch }} aria-hidden="true" />
+                </button>)}
+                <button type="button" className="workspace-highlight-icon-btn" aria-label="Erase highlights" title="Erase highlights"
+                  aria-pressed={selectedPane.erasingHighlights}
+                  onClick={() => updatePane(selectedPane.id, { erasingHighlights: true })}><CloseIcon size={15} /></button>
+              </div>
+              <button type="button" className="workspace-highlight-icon-btn" aria-label="Done highlighting" title="Done"
+                onClick={() => updatePane(selectedPane.id, { highlightEnabled: false, erasingHighlights: false })}><CheckIcon size={16} /></button>
+            </div>}
+          </div>
+          {ids.length > 1 && <button type="button" className="workspace-toolbar-btn workspace-icon-toolbar-btn workspace-arrange-toggle"
+            aria-label={arrangeOpen ? "Hide arrange controls" : "Show arrange controls"}
+            aria-expanded={arrangeOpen} aria-controls="workspace-arrange-bar"
+            title={arrangeOpen ? "Hide arrange controls" : "Show arrange controls"}
+            onClick={() => setArrangeOpen((open) => !open)}>
+            <ArrangeDrawerIcon size={16} />
+          </button>}
+          <button type="button" className="workspace-compact-toggle" aria-pressed={compactMode}
+            onClick={onToggleCompactMode}>
+            <span>Compact</span><span className="workspace-switch" aria-hidden="true"><span /></span>
+          </button>
         </div>
       </div>
     </header>
 
-    {ids.length > 1 && selectedPane && <div className="workspace-arrange-bar">
+    {arrangeOpen && ids.length > 1 && selectedPane && <div id="workspace-arrange-bar" className="workspace-arrange-bar">
       <span>Move <strong>{selectedPane.node.name}</strong> next to</span>
       <select aria-label="Target view" value={moveTarget} onChange={(event) => setMoveTarget(event.target.value)}>
         {moveTargets.map((id) => <option key={id} value={id}>{state.panes[id]?.node.name ?? "View"} · view {ids.indexOf(id) + 1}</option>)}
@@ -428,8 +446,15 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
   const [highlightError, setHighlightError] = useState<string | null>(null);
   const [highlightToast, setHighlightToast] = useState<{ kind: "saved" | "erased"; highlight: Highlight } | null>(null);
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [optionsSection, setOptionsSection] = useState<"view" | "ruler">("view");
+  const [readingRulerEnabled, setReadingRulerEnabled] = useState(false);
+  const [readingRulerDragMode, setReadingRulerDragMode] = useState(false);
+  const [readingRulerHeight, setReadingRulerHeight] = useState(48);
+  const [readingRulerColor, setReadingRulerColor] = useState("#ffc444");
+  const [readingRulerOpacity, setReadingRulerOpacity] = useState(33);
   const optionsRef = useRef<HTMLDivElement>(null);
   const optionsButtonRef = useRef<HTMLButtonElement>(null);
+  const rulerSettingsButtonRef = useRef<HTMLButtonElement>(null);
   const toastTimerRef = useRef<number | null>(null);
   const undoPendingRef = useRef(false);
   const deletingIdsRef = useRef(new Set<string>());
@@ -437,8 +462,8 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
   const zoomOptions = [...new Set([50, 75, 100, 125, 150, 200, zoomPercent])].sort((a, b) => a - b);
 
   useEffect(() => {
-    if (!optionsOpen || !compactMode) return;
-    optionsRef.current?.querySelector<HTMLSelectElement>("select")?.focus();
+    if (!optionsOpen) return;
+    optionsRef.current?.querySelector<HTMLElement>("select, input")?.focus();
     const onPointerDown = (event: PointerEvent) => {
       if (!optionsRef.current?.contains(event.target as Node)) setOptionsOpen(false);
     };
@@ -447,7 +472,7 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
       event.preventDefault();
       event.stopPropagation();
       setOptionsOpen(false);
-      optionsButtonRef.current?.focus();
+      (optionsSection === "ruler" ? rulerSettingsButtonRef : optionsButtonRef).current?.focus();
     };
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown, true);
@@ -455,11 +480,7 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown, true);
     };
-  }, [optionsOpen, compactMode]);
-
-  useEffect(() => {
-    if (!compactMode) setOptionsOpen(false);
-  }, [compactMode]);
+  }, [optionsOpen, optionsSection]);
 
   useEffect(() => {
     let active = true;
@@ -587,13 +608,8 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
           <GripIcon size={16} />
         </span>
         <strong title={pane.node.name}>{pane.node.name}</strong>
-        <div className="workspace-pane-actions">
-          <button type="button" onClick={onDuplicate} aria-label={`Duplicate view of ${pane.node.name}`} title="Open another view of this module"><DuplicateIcon size={15} /></button>
-          <button type="button" onClick={onOpenSingle} aria-label={`Open ${pane.node.name} in full reader`} title="Open in full reader"><ExpandIcon size={15} /></button>
-          <button type="button" onClick={onClose} aria-label={`Close view of ${pane.node.name}`} title="Close view"><CloseIcon size={13} /></button>
-        </div>
       </div>
-      <div className="workspace-pane-controls">
+      <div className="workspace-pane-controls" role="group" aria-label={`Reading controls for ${pane.node.name}`}>
         <div className="workspace-page-navigation" data-continuous={pane.continuous}>
           <button type="button" onClick={() => onUpdate({ page: Math.max(1, pane.page - 1) })} disabled={pane.continuous || loading || pane.page <= 1} aria-label={`Previous page of ${pane.node.name}`} title="Previous page (Left)"><ChevronLeftIcon size={14} /></button>
           <span title={`Page ${pane.page} of ${pdfDoc?.numPages ?? "unknown"}`}>
@@ -609,21 +625,41 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
         </button>
         {!compactMode && zoomSelect}
         {!compactMode && filterSelect}
-        {compactMode && <div className="workspace-view-options" ref={optionsRef}
+        <div className="workspace-view-options" ref={optionsRef}
           onBlurCapture={(event) => {
             if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) setOptionsOpen(false);
           }}>
-          <button type="button" ref={optionsButtonRef} aria-label={`More view options for ${pane.node.name}`}
-            aria-expanded={optionsOpen} title="Zoom and reading filter" onClick={() => setOptionsOpen((open) => !open)}>…</button>
+          {compactMode && <button type="button" ref={optionsButtonRef} aria-label={`More view options for ${pane.node.name}`}
+            aria-expanded={optionsOpen && optionsSection === "view"} title="Zoom and reading filter"
+            onClick={() => { setOptionsOpen((open) => optionsSection === "view" ? !open : true); setOptionsSection("view"); }}>…</button>}
+          <button type="button" onClick={() => { setReadingRulerEnabled((enabled) => !enabled); setOptionsOpen(false); }}
+            aria-pressed={readingRulerEnabled} aria-label={`Reading ruler for ${pane.node.name}`}
+            title="Toggle reading ruler" disabled={loading || !!error || !pdfDoc}>▰</button>
+          <button type="button" ref={rulerSettingsButtonRef} aria-label={`Customize reading ruler for ${pane.node.name}`}
+            aria-expanded={optionsOpen && optionsSection === "ruler"} title="Customize reading ruler"
+            disabled={loading || !!error || !pdfDoc}
+            onClick={() => { setOptionsOpen((open) => optionsSection === "ruler" ? !open : true); setOptionsSection("ruler"); }}><SettingsIcon size={14} /></button>
           {optionsOpen && <div className="workspace-view-options-popover" role="group" aria-label={`View options for ${pane.node.name}`}>
+            {optionsSection === "view" && <>
             <label>Zoom
               {zoomSelect}
             </label>
             <label>Reading filter
               {filterSelect}
             </label>
+            </>}
+            {optionsSection === "ruler" && <ReadingRulerSettings
+              dragMode={readingRulerDragMode} onDragModeChange={setReadingRulerDragMode}
+              height={readingRulerHeight} onHeightChange={setReadingRulerHeight}
+              color={readingRulerColor} onColorChange={setReadingRulerColor}
+              opacity={readingRulerOpacity} onOpacityChange={setReadingRulerOpacity} />}
           </div>}
-        </div>}
+        </div>
+      </div>
+      <div className="workspace-pane-actions" role="group" aria-label={`View actions for ${pane.node.name}`}>
+        <button type="button" onClick={onDuplicate} aria-label={`Duplicate view of ${pane.node.name}`} title="Open another view of this module"><DuplicateIcon size={15} /></button>
+        <button type="button" onClick={onOpenSingle} aria-label={`Open ${pane.node.name} in full reader`} title="Open in full reader"><ExpandIcon size={15} /></button>
+        <button type="button" onClick={onClose} aria-label={`Close view of ${pane.node.name}`} title="Close view"><CloseIcon size={13} /></button>
       </div>
     </header>
     <div className="workspace-pane-reading">
@@ -642,6 +678,11 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
         highlights={highlights} highlightEnabled={pane.highlightEnabled} erasingHighlights={pane.erasingHighlights} highlightColor={pane.highlightColor}
         onCreateHighlight={(page, rects) => { void saveHighlight(page, rects); }} onEraseHighlight={(id) => { void eraseHighlight(id); }} focusHighlight={null}
         sidebarVisible={false} sidebarWidth={0} sidebarDock="left"
+        readingRulerEnabled={readingRulerEnabled}
+        readingRulerDragMode={readingRulerDragMode}
+        readingRulerHeight={readingRulerHeight}
+        readingRulerColor={readingRulerColor}
+        readingRulerOpacity={readingRulerOpacity}
         onScaleChange={(zoom) => { if (!pane.fitWidth && !pane.fitHeight) onUpdate({ zoom }); }}
       />}
       {canMove && <div className="workspace-drop-zones">

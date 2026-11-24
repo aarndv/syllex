@@ -29,6 +29,11 @@ interface PdfJsViewerProps {
   sidebarVisible: boolean;
   sidebarWidth: number;
   sidebarDock: "left" | "right";
+  readingRulerEnabled?: boolean;
+  readingRulerDragMode?: boolean;
+  readingRulerHeight?: number;
+  readingRulerColor?: string;
+  readingRulerOpacity?: number;
   onScaleChange?: (scale: number) => void;
 }
 
@@ -105,9 +110,16 @@ export function PdfJsViewer({
   sidebarVisible,
   sidebarWidth,
   sidebarDock,
+  readingRulerEnabled = false,
+  readingRulerDragMode = false,
+  readingRulerHeight = 48,
+  readingRulerColor = "#ffc444",
+  readingRulerOpacity = 33,
   onScaleChange,
 }: PdfJsViewerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const rulerRef = useRef<HTMLDivElement | null>(null);
+  const rulerDragRef = useRef<{ pointerId: number; offset: number } | null>(null);
   const viewerElementRef = useRef<HTMLDivElement | null>(null);
   const viewerRef = useRef<PDFViewer | null>(null);
   const currentPageRef = useRef(currentPage);
@@ -409,9 +421,39 @@ export function PdfJsViewer({
   return (
     <div className={`pdfjs-viewer-shell mode-${viewMode} ${highlightEnabled ? (erasingHighlights ? "highlight-eraser-active" : "highlight-tool-active") : ""}`}
       style={sidebarVisible ? { [sidebarDock]: `${sidebarWidth}px` } : undefined}>
-      <div ref={containerRef} className="pdfjs-viewer-container">
+      <div ref={containerRef} className="pdfjs-viewer-container"
+        onPointerMove={readingRulerEnabled && !readingRulerDragMode ? (event) => {
+          const ruler = rulerRef.current;
+          if (!ruler) return;
+          ruler.style.top = `${event.clientY - event.currentTarget.getBoundingClientRect().top}px`;
+        } : undefined}>
         <div ref={viewerElementRef} className="pdfViewer" />
       </div>
+      {readingRulerEnabled && <div ref={rulerRef} className="pdf-reading-ruler"
+        style={{ height: readingRulerHeight, backgroundColor: `${readingRulerColor}${Math.round(readingRulerOpacity * 255 / 100).toString(16).padStart(2, "0")}`, borderTopColor: readingRulerColor }}>
+        {readingRulerDragMode && <div className="pdf-reading-ruler-handle" role="button" tabIndex={0}
+          aria-label="Move reading ruler. Drag or use arrow keys"
+          title="Drag to move ruler"
+          onPointerDown={(event) => {
+            event.preventDefault();
+            rulerDragRef.current = { pointerId: event.pointerId, offset: event.clientY - rulerRef.current!.getBoundingClientRect().top };
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }}
+          onPointerMove={(event) => {
+            if (rulerDragRef.current?.pointerId !== event.pointerId || !rulerRef.current) return;
+            const shell = rulerRef.current.parentElement;
+            if (!shell) return;
+            rulerRef.current.style.top = `${Math.max(0, Math.min(shell.clientHeight, event.clientY - shell.getBoundingClientRect().top - rulerDragRef.current.offset))}px`;
+          }}
+          onPointerUp={() => { rulerDragRef.current = null; }}
+          onPointerCancel={() => { rulerDragRef.current = null; }}
+          onKeyDown={(event) => {
+            if (!rulerRef.current || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) return;
+            event.preventDefault();
+            const current = rulerRef.current.offsetTop;
+            rulerRef.current.style.top = `${Math.max(0, Math.min(rulerRef.current.parentElement?.clientHeight ?? current, current + (event.key === "ArrowUp" ? -8 : 8)))}px`;
+          }}>↕</div>}
+      </div>}
     </div>
   );
 }
