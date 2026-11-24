@@ -29,7 +29,6 @@
   }
 }
 
-/* Subtle blueprint graph grid matching the main workspace */
 .landing-pad-backdrop-pattern {
   position: absolute;
   inset: 0;
@@ -61,12 +60,7 @@
   inset: 9px -13px -10px 15px;
   border: 1px solid #78917c;
   border-radius: 3px 10px 10px 3px;
-  background: repeating-linear-gradient(
-    to bottom,
-    #edf1e9 0 2px,
-    #cbd5cb 2px 3px,
-    #f8faf5 3px 5px
-  );
+  background: #edf1e9;
 }
 
 .landing-book::after {
@@ -92,9 +86,9 @@
   position: absolute;
   inset: 0;
   border-radius: 4px 4px 0 0;
-  background:
-    linear-gradient(90deg, #2c6645 0 4px, transparent 4px calc(100% - 3px), #2c6645 calc(100% - 3px)),
-    linear-gradient(100deg, #e7eadf, #fffef7 32%, #f4f6e9 78%, #d9e3d4);
+  background: #f4f6e9;
+  border-left: 4px solid #2c6645;
+  border-right: 3px solid #2c6645;
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 85%, 0 100%);
 }
 
@@ -116,22 +110,15 @@
   border: 2px solid #2c6645;
   border-radius: 50%;
   background: #0f2e1e;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 
 .landing-pad-card {
   position: relative;
   width: 100%;
   max-height: calc(100vh - 2.5rem);
-  background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.28), transparent 10%, transparent 93%, rgba(0, 0, 0, 0.1)),
-    #143722;
+  background: #143722;
   border: 2px solid #6f9978;
   border-radius: 9px 5px 5px 9px;
-  box-shadow:
-    inset 3px 0 0 rgba(255, 255, 255, 0.1),
-    inset 14px 0 13px -14px #020e08,
-    inset 0 0 0 5px rgba(123, 172, 133, 0.16);
   padding: 2rem 2.25rem 1.65rem 3rem;
   box-sizing: border-box;
   display: flex;
@@ -147,7 +134,6 @@
   inset: 7px auto 7px 13px;
   width: 1px;
   background: rgba(155, 199, 160, 0.23);
-  box-shadow: 4px 0 0 rgba(0, 0, 0, 0.1);
   pointer-events: none;
 }
 
@@ -188,14 +174,12 @@ html[data-theme="light"] .landing-app-title .landing-wordmark-light {
   display: block;
 }
 
-.landing-tagline {
+.landing-motivational-subtitle {
   margin: 0;
-  font-family: "Charter", "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
-  font-size: 0.95rem;
-  font-style: italic;
-  color: #d6ebd9;
-  opacity: 0.9;
-  line-height: 1.35;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #e2f0d9;
 }
 
 /* Vault Status Indicator */
@@ -220,18 +204,29 @@ html[data-theme="light"] .landing-app-title .landing-wordmark-light {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 4px;
-  background-color: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  background: none;
   color: #ffffff;
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 .landing-vault-icon.unconfigured {
-  background-color: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.6);
+}
+
+.landing-vault-icon:hover,
+.landing-vault-icon.unconfigured:hover {
+  color: #ffffff;
+}
+
+.landing-vault-icon:focus-visible,
+.landing-settings-trigger-btn:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
 }
 
 .landing-vault-text-group {
@@ -279,33 +274,15 @@ html[data-theme="light"] .landing-app-title .landing-wordmark-light {
   color: rgba(255, 255, 255, 0.75);
 }
 
-.landing-mini-action-btn {
-  background-color: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.22rem 0.6rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.landing-mini-action-btn:hover {
-  background-color: rgba(255, 255, 255, 0.22);
-  border-color: #ffffff;
-}
-
 /* Actions Section */
 .landing-actions-section {
-  width: 100%;
+  display: flex;
+  justify-content: center;
   margin-bottom: 1.1rem;
 }
 
 .landing-enter-btn {
-  width: 100%;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.55rem;
@@ -319,7 +296,6 @@ html[data-theme="light"] .landing-app-title .landing-wordmark-light {
   border: 1.5px solid rgba(255, 255, 255, 0.35);
   border-radius: 6px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
   transition: all 0.15s ease;
   position: relative;
 }
@@ -327,15 +303,11 @@ html[data-theme="light"] .landing-app-title .landing-wordmark-light {
 .landing-enter-btn:hover {
   background-color: #24583b;
   border-color: #ffffff;
-  box-shadow:
-    0 6px 18px rgba(0, 0, 0, 0.38),
-    0 0 10px rgba(255, 255, 255, 0.12);
   transform: translateY(-1px);
 }
 
 .landing-enter-btn:active {
   transform: translateY(1px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .landing-enter-btn:focus-visible {
@@ -379,11 +351,9 @@ html[data-theme="light"] .landing-app-title .landing-wordmark-light {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  background-color: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0;
+  border: 0;
+  background: none;
   color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -391,8 +361,6 @@ html[data-theme="light"] .landing-app-title .landing-wordmark-light {
 
 .landing-settings-trigger-btn:hover,
 .landing-settings-trigger-btn.active {
-  background-color: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.45);
   color: #ffffff;
   transform: translateY(-1px);
 }
@@ -406,7 +374,6 @@ html[data-theme="light"] .landing-app-title .landing-wordmark-light {
   border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 6px;
   padding: 0.35rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -461,14 +428,8 @@ html[data-theme="light"] .landing-pad-backdrop-pattern {
 }
 
 html[data-theme="light"] .landing-pad-card {
-  background:
-    linear-gradient(90deg, rgba(35, 76, 49, 0.17), transparent 11%, transparent 93%, rgba(35, 76, 49, 0.06)),
-    #eee9df;
+  background: #eee9df;
   border-color: #315941;
-  box-shadow:
-    inset 3px 0 0 rgba(255, 255, 255, 0.5),
-    inset 14px 0 13px -14px rgba(35, 76, 49, 0.5),
-    inset 0 0 0 5px rgba(49, 89, 65, 0.14);
 }
 
 html[data-theme="light"] .landing-book::after {
@@ -483,7 +444,7 @@ html[data-theme="light"] .landing-pad-card::before {
   background: rgba(49, 89, 65, 0.25);
 }
 
-html[data-theme="light"] .landing-tagline {
+html[data-theme="light"] .landing-motivational-subtitle {
   color: #244230;
 }
 
@@ -501,36 +462,30 @@ html[data-theme="light"] .landing-vault-stats {
 }
 
 html[data-theme="light"] .landing-vault-icon {
-  background-color: #143222;
-  border-color: #0b1d14;
-  color: #ffffff;
+  color: #143222;
+}
+
+html[data-theme="light"] .landing-vault-icon.unconfigured {
+  color: #3b5043;
+}
+
+html[data-theme="light"] .landing-vault-icon:hover,
+html[data-theme="light"] .landing-vault-icon.unconfigured:hover {
+  color: #1e6740;
 }
 
 html[data-theme="light"] .landing-vault-unselected-text {
   color: #3b5043;
 }
 
-html[data-theme="light"] .landing-mini-action-btn {
-  background-color: #eee9df;
-  color: #143222;
-  border-color: #143222;
-}
-
-html[data-theme="light"] .landing-mini-action-btn:hover {
-  background-color: #143222;
-  color: #ffffff;
-}
-
 html[data-theme="light"] .landing-enter-btn {
   background-color: #143222;
   border: 1.5px solid #0b1d14;
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(20, 50, 34, 0.18);
 }
 
 html[data-theme="light"] .landing-enter-btn:hover {
   background-color: #1e4530;
-  box-shadow: 0 6px 18px rgba(20, 50, 34, 0.28);
 }
 
 html[data-theme="light"] .enter-kbd-badge {
@@ -540,21 +495,17 @@ html[data-theme="light"] .enter-kbd-badge {
 }
 
 html[data-theme="light"] .landing-settings-trigger-btn {
-  background-color: #eee9df;
-  border: 1px solid #143222;
   color: #143222;
 }
 
 html[data-theme="light"] .landing-settings-trigger-btn:hover,
 html[data-theme="light"] .landing-settings-trigger-btn.active {
-  background-color: #143222;
-  color: #ffffff;
+  color: #1e6740;
 }
 
 html[data-theme="light"] .landing-settings-dropdown {
   background-color: #fbf9f4;
   border-color: #143222;
-  box-shadow: 0 10px 25px rgba(20, 50, 34, 0.15);
 }
 
 html[data-theme="light"] .landing-dropdown-item {
@@ -587,10 +538,6 @@ html[data-theme="light"] .landing-dropdown-item:hover {
 
   .landing-header-section {
     margin-bottom: 0.85rem;
-  }
-
-  .landing-tagline {
-    font-size: 0.85rem;
   }
 
   .landing-vault-status-box {

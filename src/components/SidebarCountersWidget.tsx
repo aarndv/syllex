@@ -151,6 +151,7 @@ export const SidebarCountersWidget: React.FC = () => {
             const isEditing = editingId === counter.id;
             return (
               <div key={counter.id} className="counter-item">
+                <div className="counter-top-row">
                 <div className="counter-left">
                   {isEditing ? (
                     <input
@@ -166,17 +167,26 @@ export const SidebarCountersWidget: React.FC = () => {
                       }}
                     />
                   ) : (
-                    <span
+                    <button
+                      type="button"
                       className="counter-name"
                       onClick={() => handleStartEdit(counter)}
-                      title="Click to rename counter"
+                      title="Rename counter"
                     >
                       {counter.name}
-                    </span>
+                    </button>
                   )}
                 </div>
+                <div className="counter-item-actions">
+                  <button type="button" onClick={() => handleReset(counter.id)} className="counter-tool-btn" title="Reset to 0" aria-label={`Reset ${counter.name} to 0`}>
+                    <ResetIcon size={12} />
+                  </button>
+                  <button type="button" onClick={() => handleDelete(counter.id)} className="counter-tool-btn delete" title="Delete counter" aria-label={`Delete ${counter.name}`}>
+                    <CloseIcon size={12} />
+                  </button>
+                </div>
+                </div>
 
-                {/* Stepper Controls in Single Row */}
                 <div className="counter-controls">
                   <button
                     type="button"
@@ -184,45 +194,25 @@ export const SidebarCountersWidget: React.FC = () => {
                     disabled={counter.count <= 0}
                     onClick={() => handleDecrement(counter.id)}
                     title="Subtract 1"
+                    aria-label={`Subtract 1 from ${counter.name}`}
                   >
                     <MinusIcon size={11} />
                   </button>
 
-                  <button
-                    type="button"
-                    className="counter-count-btn"
-                    onClick={() => handleIncrement(counter.id)}
-                    title="Click to count up (+1)"
-                  >
+                  <output className="counter-count-btn" aria-label={`${counter.name} count`}>
                     {counter.count}
-                  </button>
+                  </output>
 
                   <button
                     type="button"
                     className="counter-stepper-btn increment"
                     onClick={() => handleIncrement(counter.id)}
                     title="Add 1 (+1)"
+                    aria-label={`Add 1 to ${counter.name}`}
                   >
                     <PlusIcon size={11} />
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleReset(counter.id)}
-                    className="counter-tool-btn"
-                    title="Reset to 0"
-                  >
-                    <ResetIcon size={11} />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(counter.id)}
-                    className="counter-tool-btn delete"
-                    title="Delete counter"
-                  >
-                    <CloseIcon size={11} />
-                  </button>
                 </div>
               </div>
             );

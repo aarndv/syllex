@@ -5,7 +5,6 @@ import {
   FolderIcon,
   SettingsIcon,
   ArrowRightIcon,
-  BookIcon,
 } from "./Icons";
 import "./LandingPad.css";
 
@@ -18,6 +17,19 @@ interface LandingPadProps {
   onOpenSettings: () => void;
 }
 
+const MOTIVATIONAL_SENTENCES = [
+  "Small daily efforts compound into extraordinary mastery over time.",
+  "Focus on progress, not perfection; every page read is a victory.",
+  "Consistency is the secret bridge between ambition and achievement.",
+  "Knowledge builds quiet confidence that lasts a lifetime.",
+  "Your future self will thank you for the focus you invest today.",
+  "Curiosity fuels understanding—keep asking questions as you read.",
+  "Great scholars are simply dedicated learners who refused to give up.",
+  "One concept at a time, you are constructing your foundation.",
+  "The effort you put in today lights the path for your success tomorrow.",
+  "Deep focus transforms complex topics into familiar knowledge.",
+];
+
 export const LandingPad: React.FC<LandingPadProps> = ({
   onEnter,
   vaultPath,
@@ -27,6 +39,7 @@ export const LandingPad: React.FC<LandingPadProps> = ({
   onOpenSettings,
 }) => {
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
+  const motivationalSentence = useMemo(() => MOTIVATIONAL_SENTENCES[Math.floor(Math.random() * MOTIVATIONAL_SENTENCES.length)], []);
   const settingsMenuRef = useRef<HTMLDivElement>(null);
 
   // Extract vault folder name from full path
@@ -68,6 +81,7 @@ export const LandingPad: React.FC<LandingPadProps> = ({
         (target.tagName === "INPUT" ||
           target.tagName === "TEXTAREA" ||
           target.tagName === "SELECT" ||
+          target.closest("button") !== null ||
           target.isContentEditable)
       ) {
         return;
@@ -116,16 +130,16 @@ export const LandingPad: React.FC<LandingPadProps> = ({
 
         {/* Tagline */}
         <div className="landing-header-section">
-          <p className="landing-tagline">Academic Repository & Module Sanctuary</p>
+          <p className="landing-motivational-subtitle">{motivationalSentence}</p>
         </div>
 
         {/* Vault Status Indicator */}
         <div className="landing-vault-status-box">
           {vaultPath ? (
             <div className="landing-vault-active" title={vaultPath}>
-              <span className="landing-vault-icon">
-                <FolderIcon size={15} />
-              </span>
+              <button type="button" className="landing-vault-icon" onClick={onOpenVaultManager} title="Manage vaults" aria-label="Manage vaults">
+                <FolderIcon size={18} />
+              </button>
               <div className="landing-vault-text-group">
                 <span className="landing-vault-name">{vaultName}</span>
                 {statsSummary && (
@@ -136,21 +150,13 @@ export const LandingPad: React.FC<LandingPadProps> = ({
           ) : (
             <div className="landing-vault-unselected">
               <div className="landing-vault-unselected-label">
-                <span className="landing-vault-icon unconfigured">
-                  <BookIcon size={14} />
-                </span>
+                <button type="button" className="landing-vault-icon unconfigured" onClick={onOpenVaultManager} title="Select or create a study vault" aria-label="Select or create a study vault">
+                  <FolderIcon size={18} />
+                </button>
                 <span className="landing-vault-unselected-text">
                   No active vault loaded
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={onOpenVaultManager}
-                className="landing-mini-action-btn"
-                title="Select or create a study vault"
-              >
-                Select Vault
-              </button>
             </div>
           )}
         </div>
@@ -194,7 +200,7 @@ export const LandingPad: React.FC<LandingPadProps> = ({
                   onOpenVaultManager();
                 }}
               >
-                <FolderIcon size={14} />
+                <FolderIcon size={16} />
                 <span>Manage Vaults</span>
               </button>
               <button

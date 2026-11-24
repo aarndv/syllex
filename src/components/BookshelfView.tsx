@@ -193,12 +193,14 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
   return (
     <div className={`shelf-wrapper ${isActionMenuOpen || isColorPickerOpen ? "has-open-actions" : ""}`} style={wrapperStyle}>
       <header className={`shelf-header-blueprint ${isActionMenuOpen || isColorPickerOpen ? "has-open-actions" : ""}`} style={headerStyle}>
-        <div className="shelf-title-plate" onClick={() => setIsExpanded((prev) => !prev)}>
-          <span className="shelf-chevron-badge">{isExpanded ? "▼" : "▶"}</span>
-          <div className="folder-icon-emblem">
+        <div className="shelf-title-plate">
+          <button type="button" className="shelf-chevron-badge" onClick={() => setIsExpanded((prev) => !prev)} aria-label={`${isExpanded ? "Collapse" : "Expand"} ${folder.name}`} aria-expanded={isExpanded}>
+            {isExpanded ? "▼" : "▶"}
+          </button>
+          <button type="button" className="folder-icon-emblem" onClick={() => setIsExpanded((prev) => !prev)} aria-label={`${isExpanded ? "Collapse" : "Expand"} ${folder.name}`} aria-expanded={isExpanded}>
             <FolderIcon size={16} />
-          </div>
-          <div className="shelf-title-wrapper">
+          </button>
+          <div className="shelf-title-wrapper" onClick={() => setIsExpanded((prev) => !prev)}>
             <h3 className="shelf-title">{folder.name}</h3>
             <span className="shelf-title-sub">{folder.children.length} {folder.children.length === 1 ? "ITEM" : "ITEMS"}</span>
           </div>

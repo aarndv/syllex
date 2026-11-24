@@ -37,19 +37,6 @@ const NIGHT_GREETINGS = [
   "Nighttime dedication! Every slide and page gets you closer to your goal.",
 ];
 
-const MOTIVATIONAL_SENTENCES = [
-  "Small daily efforts compound into extraordinary mastery over time.",
-  "Focus on progress, not perfection; every page read is a victory.",
-  "Consistency is the secret bridge between ambition and achievement.",
-  "Knowledge builds quiet confidence that lasts a lifetime.",
-  "Your future self will thank you for the focus you invest today.",
-  "Curiosity fuels understanding—keep asking questions as you read.",
-  "Great scholars are simply dedicated learners who refused to give up.",
-  "One concept at a time, you are constructing your foundation.",
-  "The effort you put in today lights the path for your success tomorrow.",
-  "Deep focus transforms complex topics into familiar knowledge.",
-];
-
 function getTimeOfDay(hour: number): "morning" | "afternoon" | "evening" | "night" {
   if (hour >= 5 && hour < 12) return "morning";
   if (hour >= 12 && hour < 17) return "afternoon";
@@ -62,7 +49,7 @@ function getRandomItem<T>(items: T[]): T {
 }
 
 export const DashboardHeader: React.FC = () => {
-  const { greeting, motivationalSentence, formattedDate } = useMemo(() => {
+  const { greeting, formattedDate } = useMemo(() => {
     const now = new Date();
     const hour = now.getHours();
     const timeOfDay = getTimeOfDay(hour);
@@ -84,7 +71,6 @@ export const DashboardHeader: React.FC = () => {
     }
 
     const greetingStr = getRandomItem(greetingsList);
-    const mottoStr = getRandomItem(MOTIVATIONAL_SENTENCES);
 
     const dateOptions: Intl.DateTimeFormatOptions = {
       weekday: "long",
@@ -95,7 +81,6 @@ export const DashboardHeader: React.FC = () => {
 
     return {
       greeting: greetingStr,
-      motivationalSentence: mottoStr,
       formattedDate: dateStr,
     };
   }, []);
@@ -112,7 +97,6 @@ export const DashboardHeader: React.FC = () => {
           <span className="dashboard-date-text">{formattedDate}</span>
         </div>
         <h2 className="dashboard-greeting-title">{greeting}</h2>
-        <p className="dashboard-motivational-subtitle">{motivationalSentence}</p>
       </div>
 
     </div>
