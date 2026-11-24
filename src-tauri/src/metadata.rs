@@ -161,6 +161,34 @@ pub fn set_item_display_name(
         return Err("Display name must be 1–255 visible characters".to_string());
     }
     let (root, relative, is_folder) = validated_item(vault_root, relative_path)?;
+    if let Some((mut study, revision)) = crate::study::selected_read(app, Path::new(&root))? {
+        let key = relative.replace('\\', "/");
+        let file = Path::new(&root).join(&relative);
+        if let Some(existing) = study.library.get(&key) {
+            if !crate::study::library_entry_matches(Path::new(&root), &key, existing) {
+                return Err(
+                    "Source item changed since its study data was saved; recover it before editing"
+                        .into(),
+                );
+            }
+        }
+        let entry = study
+            .library
+            .entry(key)
+            .or_insert(crate::study::LibraryEntry {
+                display_name: None,
+                hidden: false,
+                is_folder,
+                sha256: if is_folder {
+                    None
+                } else {
+                    Some(crate::study::fingerprint_file(&file)?)
+                },
+            });
+        entry.display_name = Some(name.to_string());
+        crate::study::save(Path::new(&root), &study, Some(&revision))?;
+        return Ok(());
+    }
     let connection = open_for_app(app)?;
     connection
         .execute(
@@ -181,6 +209,31 @@ pub fn set_item_hidden(
     let connection = open_for_app(app)?;
     if hidden {
         let (root, relative, is_folder) = validated_item(vault_root, relative_path)?;
+        if let Some((mut study, revision)) = crate::study::selected_read(app, Path::new(&root))? {
+            let file = Path::new(&root).join(&relative);
+            let key = relative.replace('\\', "/");
+            if let Some(existing) = study.library.get(&key) {
+                if !crate::study::library_entry_matches(Path::new(&root), &key, existing) {
+                    return Err("Source item changed since its study data was saved; recover it before editing".into());
+                }
+            }
+            let entry = study
+                .library
+                .entry(key)
+                .or_insert(crate::study::LibraryEntry {
+                    display_name: None,
+                    hidden: false,
+                    is_folder,
+                    sha256: if is_folder {
+                        None
+                    } else {
+                        Some(crate::study::fingerprint_file(&file)?)
+                    },
+                });
+            entry.hidden = true;
+            crate::study::save(Path::new(&root), &study, Some(&revision))?;
+            return Ok(());
+        }
         connection
             .execute(
                 "INSERT INTO library_overrides(vault_root, relative_path, hidden, is_folder) VALUES (?1, ?2, 1, ?3)
@@ -190,6 +243,13 @@ pub fn set_item_hidden(
             .map_err(|_| "Could not hide library item".to_string())?;
     } else {
         let (root, relative) = validated_key(vault_root, relative_path)?;
+        if let Some((mut study, revision)) = crate::study::selected_read(app, Path::new(&root))? {
+            if let Some(entry) = study.library.get_mut(&relative.replace('\\', "/")) {
+                entry.hidden = false;
+            }
+            crate::study::save(Path::new(&root), &study, Some(&revision))?;
+            return Ok(());
+        }
         connection
             .execute("UPDATE library_overrides SET hidden = 0 WHERE vault_root = ?1 AND relative_path = ?2", params![root, relative])
             .map_err(|_| "Could not restore library item".to_string())?;
@@ -201,6 +261,38 @@ pub fn apply_library_overrides(
     app: &tauri::AppHandle,
     scan: &mut VaultScanResult,
 ) -> Result<(), String> {
+    if let Some((study, _)) = crate::study::selected_read(app, Path::new(&scan.root_path))? {
+        let mut overrides = HashMap::new();
+        for (relative, entry) in study.library {
+            let native = relative.replace('/', &std::path::MAIN_SEPARATOR.to_string());
+            let path = Path::new(&scan.root_path).join(&native);
+            let valid =
+                crate::study::library_entry_matches(Path::new(&scan.root_path), &relative, &entry);
+            if !valid {
+                scan.warnings.push(format!(
+                    "Study data for {relative} needs recovery; source changed or is missing"
+                ));
+                continue;
+            }
+            if entry.hidden {
+                scan.hidden_items.push(HiddenItem {
+                    relative_path: native.clone(),
+                    name: entry.display_name.clone().unwrap_or_else(|| {
+                        path.file_name()
+                            .unwrap_or_default()
+                            .to_string_lossy()
+                            .into_owned()
+                    }),
+                    is_folder: entry.is_folder,
+                });
+            }
+            overrides.insert(native, (entry.display_name, entry.hidden));
+        }
+        scan.hidden_items
+            .sort_by(|a, b| a.relative_path.cmp(&b.relative_path));
+        apply_overrides_to_nodes(&mut scan.root_nodes, &overrides);
+        return Ok(());
+    }
     let connection = open_for_app(app)?;
     let mut statement = connection
         .prepare("SELECT relative_path, display_name, hidden, is_folder FROM library_overrides WHERE vault_root = ?1")

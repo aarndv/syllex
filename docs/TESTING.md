@@ -20,6 +20,12 @@ Issue #9 date-only calendar calculations have focused Node built-in tests. Run `
 
 Issue #11 tree navigation has focused Node built-in tests: `node --test tests/treeNavigation.test.mjs`. Tree semantics, focus behavior, and row actions still require manual checks in both desktop webviews.
 
+Issue #23 Markdown safety has focused Node tests: `node --test tests/markdownSafety.test.mjs`. Native path, encoding, and read-only behavior is covered by `cargo test original --lib` in `src-tauri`.
+
+Issue #16 portable-store tests run with `cargo test portable --lib` in `src-tauri`. They cover unrelated `.syllex` collisions, copied-directory discovery, manifest versions, record backups and interrupted staging, symlink rejection, and portable module paths.
+
+Issue #17 migration tests run with `cargo test study --lib` in `src-tauri`. They cover populated and missing legacy data, repeat-safe migration, copied-vault references, changed source fingerprints, and invalid portable paths.
+
 ### Rust unit and integration tests
 
 Cover native behavior such as:
@@ -76,6 +82,9 @@ Run on Fedora KDE and Windows 11 for:
 - Check that the sans-serif page-preview numbers remain legible over thumbnails in both themes and on both WebKitGTK and WebView2.
 - Check the supplied horizontal Syllex wordmark on the landing screen in both themes and in the dark header; confirm there is no light panel or duplicate header title. Check the light square icon in the browser tab, a newly installed web-app shortcut, and the native app on Fedora and Windows.
 - Issue #13: in single-page mode, use a mouse wheel and trackpad over both the Explorer file list and page-preview strip (including at their ends) and confirm no page flip; wheel over the document and confirm pages still flip. Repeat with previews docked on either side, in continuous mode, and in both webviews. Check Ctrl/Cmd+wheel zoom over the document and explicit page navigation.
+- Issue #23: on Fedora/WebKitGTK and Windows 11/WebView2, open a Markdown module with headings, lists, code, a table, and safe links in both themes. Confirm raw HTML and remote images do not load. Check empty, missing, invalid UTF-8, and inaccessible modules show a recoverable state with Open Original. Compare source-file bytes before and after reading.
+- Issue #16: select an empty vault and confirm `.syllex/manifest.json` appears while the library remains empty. Repeat with an unrelated `.syllex` entry and confirm Syllex uses `.syllex-1` without changing the unrelated entry. Copy the full vault between Fedora and Windows and confirm the same managed directory is rediscovered and omitted from library views. Make the manifest malformed or set its version higher than supported; confirm the library stays usable, a portable-data warning appears, and the file and `.json.bak` backup remain intact.
+- Issue #17: with legacy highlights, a hidden folder, and display names, select the vault and confirm they remain visible after migration and restart. Edit a highlight or name, restart again, and confirm the newer portable edit persists without duplicate records. Copy the vault to the other OS and verify the same data appears while selected path and reading page remain device-local. Rename or change a referenced source module and confirm recovery warnings rather than reassignment. Make one legacy reference missing before migration and confirm no partial `study.json` is published and the SQLite source remains available.
 - Issue #10: after selecting a thumbnail, navigate with Left and Right and confirm only the new current page has the subdued green overlay and frame; its label and highlight tapes remain legible under every filter, and keyboard focus follows the new thumbnail when navigation started from the preview strip
 - Issue #10: choose each highlight color from the visible swatches, draw on text and non-text areas, reopen the document, and confirm its color and tape persist; use H, Escape, Done, and the six-second Undo action
 - Issue #10: choose Erase beside the color swatches, click a highlighted region to remove only that highlight, and verify its tape disappears and Undo restores both the region and tape; click unhighlighted page space to confirm nothing is removed, then choose a color and draw again

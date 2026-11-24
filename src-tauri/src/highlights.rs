@@ -94,7 +94,7 @@ fn open_for_app(app: &tauri::AppHandle) -> Result<Connection, String> {
     open_at(&data_dir.join("highlights.sqlite3"))
 }
 
-fn validate_highlight(highlight: &Highlight) -> Result<(), String> {
+pub(crate) fn validate_highlight(highlight: &Highlight) -> Result<(), String> {
     if highlight.id.len() > 64
         || highlight.id.len() < 8
         || !highlight
@@ -142,6 +142,21 @@ pub fn list(
     relative_path: &str,
 ) -> Result<Vec<Highlight>, String> {
     let document = validated_document(vault_root, relative_path)?;
+    if let Some((study, _)) = crate::study::selected_read(app, Path::new(vault_root))? {
+        let key = relative_path.replace('\\', "/");
+        return match study.highlights.get(&key) {
+            Some(set)
+                if crate::study::fingerprint_matches(Path::new(vault_root), &key, &set.sha256)? =>
+            {
+                Ok(set.items.clone())
+            }
+            Some(_) => Err(
+                "This module changed since its highlights were saved; study data needs recovery"
+                    .into(),
+            ),
+            None => Ok(Vec::new()),
+        };
+    }
     let connection = open_for_app(app)?;
     let mut statement = connection
         .prepare("SELECT id, page_number, color, rects_json FROM highlights WHERE document_path = ?1 ORDER BY created_at, rowid")
@@ -171,6 +186,29 @@ pub fn insert(
 ) -> Result<(), String> {
     validate_highlight(&highlight)?;
     let document = validated_document(vault_root, relative_path)?;
+    if let Some((mut study, revision)) = crate::study::selected_read(app, Path::new(vault_root))? {
+        let key = relative_path.replace('\\', "/");
+        let sha256 = crate::study::fingerprint_file(&document)?;
+        let entry = study
+            .highlights
+            .entry(key)
+            .or_insert(crate::study::HighlightSet {
+                sha256: sha256.clone(),
+                items: Vec::new(),
+            });
+        if entry.sha256 != sha256 {
+            return Err(
+                "This module changed since its highlights were saved; study data needs recovery"
+                    .into(),
+            );
+        }
+        if entry.items.iter().any(|item| item.id == highlight.id) {
+            return Err("Highlight already exists".into());
+        }
+        entry.items.push(highlight);
+        crate::study::save(Path::new(vault_root), &study, Some(&revision))?;
+        return Ok(());
+    }
     let connection = open_for_app(app)?;
     let rects_json = serde_json::to_string(&highlight.rects)
         .map_err(|_| "Could not encode highlight".to_string())?;
@@ -190,6 +228,17 @@ pub fn delete(
     id: &str,
 ) -> Result<(), String> {
     let document = validated_document(vault_root, relative_path)?;
+    if let Some((mut study, revision)) = crate::study::selected_read(app, Path::new(vault_root))? {
+        let key = relative_path.replace('\\', "/");
+        if let Some(entry) = study.highlights.get_mut(&key) {
+            if !crate::study::fingerprint_matches(Path::new(vault_root), &key, &entry.sha256)? {
+                return Err("This module changed since its highlights were saved; study data needs recovery".into());
+            }
+            entry.items.retain(|item| item.id != id);
+            crate::study::save(Path::new(vault_root), &study, Some(&revision))?;
+        }
+        return Ok(());
+    }
     let connection = open_for_app(app)?;
     connection
         .execute(

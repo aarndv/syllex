@@ -1,13 +1,27 @@
 pub mod folder_order;
 pub mod highlights;
 pub mod metadata;
+pub mod original;
+pub mod portable;
 pub mod ppt_converter;
+pub mod study;
 pub mod vault;
 
 #[tauri::command]
 fn scan_vault(app: tauri::AppHandle, path: String) -> Result<vault::VaultScanResult, String> {
     let mut scan = vault::scan_vault(path)?;
-    metadata::apply_library_overrides(&app, &mut scan)?;
+    if metadata::selected_vault(&app)?.as_deref() == Some(scan.root_path.as_str()) {
+        if let Err(error) = portable::ensure(std::path::Path::new(&scan.root_path)) {
+            scan.warnings.push(format!("Portable study data: {error}"));
+        } else if let Err(error) =
+            study::ensure_for_app(&app, std::path::Path::new(&scan.root_path))
+        {
+            scan.warnings.push(format!("Study-data migration: {error}"));
+        }
+    }
+    if let Err(error) = metadata::apply_library_overrides(&app, &mut scan) {
+        scan.warnings.push(format!("Library study data: {error}"));
+    }
     Ok(scan)
 }
 
@@ -151,6 +165,22 @@ fn convert_ppt_to_pdf(
     ppt_converter::convert_ppt_to_pdf(&app, &vault_root, &relative_path)
 }
 
+#[tauri::command]
+fn open_original(app: tauri::AppHandle, relative_path: String) -> Result<(), String> {
+    let root = metadata::selected_vault(&app)?.ok_or_else(|| "No vault is selected".to_string())?;
+    let file = original::validated_module(std::path::Path::new(&root), &relative_path)?;
+    original::open_in_system_app(&app, &file)
+}
+
+#[tauri::command]
+fn read_markdown_module(
+    app: tauri::AppHandle,
+    relative_path: String,
+) -> Result<original::MarkdownModule, String> {
+    let root = metadata::selected_vault(&app)?.ok_or_else(|| "No vault is selected".to_string())?;
+    original::read_markdown(std::path::Path::new(&root), &relative_path)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -175,7 +205,9 @@ pub fn run() {
             create_vault,
             list_subvaults,
             check_libreoffice_installed,
-            convert_ppt_to_pdf
+            convert_ppt_to_pdf,
+            open_original,
+            read_markdown_module
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

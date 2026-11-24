@@ -5,6 +5,7 @@ import { VaultScanResult, VaultNode } from "./types/vault";
 import { FileTree } from "./components/FileTree";
 import { BookshelfView } from "./components/BookshelfView";
 import { PdfViewer } from "./components/PdfViewer";
+import { MarkdownViewer } from "./components/MarkdownViewer";
 import { MultiDocumentWorkspace } from "./components/MultiDocumentWorkspace";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { VaultManagerModal } from "./components/VaultManagerModal";
@@ -396,7 +397,7 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
     if (!isFile) return;
 
     const fileType = (node.node_type as { File: string }).File;
-    if (fileType === "Pdf" || fileType === "Ppt" || fileType === "Pptx") {
+    if (fileType === "Pdf" || fileType === "Ppt" || fileType === "Pptx" || fileType === "Md") {
       setWorkspaceOpen(false);
       setActiveNode(node);
       setInitialPdfState({ page: targetPage, query: initialSearchQuery });
@@ -497,7 +498,11 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
         />
       )}
 
-      {activeNode && vaultPath && scanResult && (
+      {activeNode && vaultPath && scanResult && activeNode.node_type !== "Folder" && activeNode.node_type.File === "Md" && (
+        <MarkdownViewer node={activeNode} onClose={() => setActiveNode(null)} />
+      )}
+
+      {activeNode && vaultPath && scanResult && activeNode.node_type !== "Folder" && activeNode.node_type.File !== "Md" && (
         <PdfViewer
           settings={settings}
           onUpdateSettings={setSettings}
@@ -779,7 +784,7 @@ function App({ startInVault = false }: { startInVault?: boolean }) {
             <div className="vault-view">
               {scanResult.warnings.length > 0 && (
                 <div className="scan-warning" role="status">
-                  <p><strong>{scanResult.warnings.length} {scanResult.warnings.length === 1 ? "entry was" : "entries were"} skipped:</strong> {scanResult.warnings.slice(0, 3).join("; ")}{scanResult.warnings.length > 3 ? `; and ${scanResult.warnings.length - 3} more` : ""}</p>
+                  <p><strong>Vault warnings:</strong> {scanResult.warnings.slice(0, 3).join("; ")}{scanResult.warnings.length > 3 ? `; and ${scanResult.warnings.length - 3} more` : ""}</p>
                 </div>
               )}
               <DashboardHeader />

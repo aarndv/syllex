@@ -30,6 +30,7 @@ import type { AppSettings } from "./SettingsModal";
 import { HIGHLIGHT_COLORS } from "../types/highlight";
 import type { Highlight, HighlightColor, HighlightFocus, HighlightRect } from "../types/highlight";
 import { toUserFacingError } from "../utils/userFacingError";
+import { OpenOriginalButton } from "./OpenOriginalButton";
 import "./PdfViewer.css";
 
 interface PdfViewerProps {
@@ -882,6 +883,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             <button type="button" onClick={() => onOpenWorkspace(currentPage)} className="toolbar-btn" title="Read this module alongside others">
               Workspace
             </button>
+            <OpenOriginalButton relativePath={node.relative_path} />
             <span className="doc-title" title={node.name}>{node.name}</span>
             {settings.showReadingFilterIndicator && (
               <button
@@ -1217,7 +1219,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           {error && (
             <div className="pdf-error">
               <p><strong>Error loading document:</strong> {error}</p>
-              <p className="subtext">The PDF file may be protected or corrupted.</p>
+              <OpenOriginalButton relativePath={node.relative_path} />
             </div>
           )}
 

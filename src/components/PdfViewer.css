@@ -1459,3 +1459,5 @@ html[data-theme="light"] .match-pill-text {
   color: #143222;
 }
 
+.open-original-action { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.open-original-error { color: #fca5a5; font-size: 0.85rem; max-width: 28rem; }

@@ -45,11 +45,11 @@ Course vault   App-data SQLite  LibreOffice
 
 ### SQLite
 
-Live SQLite databases stay in platform application data and never enter the vault. The current issue #10 highlights and issue #34 library overrides use versioned app-data databases; M6 migrates those records to portable vault files. Selected vault path and reading position remain device-local. React/PDF.js owns highlight overlay geometry and page-preview rendering. The scan skips linked entries, tracks visited directories, and returns warnings for entries it cannot inspect; React displays those warnings with the visible library.
+Live SQLite databases stay in platform application data and never enter the vault. Existing highlight and library-override records are copied into one versioned portable study snapshot on vault selection; the legacy databases remain available for migration recovery. Selected vault path and reading position remain device-local. React/PDF.js owns highlight overlay geometry and page-preview rendering. The scan skips linked entries, tracks visited directories, and returns warnings for entries it cannot inspect; React displays those warnings with the visible library.
 
 ### Managed vault data
 
-An identifiable, collision-safe Syllex directory at the selected vault root stores versioned portable flashcards, highlights, library overrides, and one Markdown companion note per module. It is excluded from normal module scans. Original course modules remain read-only to Syllex; writes are restricted to app-created study data and explicit safe module-copy/folder-creation operations. Rust validates paths and module references, detects external edits, and writes portable files atomically. Manual folder copies move study data between Fedora and Windows without syncing a live SQLite database. Exact schema and identity rules are M6 design work.
+An identifiable, collision-safe Syllex directory at the selected vault root stores versioned portable flashcards, highlights, library overrides, and one Markdown companion note per module. It is excluded from normal module scans. Original course modules remain read-only to Syllex; writes are restricted to app-created study data and explicit safe module-copy/folder-creation operations. Rust validates paths and module references, detects external edits, and writes portable files atomically. Manual folder copies move study data between Fedora and Windows without syncing a live SQLite database. The manifest and identity rules are specified in `docs/FILE_FORMATS.md`; individual feature schemas and migration are follow-up M6 work.
 
 ### Application cache
 

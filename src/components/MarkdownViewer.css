@@ -1,0 +1,20 @@
+.markdown-reader { display: flex; flex-direction: column; color: #edf4ee; background: #0d1f14; }
+.markdown-reader-toolbar { display: flex; align-items: center; gap: 1rem; min-height: 3.5rem; padding: 0.5rem 1rem; background: #142a1d; border-bottom: 1px solid #41634c; flex-wrap: wrap; }
+.markdown-reader-toolbar strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 5rem; flex: 1; }
+.markdown-reader-scroll { overflow: auto; padding: 1.5rem; flex: 1; }
+.markdown-reader-content, .markdown-reader-state { max-width: 50rem; margin: 0 auto; line-height: 1.65; }
+.markdown-reader-content h1, .markdown-reader-content h2, .markdown-reader-content h3 { line-height: 1.25; margin-top: 1.5em; }
+.markdown-reader-content a { color: #9bd5ae; text-decoration: underline; }
+.markdown-reader-content pre { overflow-x: auto; padding: 1rem; background: #07140d; border-radius: 0.4rem; }
+.markdown-reader-content :not(pre) > code { padding: 0.1rem 0.25rem; background: #21382a; border-radius: 0.25rem; }
+.markdown-reader-content table { border-collapse: collapse; display: block; overflow-x: auto; }
+.markdown-reader-content th, .markdown-reader-content td { border: 1px solid #41634c; padding: 0.4rem 0.65rem; }
+.markdown-reader-content blockquote { border-left: 3px solid #79ae87; margin-left: 0; padding-left: 1rem; color: #c8d9cb; }
+.markdown-reader-state { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.markdown-image-placeholder { color: #b5c8b9; font-style: italic; }
+html[data-theme="light"] .markdown-reader { color: #17291c; background: #f5f8f5; }
+html[data-theme="light"] .markdown-reader-toolbar { background: #e8f0e9; }
+html[data-theme="light"] .markdown-reader-content a { color: #166534; }
+html[data-theme="light"] .markdown-reader-content pre { color: #edf4ee; background: #233e2c; }
+html[data-theme="light"] .markdown-reader-content :not(pre) > code { background: #e1eee4; }
+html[data-theme="light"] .markdown-reader-content blockquote, html[data-theme="light"] .markdown-image-placeholder { color: #526b59; }

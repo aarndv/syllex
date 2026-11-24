@@ -24,7 +24,7 @@ pub fn is_managed_dir(path: &Path) -> bool {
     is_owned(path)
 }
 
-fn data_dir(root: &Path, create: bool) -> Result<Option<PathBuf>, String> {
+pub fn managed_dir(root: &Path, create: bool) -> Result<Option<PathBuf>, String> {
     let entries = fs::read_dir(root).map_err(|_| "Could not inspect vault data".to_string())?;
     let mut entries: Vec<_> = entries.flatten().collect();
     entries.sort_by_key(|entry| entry.file_name());
@@ -101,7 +101,7 @@ pub fn list(vault_root: &str) -> Result<HashMap<String, Vec<String>>, String> {
     let root = Path::new(vault_root)
         .canonicalize()
         .map_err(|_| "Vault is unavailable".to_string())?;
-    Ok(match data_dir(&root, false)? {
+    Ok(match managed_dir(&root, false)? {
         Some(dir) => load_file(&dir)?.parents,
         None => HashMap::new(),
     })
@@ -150,7 +150,7 @@ pub fn save(vault_root: &str, parent_path: &str, folder_paths: Vec<String>) -> R
             return Err("Only sibling folders can be reordered".to_string());
         }
     }
-    let dir = data_dir(&root, true)?.ok_or("Syllex vault data directory is unavailable")?;
+    let dir = managed_dir(&root, true)?.ok_or("Syllex vault data directory is unavailable")?;
     let mut data = load_file(&dir)?;
     data.parents.insert(parent_key, normalized_paths);
     let mut staged = tempfile::NamedTempFile::new_in(&dir)
