@@ -2,9 +2,10 @@ import React, { useCallback, useState, useEffect, useLayoutEffect, useRef } from
 import { createPortal } from "react-dom";
 import { invoke } from "@tauri-apps/api/core";
 import { VaultNode, VaultNodeType } from "../types/vault";
-import { FolderIcon, FileIcon, PlusIcon, CloseIcon, BookIcon, PencilIcon } from "./Icons";
+import { FolderIcon, FileIcon, PlusIcon, CloseIcon, BookIcon, PencilIcon, GripIcon } from "./Icons";
 import { getModuleCoverThumbnail } from "../utils/pdfThumbnail";
 import { getTooltipPosition } from "../utils/tooltipPosition";
+import { moveSiblingFolder, sortSiblingFolders } from "../utils/folderOrder";
 import "./BookshelfView.css";
 
 export interface FolderColorOption {
@@ -55,6 +56,20 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
   onRemoveItem,
   onRenameItem,
 }) => {
+  const [folderOrders, setFolderOrders] = useState<Record<string, string[]>>({});
+  const [draggedFolder, setDraggedFolder] = useState<{ path: string; parent: string } | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ path: string; position: "before" | "after" } | null>(null);
+  const [orderError, setOrderError] = useState<string | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    setFolderOrders({});
+    invoke<Record<string, string[]>>("get_folder_orders", { vaultRoot })
+      .then((orders) => { if (active) setFolderOrders(orders); })
+      .catch(() => { if (active) setOrderError("Could not load saved folder order."); });
+    return () => { active = false; };
+  }, [vaultRoot]);
   const [folderColors, setFolderColors] = useState<Record<string, string>>(() => {
     const saved = localStorage.getItem(FOLDER_COLORS_STORAGE_KEY);
     if (saved) {
@@ -75,11 +90,30 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
     });
   }
 
-  const folderNodes = nodes.filter((n) => n.node_type === "Folder");
+  const folderNodes = sortSiblingFolders(nodes.filter((n) => n.node_type === "Folder"), folderOrders[""]);
   const fileNodes = nodes.filter((n) => n.node_type !== "Folder");
+
+  async function handleReorder(parentPath: string, siblings: VaultNode[], source: string, target: string, position: "before" | "after") {
+    if (savingOrder) return;
+    const current = sortSiblingFolders(siblings, folderOrders[parentPath.replace(/\\/g, "/")]).map((folder) => folder.relative_path);
+    const next = moveSiblingFolder(current, source, target, position);
+    if (next.join("\0") === current.join("\0")) return;
+    setSavingOrder(true);
+    setOrderError(null);
+    setFolderOrders((previous) => ({ ...previous, [parentPath.replace(/\\/g, "/")]: next }));
+    try {
+      await invoke("save_folder_order", { vaultRoot, parentPath, folderPaths: next });
+    } catch {
+      setFolderOrders((previous) => ({ ...previous, [parentPath.replace(/\\/g, "/")]: current }));
+      setOrderError("Could not save folder order. Try dragging again.");
+    } finally {
+      setSavingOrder(false);
+    }
+  }
 
   return (
     <div className="bookshelf-container">
+      {orderError && <p className="shelf-order-error" role="alert">{orderError}</p>}
       {fileNodes.length > 0 && (
         <ShelfSection
           title="General Modules Shelf"
@@ -98,6 +132,14 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
         <FolderShelf
           key={folder.relative_path}
           folder={folder}
+          parentPath=""
+          siblings={folderNodes}
+          folderOrders={folderOrders}
+          draggedFolder={draggedFolder}
+          dropTarget={dropTarget}
+          onDragFolder={setDraggedFolder}
+          onDropTarget={setDropTarget}
+          onReorder={handleReorder}
           folderColors={folderColors}
           vaultRoot={vaultRoot}
           onSetFolderColor={handleSetFolderColor}
@@ -124,6 +166,14 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
 
 interface FolderShelfProps {
   folder: VaultNode;
+  parentPath: string;
+  siblings: VaultNode[];
+  folderOrders: Record<string, string[]>;
+  draggedFolder: { path: string; parent: string } | null;
+  dropTarget: { path: string; position: "before" | "after" } | null;
+  onDragFolder: (value: { path: string; parent: string } | null) => void;
+  onDropTarget: (value: { path: string; position: "before" | "after" } | null) => void;
+  onReorder: (parent: string, siblings: VaultNode[], source: string, target: string, position: "before" | "after") => void;
   folderColors: Record<string, string>;
   vaultRoot: string;
   onSetFolderColor: (relPath: string, colorId: string) => void;
@@ -136,6 +186,14 @@ interface FolderShelfProps {
 
 const FolderShelf: React.FC<FolderShelfProps> = ({
   folder,
+  parentPath,
+  siblings,
+  folderOrders,
+  draggedFolder,
+  dropTarget,
+  onDragFolder,
+  onDropTarget,
+  onReorder,
   folderColors,
   vaultRoot,
   onSetFolderColor,
@@ -177,7 +235,7 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
   const folderColor = currentColorObj ? currentColorObj.primary : "#059669";
 
   const directFiles = folder.children.filter((c) => c.node_type !== "Folder");
-  const subfolders = folder.children.filter((c) => c.node_type === "Folder");
+  const subfolders = sortSiblingFolders(folder.children.filter((c) => c.node_type === "Folder"), folderOrders[folder.relative_path.replace(/\\/g, "/")]);
 
   const headerStyle = currentColorObj
     ? { backgroundColor: currentColorObj.secondary }
@@ -193,7 +251,31 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
 
   return (
     <div className={`shelf-wrapper ${isActionMenuOpen || isColorPickerOpen ? "has-open-actions" : ""}`} style={wrapperStyle}>
-      <header className={`shelf-header-blueprint ${isActionMenuOpen || isColorPickerOpen ? "has-open-actions" : ""}`} style={headerStyle}>
+      <header className={`shelf-header-blueprint ${isActionMenuOpen || isColorPickerOpen ? "has-open-actions" : ""} ${dropTarget?.path === folder.relative_path ? `drop-${dropTarget.position}` : ""}`} style={headerStyle}
+        onDragOver={(event) => {
+          if (!draggedFolder || draggedFolder.parent !== parentPath || draggedFolder.path === folder.relative_path) {
+            if (dropTarget?.path === folder.relative_path) onDropTarget(null);
+            return;
+          }
+          event.preventDefault();
+          event.stopPropagation();
+          const rect = event.currentTarget.getBoundingClientRect();
+          const position = event.clientY < rect.top + rect.height / 2 ? "before" : "after";
+          onDropTarget({ path: folder.relative_path, position });
+        }}
+        onDragLeave={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node) && dropTarget?.path === folder.relative_path) onDropTarget(null);
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (draggedFolder?.parent === parentPath && draggedFolder.path !== folder.relative_path) {
+            const rect = event.currentTarget.getBoundingClientRect();
+            onReorder(parentPath, siblings, draggedFolder.path, folder.relative_path, event.clientY < rect.top + rect.height / 2 ? "before" : "after");
+          }
+          onDragFolder(null);
+          onDropTarget(null);
+        }}>
         <div className="shelf-title-plate">
           <button type="button" className="shelf-chevron-badge" onClick={() => setIsExpanded((prev) => !prev)} aria-label={`${isExpanded ? "Collapse" : "Expand"} ${folder.name}`} aria-expanded={isExpanded}>
             {isExpanded ? "▼" : "▶"}
@@ -208,6 +290,10 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
         </div>
 
         <div className="shelf-actions">
+          {siblings.length > 1 && <button type="button" className="shelf-drag-handle" draggable
+            aria-label={`Drag to reorder ${folder.name}`} title="Drag to reorder folder"
+            onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", folder.relative_path); onDragFolder({ path: folder.relative_path, parent: parentPath }); }}
+            onDragEnd={() => { onDragFolder(null); onDropTarget(null); }}><GripIcon size={17} /></button>}
           <div className="shelf-more-wrapper" ref={actionsRef}>
             <button
               type="button"
@@ -226,6 +312,10 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
 
             {isActionMenuOpen && (
               <div className="shelf-actions-menu">
+                {siblings.findIndex((item) => item.relative_path === folder.relative_path) > 0 &&
+                  <button type="button" onClick={() => { const index = siblings.findIndex((item) => item.relative_path === folder.relative_path); onReorder(parentPath, siblings, folder.relative_path, siblings[index - 1].relative_path, "before"); setIsActionMenuOpen(false); }}>Move up</button>}
+                {siblings.findIndex((item) => item.relative_path === folder.relative_path) < siblings.length - 1 &&
+                  <button type="button" onClick={() => { const index = siblings.findIndex((item) => item.relative_path === folder.relative_path); onReorder(parentPath, siblings, folder.relative_path, siblings[index + 1].relative_path, "after"); setIsActionMenuOpen(false); }}>Move down</button>}
                 <button type="button" onClick={() => {
                   setIsActionMenuOpen(false);
                   setIsColorPickerOpen(true);
@@ -333,6 +423,14 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
             <FolderShelf
               key={sub.relative_path}
               folder={sub}
+              parentPath={folder.relative_path}
+              siblings={subfolders}
+              folderOrders={folderOrders}
+              draggedFolder={draggedFolder}
+              dropTarget={dropTarget}
+              onDragFolder={onDragFolder}
+              onDropTarget={onDropTarget}
+              onReorder={onReorder}
               folderColors={folderColors}
               vaultRoot={vaultRoot}
               onSetFolderColor={onSetFolderColor}

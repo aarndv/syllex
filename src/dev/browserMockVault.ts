@@ -87,6 +87,13 @@ const scan: VaultScanResult = {
 
 export function installBrowserMockVault() {
   const readingProgress = new Map<string, number>();
+  let savedFolderOrders: Record<string, string[]> = {};
+  try {
+    savedFolderOrders = JSON.parse(localStorage.getItem("syllex_demo_folder_orders") || "{}");
+  } catch {
+    // Ignore malformed browser demo data.
+  }
+  const folderOrders = new Map<string, string[]>(Object.entries(savedFolderOrders));
   Object.assign(window, {
     __TAURI_INTERNALS__: {
       async invoke(command: string, args: Record<string, unknown> = {}): Promise<unknown> {
@@ -97,6 +104,12 @@ export function installBrowserMockVault() {
             return args.path === null ? null : ROOT;
           case "scan_vault":
             return scan;
+          case "get_folder_orders":
+            return Object.fromEntries(folderOrders);
+          case "save_folder_order":
+            folderOrders.set(String(args.parentPath ?? ""), args.folderPaths as string[]);
+            localStorage.setItem("syllex_demo_folder_orders", JSON.stringify(Object.fromEntries(folderOrders)));
+            return null;
           case "list_subvaults":
             return [{ name: "Browser Demo Vault", path: ROOT, file_count: documents.size }];
           case "read_module_bytes": {

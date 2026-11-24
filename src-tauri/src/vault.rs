@@ -109,6 +109,9 @@ pub fn scan_vault<P: AsRef<Path>>(root_path: P) -> Result<VaultScanResult, Strin
                 warnings.push(format!("Skipped linked entry: {}", relative.display()));
                 continue;
             }
+            if current_dir == canonical_root && crate::folder_order::is_managed_dir(&path) {
+                continue;
+            }
             let canonical_path = match path.canonicalize() {
                 Ok(c) => c,
                 Err(_) => {

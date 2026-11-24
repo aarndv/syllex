@@ -1,3 +1,4 @@
+pub mod folder_order;
 pub mod highlights;
 pub mod metadata;
 pub mod ppt_converter;
@@ -27,6 +28,22 @@ fn read_module_bytes(vault_root: String, relative_path: String) -> Result<Vec<u8
 #[tauri::command]
 fn create_folder(vault_root: String, relative_path: String) -> Result<(), String> {
     vault::create_folder(vault_root, &relative_path)
+}
+
+#[tauri::command]
+fn get_folder_orders(
+    vault_root: String,
+) -> Result<std::collections::HashMap<String, Vec<String>>, String> {
+    folder_order::list(&vault_root)
+}
+
+#[tauri::command]
+fn save_folder_order(
+    vault_root: String,
+    parent_path: String,
+    folder_paths: Vec<String>,
+) -> Result<(), String> {
+    folder_order::save(&vault_root, &parent_path, folder_paths)
 }
 
 #[tauri::command]
@@ -144,6 +161,8 @@ pub fn run() {
             add_module_to_vault,
             read_module_bytes,
             create_folder,
+            get_folder_orders,
+            save_folder_order,
             set_item_hidden,
             set_item_display_name,
             get_selected_vault,

@@ -11,11 +11,14 @@ This document distinguishes the current implementation from the approved persona
 | Display and viewer preferences | Webview local storage | Per-device storage; migration to app-data SQLite remains separate work |
 | Highlights | Platform app-data SQLite (`highlights.sqlite3`) | Versioned portable files in the managed vault-root directory |
 | Hidden items and display-name overrides | Platform app-data SQLite (`metadata.sqlite3`) | Versioned portable files in the managed vault-root directory |
+| Bookshelf folder order | Versioned `.syllex/folder-order.json` (or a marked `.syllex-N` directory if the name is occupied) | Portable vault data |
 | Flashcard decks and cards | Not implemented | Versioned portable files in the managed vault-root directory |
 | Companion notes | Not implemented | One Markdown file per module in the managed vault-root directory |
 | Converted presentations and thumbnails | Application cache | Application cache; disposable and never transferred as study data |
 
-The managed directory uses `.syllex` when that name is free or already identifiable as Syllex-owned. An unrelated collision must be left untouched and a discoverable alternate chosen. Its exact marker, schema, layout, and migration protocol are M6 design work. Do not put a live SQLite database in the vault or treat copied portable files as trusted. Manual copying of the vault is the supported first-release transfer path.
+The managed directory uses `.syllex` when that name is free or already identifiable as Syllex-owned. An unrelated collision must be left untouched and a discoverable alternate chosen. Schemas and migration rules for the remaining portable records are M6 design work. Do not put a live SQLite database in the vault or treat copied portable files as trusted. Manual copying of the vault is the supported first-release transfer path.
+
+Folder order uses a narrow version 1 JSON file with `parents` mapping each vault-relative parent path to an ordered list of its direct child folder paths. Paths use `/` separators so a copied vault can retain its order on Windows and Fedora. Syllex marks the managed directory with an `owner` file, ignores that directory in library scans, validates sibling paths before saving, and writes the order file through a staged replacement. An unrelated `.syllex` directory is left untouched; the next free `.syllex-N` name is used.
 
 ## Device-local records
 
