@@ -1,5 +1,6 @@
 import React, { useCallback, useState, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { invoke } from "@tauri-apps/api/core";
 import { VaultNode, VaultNodeType } from "../types/vault";
 import { FolderIcon, FileIcon, PlusIcon, CloseIcon, BookIcon, PencilIcon } from "./Icons";
 import { getModuleCoverThumbnail } from "../utils/pdfThumbnail";
@@ -200,8 +201,8 @@ const FolderShelf: React.FC<FolderShelfProps> = ({
           <button type="button" className="folder-icon-emblem" onClick={() => setIsExpanded((prev) => !prev)} aria-label={`${isExpanded ? "Collapse" : "Expand"} ${folder.name}`} aria-expanded={isExpanded}>
             <FolderIcon size={16} />
           </button>
-          <div className="shelf-title-wrapper" onClick={() => setIsExpanded((prev) => !prev)}>
-            <h3 className="shelf-title">{folder.name}</h3>
+          <div className="shelf-title-wrapper">
+            <h3 className="shelf-title"><button type="button" className="shelf-title-button" onClick={() => setIsExpanded((prev) => !prev)} aria-expanded={isExpanded}>{folder.name}</button></h3>
             <span className="shelf-title-sub">{folder.children.length} {folder.children.length === 1 ? "ITEM" : "ITEMS"}</span>
           </div>
         </div>
@@ -453,6 +454,8 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
 }) => {
   const ext = getFileExt(node.node_type);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [lastReadPage, setLastReadPage] = useState<number | null | undefined>(undefined);
+  const [progressUnavailable, setProgressUnavailable] = useState(false);
   const [nearViewport, setNearViewport] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
@@ -536,6 +539,27 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
     };
   }, [vaultRoot, node.relative_path, ext, nearViewport]);
 
+  useEffect(() => {
+    if (!vaultRoot || !nearViewport || ext === "MD") return;
+    let active = true;
+    setLastReadPage(undefined);
+    setProgressUnavailable(false);
+    invoke<number | null>("get_reading_progress", { vaultRoot, relativePath: node.relative_path })
+      .then((page) => { if (active) setLastReadPage(page); })
+      .catch(() => { if (active) setProgressUnavailable(true); });
+    return () => { active = false; };
+  }, [vaultRoot, node.relative_path, ext, nearViewport]);
+
+  const readingState = ext === "MD"
+    ? "reading position not tracked"
+    : progressUnavailable
+      ? "reading position unavailable"
+      : lastReadPage === undefined
+        ? "reading position loading"
+        : lastReadPage === null
+          ? "not started"
+          : `last read on page ${lastReadPage}`;
+
   return (
     <div
       ref={cardRef}
@@ -552,7 +576,7 @@ const BookSpineItem: React.FC<BookSpineItemProps> = ({
 
       <button type="button" className="book-spine-open"
         onClick={() => onSelectFile(node)}
-        aria-label={`Open ${node.name}, ${ext} module`}>
+        aria-label={`Open ${node.name}, ${ext} module, ${readingState}`}>
         <span className="book-spine-content">
           {coverUrl ? (
             <span className="book-cover-snapshot-plate">

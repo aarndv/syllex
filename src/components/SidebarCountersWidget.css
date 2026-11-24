@@ -342,6 +342,43 @@
   background-color: rgba(239, 68, 68, 0.25);
 }
 
+.counter-undo-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 5px;
+  color: #e2f0d9;
+  font-size: 0.72rem;
+}
+
+.counter-undo-notice span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.counter-undo-notice button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+.counter-undo-notice button:focus-visible {
+  outline: 2px solid var(--app-focus-ring);
+  outline-offset: 2px;
+}
+
 /* Light Theme Botanical Parchment Overrides */
 html[data-theme="light"] .sidebar-counters-card {
   background-color: #eee9df;
@@ -466,6 +503,15 @@ html[data-theme="light"] .counter-tool-btn:hover {
 html[data-theme="light"] .counter-tool-btn.delete:hover {
   color: #dc2626;
   background-color: #fee2e2;
+}
+
+html[data-theme="light"] .counter-undo-notice {
+  border-color: #9caf9e;
+  color: #143222;
+}
+
+html[data-theme="light"] .counter-undo-notice button {
+  color: #143222;
 }
 
 html[data-theme="light"] .counter-name:focus-visible,

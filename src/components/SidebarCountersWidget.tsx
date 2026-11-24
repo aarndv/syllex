@@ -8,6 +8,10 @@ export interface CounterItem {
   count: number;
 }
 
+type CounterUndo =
+  | { type: "reset"; id: string; name: string; previousCount: number }
+  | { type: "delete"; item: CounterItem; index: number };
+
 const COUNTERS_STORAGE_KEY = "syllex_sidebar_counters";
 
 const DEFAULT_COUNTERS: CounterItem[] = [
@@ -34,10 +38,17 @@ export const SidebarCountersWidget: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState<string>("");
   const [isExpanded, setIsExpanded] = useState(false);
+  const [undoAction, setUndoAction] = useState<CounterUndo | null>(null);
 
   useEffect(() => {
     localStorage.setItem(COUNTERS_STORAGE_KEY, JSON.stringify(counters));
   }, [counters]);
+
+  useEffect(() => {
+    if (!undoAction) return;
+    const timer = window.setTimeout(() => setUndoAction(null), 6000);
+    return () => window.clearTimeout(timer);
+  }, [undoAction]);
 
   function handleAddCounter() {
     const nameToUse = newName.trim() || `Counter ${counters.length + 1}`;
@@ -64,13 +75,36 @@ export const SidebarCountersWidget: React.FC = () => {
   }
 
   function handleReset(id: string) {
+    const counter = counters.find((item) => item.id === id);
+    if (!counter || counter.count === 0) return;
+    setUndoAction({ type: "reset", id, name: counter.name, previousCount: counter.count });
     setCounters((prev) =>
       prev.map((c) => (c.id === id ? { ...c, count: 0 } : c))
     );
   }
 
   function handleDelete(id: string) {
+    const index = counters.findIndex((item) => item.id === id);
+    if (index < 0) return;
+    setUndoAction({ type: "delete", item: counters[index], index });
     setCounters((prev) => prev.filter((c) => c.id !== id));
+  }
+
+  function handleUndo() {
+    if (!undoAction) return;
+    if (undoAction.type === "reset") {
+      const { id, previousCount } = undoAction;
+      setCounters((prev) => prev.map((item) => item.id === id ? { ...item, count: previousCount } : item));
+    } else {
+      const { item, index } = undoAction;
+      setCounters((prev) => {
+        if (prev.some((counter) => counter.id === item.id)) return prev;
+        const restored = [...prev];
+        restored.splice(Math.min(index, restored.length), 0, item);
+        return restored;
+      });
+    }
+    setUndoAction(null);
   }
 
   function handleStartEdit(counter: CounterItem) {
@@ -219,6 +253,12 @@ export const SidebarCountersWidget: React.FC = () => {
           })
         )}
       </div>
+      {undoAction && (
+        <div className="counter-undo-notice" role="status" aria-live="polite">
+          <span>{undoAction.type === "reset" ? `Reset ${undoAction.name}` : `Deleted ${undoAction.item.name}`}</span>
+          <button type="button" onClick={handleUndo}>Undo</button>
+        </div>
+      )}
       </div>}
     </div>
   );
