@@ -263,6 +263,36 @@ export function MultiDocumentWorkspace({
     setDraggedId(null);
   }
 
+  function startPaneDrag(event: React.PointerEvent<HTMLElement>, id: string) {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    const { clientX, clientY, pointerId } = event;
+    let started = false;
+    const move = (next: PointerEvent) => {
+      if (next.pointerId !== pointerId) return;
+      if (!started && Math.hypot(next.clientX - clientX, next.clientY - clientY) > 5) {
+        started = true;
+        setDraggedId(id);
+      }
+    };
+    const finish = (next: PointerEvent) => {
+      if (next.pointerId !== pointerId) return;
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", finish);
+      window.removeEventListener("pointercancel", finish);
+      if (started && next.type === "pointerup") {
+        const zone = document.elementFromPoint(next.clientX, next.clientY)?.closest<HTMLElement>(".workspace-drop-zone");
+        const target = zone?.dataset.paneId;
+        const side = zone?.dataset.side as WorkspaceSide | undefined;
+        if (target && side && target !== id) arrange(id, target, side);
+      }
+      setDraggedId(null);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", finish);
+    window.addEventListener("pointercancel", finish);
+  }
+
   function renderPane(id: string): React.ReactNode {
     const pane = state.panes[id];
     const rect = rects[id];
@@ -290,16 +320,7 @@ export function MultiDocumentWorkspace({
       onClose={() => closePane(pane.id)}
       onDuplicate={() => onAddNode(pane.node, pane.id, "right", pane.page)}
       onOpenSingle={() => onOpenSingle(pane.node, pane.page)}
-      onDragStart={(event) => {
-        event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", pane.id);
-        setDraggedId(pane.id);
-      }}
-      onDragEnd={() => setDraggedId(null)}
-      onDropSide={(event, side) => {
-        const dragged = event.dataTransfer.getData("text/plain") || draggedId;
-        if (dragged) arrange(dragged, pane.id, side);
-      }}
+      onDragHandlePointerDown={(event) => startPaneDrag(event, pane.id)}
     /></div>;
   }
 
@@ -432,13 +453,11 @@ interface WorkspacePaneProps {
   onClose: () => void;
   onDuplicate: () => void;
   onOpenSingle: () => void;
-  onDragStart: (event: React.DragEvent<HTMLElement>) => void;
-  onDragEnd: () => void;
-  onDropSide: (event: React.DragEvent<HTMLElement>, side: WorkspaceSide) => void;
+  onDragHandlePointerDown: (event: React.PointerEvent<HTMLElement>) => void;
 }
 
 function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged, selected, compactMode, draggedId, onSelect, onUpdate, onClose,
-  onDuplicate, onOpenSingle, onDragStart, onDragEnd, onDropSide }: WorkspacePaneProps) {
+  onDuplicate, onOpenSingle, onDragHandlePointerDown }: WorkspacePaneProps) {
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [loading, setLoading] = useState(true);
@@ -603,7 +622,7 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
   return <section className={`workspace-pane ${selected ? "selected" : ""}`} onPointerDown={onSelect} onFocusCapture={onSelect} aria-label={`View of ${pane.node.name}`}>
     <header className="workspace-pane-header">
       <div className="workspace-pane-identity">
-        <span className="workspace-drag-handle" draggable onDragStart={onDragStart} onDragEnd={onDragEnd}
+        <span className="workspace-drag-handle" onPointerDown={onDragHandlePointerDown}
           title="Drag onto an edge of another view" aria-label={`Drag ${pane.node.name} to arrange`}>
           <GripIcon size={16} />
         </span>
@@ -685,13 +704,10 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
         readingRulerOpacity={readingRulerOpacity}
         onScaleChange={(zoom) => { if (!pane.fitWidth && !pane.fitHeight) onUpdate({ zoom }); }}
       />}
-      {canMove && <div className="workspace-drop-zones">
-        {SIDES.map((side) => <div key={side.value} className={`workspace-drop-zone side-${side.value}`}
-          onDragOver={(event) => event.preventDefault()}
-          onDrop={(event) => { event.preventDefault(); onDropSide(event, side.value); }}>
-          {side.label}
-        </div>)}
-      </div>}
     </div>
+    {canMove && <div className="workspace-drop-zones">
+      {SIDES.map((side) => <div key={side.value} className={`workspace-drop-zone side-${side.value}`}
+        data-pane-id={pane.id} data-side={side.value}>{side.label}</div>)}
+    </div>}
   </section>;
 }

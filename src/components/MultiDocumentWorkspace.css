@@ -248,6 +248,7 @@
   width: 28px;
   height: 28px;
   cursor: grab;
+  touch-action: none;
   user-select: none;
   color: #d2ddcf;
 }
@@ -386,7 +387,7 @@
 .workspace-highlight-toast { display: flex; align-items: center; gap: 0.5rem; max-width: 100%; }
 .workspace-highlight-toast button { min-height: 25px; }
 
-.workspace-drop-zones { position: absolute; inset: 0; z-index: 10; pointer-events: none; }
+.workspace-drop-zones { position: absolute; inset: 0; z-index: 300; pointer-events: none; }
 .workspace-drop-zone {
   position: absolute;
   display: grid;
