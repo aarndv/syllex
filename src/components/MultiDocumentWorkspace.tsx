@@ -8,7 +8,7 @@ import type { VaultNode } from "../types/vault";
 import type { WorkspacePaneState, WorkspaceState } from "../types/workspace";
 import { minimumLayoutSize, movePane, paneIds, paneRects, removePane, resizeSplit, splitDividers, type WorkspaceSide } from "../utils/workspaceLayout";
 import { toUserFacingError } from "../utils/userFacingError";
-import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon, CloseIcon, ContinuousModeIcon, DuplicateIcon, ExpandIcon, FileIcon, FolderIcon, GripIcon, PageModeIcon, PlusIcon } from "./Icons";
+import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon, CloseIcon, ContinuousModeIcon, DuplicateIcon, ExpandIcon, FileIcon, FolderIcon, GripIcon, PageModeIcon, PlusIcon } from "./Icons";
 import "./PdfViewer.css";
 import "./MultiDocumentWorkspace.css";
 
@@ -308,8 +308,10 @@ export function MultiDocumentWorkspace({
         <div><strong>Document workspace</strong><span>Session only · {ids.length} {ids.length === 1 ? "view" : "views"}</span></div>
       </div>
       <div className="multi-workspace-actions">
-        <button type="button" className="workspace-toolbar-btn" aria-pressed={compactMode}
-          onClick={onToggleCompactMode}>Compact mode</button>
+        <button type="button" className="workspace-compact-toggle" aria-pressed={compactMode}
+          onClick={onToggleCompactMode}>
+          <span>Compact mode</span><span className="workspace-switch" aria-hidden="true"><span /></span>
+        </button>
         <label>Place new view
           <select value={addSide} onChange={(event) => setAddSide(event.target.value as WorkspaceSide)}>
             {SIDES.map((side) => <option key={side.value} value={side.value}>{side.label}</option>)}
@@ -348,10 +350,12 @@ export function MultiDocumentWorkspace({
                 onClick={() => { localStorage.setItem("syllex_highlight_color", color.id); updatePane(selectedPane.id, { highlightColor: color.id, erasingHighlights: false }); }}>
                 <span style={{ backgroundColor: color.swatch }} aria-hidden="true" />
               </button>)}
-              <button type="button" aria-pressed={selectedPane.erasingHighlights}
-                onClick={() => updatePane(selectedPane.id, { erasingHighlights: true })}>Erase</button>
+              <button type="button" className="workspace-highlight-icon-btn" aria-label="Erase highlights" title="Erase highlights"
+                aria-pressed={selectedPane.erasingHighlights}
+                onClick={() => updatePane(selectedPane.id, { erasingHighlights: true })}><CloseIcon size={15} /></button>
             </div>
-            <button type="button" onClick={() => updatePane(selectedPane.id, { highlightEnabled: false, erasingHighlights: false })}>Done</button>
+            <button type="button" className="workspace-highlight-icon-btn" aria-label="Done highlighting" title="Done"
+              onClick={() => updatePane(selectedPane.id, { highlightEnabled: false, erasingHighlights: false })}><CheckIcon size={16} /></button>
           </div>}
         </div>
       </div>

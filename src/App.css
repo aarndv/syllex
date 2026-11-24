@@ -281,15 +281,15 @@ html[data-theme="light"] .search-trigger-btn:hover {
 }
 
 .close-icon-btn {
-  background-color: #381d1b;
-  color: #fca5a5;
-  border: 1px solid #7f1d1d;
+  background-color: #443d36;
+  color: #e2c8b4;
+  border: 1px solid #786758;
   font-size: 1rem;
 }
 
 .close-icon-btn:hover {
-  background-color: #991b1b;
-  color: #ffffff;
+  background-color: #5a4b40;
+  color: #f5e9dc;
 }
 
 .plus-menu-wrapper {
