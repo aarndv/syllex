@@ -479,6 +479,9 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
   const toastTimerRef = useRef<number | null>(null);
   const undoPendingRef = useRef(false);
   const deletingIdsRef = useRef(new Set<string>());
+  const pageWheelAccumulatorRef = useRef(0);
+  const pageWheelTimerRef = useRef<number | null>(null);
+  const pageWheelCooldownRef = useRef(0);
   const zoomPercent = Math.round(pane.zoom * 100);
   const zoomOptions = [...new Set([50, 75, 100, 125, 150, 200, zoomPercent])].sort((a, b) => a - b);
 
@@ -540,6 +543,34 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
   }, [vaultRoot, pane.node.relative_path, highlightRevision]);
 
   useEffect(() => () => { if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current); }, []);
+
+  useEffect(() => () => {
+    if (pageWheelTimerRef.current) window.clearTimeout(pageWheelTimerRef.current);
+  }, []);
+
+  function handleReadingWheel(event: React.WheelEvent<HTMLDivElement>) {
+    if (!selected || pane.continuous || !pdfDoc || event.ctrlKey || event.metaKey
+      || !(event.target instanceof Element) || !event.target.closest(".pdfjs-viewer-shell")) {
+      pageWheelAccumulatorRef.current = 0;
+      return;
+    }
+
+    let delta = event.deltaY;
+    if (event.deltaMode === WheelEvent.DOM_DELTA_LINE) delta *= 33;
+    else if (event.deltaMode === WheelEvent.DOM_DELTA_PAGE) delta *= 500;
+
+    pageWheelAccumulatorRef.current += delta;
+    if (pageWheelTimerRef.current) window.clearTimeout(pageWheelTimerRef.current);
+    pageWheelTimerRef.current = window.setTimeout(() => { pageWheelAccumulatorRef.current = 0; }, 400);
+
+    const now = Date.now();
+    if (Math.abs(pageWheelAccumulatorRef.current) < 80 || now - pageWheelCooldownRef.current < 350) return;
+
+    const nextPage = pane.page + (pageWheelAccumulatorRef.current > 0 ? 1 : -1);
+    pageWheelAccumulatorRef.current = 0;
+    pageWheelCooldownRef.current = now;
+    if (nextPage >= 1 && nextPage <= pdfDoc.numPages) onUpdate({ page: nextPage });
+  }
 
   function showHighlightToast(kind: "saved" | "erased", highlight: Highlight) {
     if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
@@ -683,7 +714,7 @@ function WorkspacePane({ vaultRoot, pane, highlightRevision, onHighlightChanged,
         <button type="button" onClick={onClose} aria-label={`Close view of ${pane.node.name}`} title="Close view"><CloseIcon size={13} /></button>
       </div>
     </header>
-    <div className="workspace-pane-reading">
+    <div className="workspace-pane-reading" onWheel={handleReadingWheel}>
       {(highlightError || highlightToast) && <div className="workspace-highlight-feedback">
         {highlightError && <p className="workspace-highlight-error" role="alert">{highlightError}</p>}
         {highlightToast && <div className="workspace-highlight-toast" role="status">
